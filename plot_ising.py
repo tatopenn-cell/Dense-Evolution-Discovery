@@ -1,27 +1,37 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Carica i dati reali estratti dal simulatore
 df = pd.read_csv("transizione_fase_ising.csv")
 
+g = df["Campo_g"].values
+E_zz = df["Expectation_H_zz"].values
+
+suscettivita = -np.gradient(E_zz, g)
+
 plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-# Disegna la curva d'ordine quantistica
-ax.plot(df["Campo_g"], df["Expectation_H_zz"], marker='o', linestyle='-', color='#00FFFF', linewidth=2, label=r'$\langle H_{zz} \rangle$ Osservabile Reale')
-ax.fill_between(df["Campo_g"], df["Expectation_H_zz"], color='#00FFFF', alpha=0.1)
+ax1.plot(g, E_zz, color='#FF007F', linewidth=2.5, label='Measured ZZ Correlation')
+ax1.set_ylabel("Spin-Spin Correlation <H_zz>", color='#888888')
+ax1.set_ylim(-0.05, 1.05)
+ax1.grid(True, linestyle='--', alpha=0.2, color='#444444')
+ax1.legend(loc="upper right")
+ax1.set_title("Quantum Ising Phase Scan & Susceptibility (3500 Steps)", fontsize=11, fontweight='bold', pad=15)
 
-# Personalizzazione estetica del grafico scientifico
-ax.set_title("Transizione di Fase Quantistica: Modello di Ising in Campo Trasverso (24 Qubit)", fontsize=12, fontweight='bold', pad=15)
-ax.set_xlabel("Intensità del Campo Trasversale (g)", fontsize=10, color='#888888')
-ax.set_ylabel("Correlazione Ferromagnetica Z-Z", fontsize=10, color='#888888')
-ax.grid(True, linestyle='--', alpha=0.3, color='#444444')
-ax.legend(loc="upper right")
+ax2.plot(g, suscettivita, color='#00FFFF', linewidth=2, label='Fermionic Susceptibility (dZZ/dg)')
+idx_max = np.argmax(suscettivita)
+g_critico = g[idx_max]
 
-# Evidenzia la direzione della transizione
-ax.annotate('Fase Ferromagnetica Ordinata', xy=(0.1, -0.98), xytext=(0.4, -0.85),
-            arrowprops=dict(facecolor='#FF007F', shrink=0.05, width=1, headwidth=6))
+ax2.axvline(g_critico, color='#FFFF00', linestyle=':', alpha=0.8, label=f'Critical Point g ~ {g_critico:.3f}')
+ax2.set_xlabel("Transverse Field Strength (g)", color='#888888')
+ax2.set_ylabel("Susceptibility", color='#888888')
+ax2.grid(True, linestyle='--', alpha=0.2, color='#444444')
+ax2.legend(loc="upper right")
 
 plt.tight_layout()
-plt.savefig("curva_transizione_ising.png", dpi=300)
-print("✅ Grafico ad alta risoluzione salvato in: curva_transizione_ising.png")
+plt.savefig("transizione_fase_ising.png", dpi=300)
+
+print("============================================================")
+print(f"📊 Grafico esportato! Punto critico rilevato a g = {g_critico:.3f}")
+print("============================================================")
