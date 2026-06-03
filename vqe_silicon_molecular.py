@@ -1,4 +1,4 @@
-import time
+﻿import time
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -12,7 +12,7 @@ N_Q = 18
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
 print("============================================================")
-print("🔬 MOLECULAR VQE: QUANTUM PARAMETER-SHIFT OPTIMIZER")
+print("ðŸ”¬ MOLECULAR VQE: QUANTUM PARAMETER-SHIFT OPTIMIZER")
 print("============================================================")
 
 distanze_R = np.linspace(1.4, 3.2, 15)
