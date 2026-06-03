@@ -1,0 +1,35 @@
+============================================================
+🔬 DENSE-EVOLUTION HARDWARE & MULTI-EXPERIMENT REAL REPORT
+============================================================
+
+--- TARGET ENVIRONMENT & SYSTEM METRICS ---
+Host OS Platform : Windows 10 (v10.0.22631)
+Core CPU Architecture: Intel64 Family 6 Model 142 Stepping 10, GenuineIntel
+Total Physical RAM   : 7.88 GB
+Active Python Runtime: 3.9.7
+JAX Hardware Backend : cpu | Engine: XLA Kernel Fusion
+
+--- ARCHITECTURAL BENCHMARKS (STEADY-STATE) ---
+Allocated Qubits    : 24
+Hilbert Space Dim   : 16777216 complex amplitudes
+Raw Statevector RAM : 268.44 MB (Zero-Reshape 1D Layer)
+JAX Tracing Overhead: 4.9401 seconds (First-run compilation)
+Amortized Compute Latency: 4.391945 seconds (Pure JIT Execution)
+Computational Throughput : 5.46 Gates/Second
+
+--- [EXPERIMENT 1] DEPOLARIZING NOISE ANALYSIS ---
+Von Neumann Spectral Entropy : 1.0000 bit
+Ferromagnetic Contribution <H_zz> : -0.5000
+Dominant Active Amplitudes (Soglia > 0.01%):
+  |000000000000000000000000⟩ -> 50.0000%
+  |111111110111011111111111⟩ -> 50.0000%
+
+--- [EXPERIMENT 2] TRANSVERSE FIELD SCAN PARAMETERS ---
+ 🔹 Campo g = 1.0 -> Expectation <H_zz>: -0.9441
+ 🔹 Campo g = 1.2 -> Expectation <H_zz>: -0.9205
+
+--- [EXPERIMENT 3] THERMAL AMPLITUDE DAMPING ---
+Stati risultanti dal decadimento energetico (T1 relaxation):
+  |000000000000000000000000⟩ -> 77.4000%
+  |111111111111111111111101⟩ -> 22.6000%
+============================================================
