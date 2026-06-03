@@ -1,58 +1,69 @@
 import time
 import jax
+import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import dense_evolution as de
 
-# Forza precisione macchina float64/complex128
 jax.config.update("jax_enable_x64", True)
 
-N_Q = 24
+N_Q = 12
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
-# Generiamo una griglia fine di punti per il campo trasverso g
-punti_g = np.linspace(0.0, 2.5, 10)
+punti_g = np.linspace(0.0, 2.5, 3500)
 risultati = []
 
 print("============================================================")
-print(f"🔬 ISING TRANSVERSE FIELD SCAN ON {N_Q} QUBITS (16.7M Amplitudes)")
+print(f"🔬 ULTRA-HIGH RESOLUTION QUANTUM ISING SCAN: 3500 STEPS")
 print("============================================================")
 
-# Definizione del circuito variazionale anisotropo reale
-def esegui_circuito_ising(g_campo):
-    # Strato indotto dal campo trasversale (interazione X)
-    rotazioni = [['rx', q, float(0.1 * g_campo)] for q in range(N_Q)]
-    # Strato ferromagnetico ad accoppiamento ZZ lungo la catena lineare
-    entanglement = [['cx', q, q + 1] for q in range(N_Q - 1)]
+def esegui_circuito_ising_reale(g_campo):
+    ansatz_circuit = []
     
+    for q in range(N_Q - 1):
+        ansatz_circuit.append(['cx', q, q + 1])
+        ansatz_circuit.append(['rz', q + 1, float(1.2)])
+        ansatz_circuit.append(['cx', q, q + 1])
+        
+    for q in range(N_Q):
+        ansatz_circuit.append(['rx', q, float(g_campo * 0.6)])
+        
     sim.set_initial_state()
-    sim.run_circuit_jit_beast_mode(rotazioni + entanglement)
+    sim.run_circuit_jit_beast_mode(ansatz_circuit)
     return sim.get_probabilities()
 
-# Loop di scansione reale sulle ampiezze JAX
+def calcola_vera_correlazione_zz(prob_array):
+    dim = len(prob_array)
+    indici = np.arange(dim)
+    somma_zz = 0.0
+    
+    for q in range(N_Q - 1):
+        bit_i = (indici & (1 << q)) >> q
+        bit_j = (indici & (1 << (q + 1))) >> (q + 1)
+        parita = np.where(bit_i == bit_j, 1.0, -1.0)
+        somma_zz += float(np.sum(prob_array * parita))
+        
+    return somma_zz / (N_Q - 1)
+
+t_global_start = time.perf_counter()
+
 for idx, g in enumerate(punti_g):
-    t_start = time.perf_counter()
+    prob = esegui_circuito_ising_reale(g)
+    E_zz = calcola_vera_correlazione_zz(prob)
     
-    # Estrazione delle probabilità native calcolate
-    prob = esegui_circuito_ising(g)
-    
-    # Calcolo REALE del valore di aspettazione dell'operatore di stringa <H_zz>
-    E_zz = -float(prob[0] + prob[-1])
-    
-    latenza = time.perf_counter() - t_start
-    print(f"Punto {idx+1:02d}/10 | Campo g: {g:.2f} | Correlazione <H_zz>: {E_zz:.6f} | Tempo: {latenza:.2f}s")
+    if (idx + 1) % 250 == 0 or idx == 0 or idx == len(punti_g) - 1:
+        print(f"Step {idx+1:04d}/3500 | Campo g: {g:.3f} | Correlazione <H_zz>: {E_zz:+.6f}")
     
     risultati.append({
         "Campo_g": g,
-        "Expectation_H_zz": E_zz,
-        "Latenza_Secondi": latenza
+        "Expectation_H_zz": E_zz
     })
 
-# Esportazione in un file CSV reale per l'analisi dei dati
 df = pd.DataFrame(risultati)
 df.to_csv("transizione_fase_ising.csv", index=False)
 
-print("\n============================================================")
-print("✅ SCANSIONE COMPLETATA CON SUCCESSO!")
-print("📊 Dati esportati e salvati in: transizione_fase_ising.csv")
+tempo_totale = time.perf_counter() - t_global_start
 print("============================================================")
+print(f"✅ SCANSIONE ULTRA-RISOLTA COMPLETATA IN {tempo_totale:.2f} s")
+print("============================================================")
+
