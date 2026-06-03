@@ -1,94 +1,103 @@
-﻿import time
-import psutil
-import platform
+import time
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 import dense_evolution as de
 
-# Forza la precisione assoluta a 64 bit
+# Forza la precisione a 64 bit per garantire la convergenza della simulazione
 jax.config.update("jax_enable_x64", True)
 
 print("============================================================")
-print("ðŸ”¬ HYBRID SCANNER: REAL CPU SILICON TO QUANTUM BANDSTRUCTURE")
+print("⚛️ TRUE VARIATIONAL QUANTUM EIGENSOLVER (VQE) SIMULATION")
 print("============================================================")
+print("🔍 Finding the true ground state energy of a 1D Fermionic Chain...\n")
 
-# 1. ESTRAZIONE DATI IN DIRETTA DALLA TUA CPU FISICA
-freq_hardware = psutil.cpu_freq()
-cpu_load = psutil.cpu_percent(interval=0.5)
-
-# Ricaviamo la frequenza corrente (es. 2.50 GHz) o usiamo un fallback stabile
-current_ghz = freq_hardware.current / 1000.0 if freq_hardware else 2.50
-if current_ghz == 0.0: current_ghz = 2.50
-
-print(f"ðŸ“Š Live Hardware Frequency : {current_ghz:.4f} GHz")
-print(f"ðŸ”¥ Live CPU Core Load      : {cpu_load}%")
-
-# 2. CALIBRAZIONE DELLA FISICA DEL RETICOLO DEL SILICIO CRISTALLINO VERO
-# Il Silicio ha un Bandgap reale di circa 1.12 eV. Usiamo il carico e la frequenza
-# della tua CPU come perturbazione cinetica (fluttuazione termica del silicio reale).
-N_Q = 18
+N_Q = 6  # Ridotto a 6 qubit per garantire un'ottimizzazione VQE rapida e stabile
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
-# Mappiamo i punti nello spazio di Brillouin (Vettore d'onda K da 0 a 2)
-punti_k = np.linspace(0.0, 2.0, 10)
-risultati_ibridi = []
+# Parametro fisico reale di hopping (eV)
+t_hopping = 2.11  
 
-# Formula quantistica per simulare il salto energetico (Tight-Binding perturbato)
-def circuito_reticolo_silicio(k_vector, rumore_cpu):
-    # L'angolo di rotazione dei qubit simula il vettore d'onda degli elettroni nel reticolo
-    angolo_k = float(k_vector * np.pi / 4)
-    # Il rumore della CPU agisce come perturbazione di campo esterno g
-    perturbazione_termica = float(rumore_cpu * 0.005)
+def cost_function(theta_params):
+    """
+    Funzione di costo del VQE: calcola il valore di aspettazione dell'Hamiltoniana
+    <psi(theta)| H |psi(theta)> usando il simulatore quantistico.
+    """
+    ansatz_circuit = []
     
-    rotazioni = [['rx', q, angolo_k + perturbazione_termica] for q in range(N_Q)]
-    entanglement = [['cx', q, q + 1] for q in range(N_Q - 1)]
+    # 1. Prepariamo lo stato di Fock ad 1 elettrone: |100000>
+    ansatz_circuit.append(['x', 0])
     
+    # 2. Hardware-Efficient Excitation-Preserving Ansatz (Rotazioni di Givens)
+    # Questo blocco distribuisce l'eccitazione preservando il settore a 1 fermione.
+    # Usiamo porte controllate e rotazioni parametrizzate dagli angoli theta.
+    param_idx = 0
+    for q in range(N_Q - 1):
+        # Implementazione di una rotazione orbitale fermionica coerente (Givens gate)
+        # Sfrutta accoppiamenti controllati per non violare lo spazio delle particelle
+        ansatz_circuit.append(['cx', q + 1, q])
+        ansatz_circuit.append(['ry', q + 1, float(theta_params[param_idx])])
+        ansatz_circuit.append(['cx', q, q + 1])
+        ansatz_circuit.append(['ry', q + 1, -float(theta_params[param_idx])])
+        ansatz_circuit.append(['cx', q + 1, q])
+        param_idx += 1
+
+    # Esecuzione del circuito nel simulatore quantistico
     sim.set_initial_state()
-    sim.run_circuit_jit_beast_mode(rotazioni + entanglement)
-    return sim.get_probabilities()
-
-print("\nâ³ Computazione quantistica delle bande energetiche del Silicio...")
-for idx, k in enumerate(punti_k):
-    t_start = time.perf_counter()
+    sim.run_circuit_jit_beast_mode(ansatz_circuit)
+    statevector = sim.get_statevector()
     
-    # Calcolo con iniezione dinamica dei dati hardware reali del tuo PC
-    prob = circuito_reticolo_silicio(k, cpu_load)
+    # 3. Misurazione dei valori di aspettazione di Jordan-Wigner (H = -t/2 * sum(XX + YY))
+    dim = len(statevector)
+    indices = np.arange(dim)
+    total_kinetic_energy = 0.0
     
-    # Ricaviamo l'energia di banda (Valore di aspettazione proiettato)
-    E_banda = -float(prob[0] + prob[-1]) * 1.12  # Scalato sul vero Bandgap del silicio (1.12 eV)
-    
-    latenza = time.perf_counter() - t_start
-    print(f"K-Space Point {idx+1:02d}/10 | Wavevector k: {k:.2f} | Energia Banda: {E_banda:.6f} eV | {latenza:.2f}s")
-    
-    risultati_ibridi.append({
-        "Wavevector_k": k,
-        "Energy_eV": E_banda,
-        "CPU_Load_Perturbation": cpu_load
-    })
+    for q in range(N_Q):
+        q_next = (q + 1) % N_Q  # Condizioni al contorno periodiche (PBC)
+        mask_i = 1 << q
+        mask_j = 1 << q_next
+        combined_mask = mask_i | mask_j
+        
+        flipped_indices = indices ^ combined_mask
+        psi_flipped = statevector[flipped_indices]
+        
+        # Termine XX
+        xx_exp = np.real(np.sum(np.conj(statevector) * psi_flipped))
+        
+        # Termine YY
+        bit_i = (indices & mask_i) >> q
+        bit_j = (indices & mask_j) >> q_next
+        phase = np.where(bit_i == bit_j, -1.0, 1.0)
+        yy_exp = np.real(np.sum(np.conj(statevector) * psi_flipped * phase))
+        
+        total_kinetic_energy += float(xx_exp + yy_exp)
+        
+    # Calcolo dell'energia totale
+    E_total = - (t_hopping / 2.0) * total_kinetic_energy
+    return E_total
 
-# Esportazione del Dataset Ibrido
-df = pd.DataFrame(risultati_ibridi)
-df.to_csv("bande_silicio_ibrido.csv", index=False)
+# --- ESECUZIONE DELL'OTTIMIZZAZIONE CO-ASSISTITA (VQE) ---
+# Inizializziamo i parametri theta in modo casuale
+num_parameters = N_Q - 1
+initial_thetas = np.random.uniform(0, 2 * np.pi, num_parameters)
 
-# Generazione del grafico ad alta risoluzione della struttura a bande
-plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
+print("🚀 Avvio dell'ottimizzatore classico (COBYLA)...")
+t_start = time.perf_counter()
 
-ax.plot(df["Wavevector_k"], df["Energy_eV"], marker='o', linestyle='-', color='#00FF00', linewidth=2, label='Banda di Valenza Perturbata (Dati Hardware Reali)')
-ax.fill_between(df["Wavevector_k"], df["Energy_eV"], -1.5, color='#00FF00', alpha=0.1)
+res = minimize(cost_function, initial_thetas, method='COBYLA', options={'maxiter': 200})
 
-ax.set_title(f"Silicon Bandstructure on {platform.processor()}\nLive Injection: {current_ghz:.2f}GHz @ {cpu_load}% Load", fontsize=11, fontweight='bold', pad=15)
-ax.set_xlabel("Vettore d'onda nello Spazio di Brillouin (k)", color='#888888')
-ax.set_ylabel("Energia degli Elettroni (eV)", color='#888888')
-ax.grid(True, linestyle='--', alpha=0.3, color='#444444')
-ax.legend(loc="upper right")
+vqe_duration = time.perf_counter() - t_start
+exact_ground_state = -2 * t_hopping  # Valore teorico esatto per k=0
 
-plt.tight_layout()
-plt.savefig("bande_silicio_ibrido.png", dpi=300)
 print("\n============================================================")
-print("âœ… MAPPATURA IBRIDA EFFETTUATA CON SUCCESSO!")
-print("ðŸ“Š Grafico accoppiato salvato in: bande_silicio_ibrido.png")
+print("✅ OTTIMIZZAZIONE VQE COMPLETATA CON SUCCESSO!")
 print("============================================================")
+print(f"⏱️ Tempo impiegato dall'algoritmo: {vqe_duration:.3f} secondi")
+print(f"📊 Energia minima trovata dal VQE: {res.fun:.6f} eV")
+print(f"🎯 Valore teorico analitico esatto: {exact_ground_state:.6f} eV")
+print(f"📉 Errore residuo assoluto: {abs(res.fun - exact_ground_state):.6e} eV")
+print("============================================================")
+
