@@ -6,83 +6,110 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
 
-# Forza precisione doppia float64
 jax.config.update("jax_enable_x64", True)
 
-N_Q = 24
+N_Q = 6
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+t_hopping = 2.11
+
+def calcola_aspettazione_da_sv(statevector):
+    dim = len(statevector)
+    indices = np.arange(dim)
+    total_kinetic = 0.0
+    
+    for q in range(N_Q):
+        q_next = (q + 1) % N_Q
+        mask = (1 << q) | (1 << q_next)
+        psi_flipped = statevector[indices ^ mask]
+        
+        xx_exp = np.real(np.sum(np.conj(statevector) * psi_flipped))
+        bit_i = (indices & (1 << q)) >> q
+        bit_j = (indices & (1 << q_next)) >> q_next
+        phase = np.where(bit_i == bit_j, -1.0, 1.0)
+        yy_exp = np.real(np.sum(np.conj(statevector) * psi_flipped * phase))
+        
+        total_kinetic += float(xx_exp + yy_exp)
+        
+    return - (t_hopping / 2.0) * total_kinetic
+
+punti_theta = np.linspace(0.0, 2 * np.pi, 3500)
+N_STEPS = len(punti_theta)
+
+base_ops = []
+base_ops.append(['x', 0])
+for q in range(N_Q - 1):
+    base_ops.append(['cx', q + 1, q])
+    base_ops.append(['ry', q + 1, f"param_vqe"])
+    base_ops.append(['cx', q, q + 1])
+    base_ops.append(['ry', q + 1, f"param_vqe_inv"])
+    base_ops.append(['cx', q + 1, q])
 
 print("============================================================")
-print(f"🔬 BATCH-ENGINE PARAMETER-SHIFT GRADIENT (24 QUBITS)")
+print("🚀 MASSIVE JAX BATCH: COMPILING 10,500 PARALLEL INSTANCES...")
 print("============================================================")
 
-# Lo shift formale per la derivata dei gate di rotazione RX è pi/2
-SHIFT = np.pi / 2
+griglia_globale = np.zeros((N_STEPS * 3, 2), dtype=np.float64)
 
-# Struttura fissa del circuito variazionale anisotropo (i parametri sono impostati a 0.0 nel template)
-base_ops = [['rx', q, 0.0] for q in range(N_Q)] + [['cx', q, q + 1] for q in range(N_Q - 1)]
+for idx, theta in enumerate(punti_theta):
+    theta_plus = float(theta + np.pi / 2)
+    theta_minus = float(theta - np.pi / 2)
+    
+    griglia_globale[idx * 3]     = [theta, -theta]
+    griglia_globale[idx * 3 + 1] = [theta_plus, -theta_plus]
+    griglia_globale[idx * 3 + 2] = [theta_minus, -theta_minus]
 
-# Definizione dello spazio di campionamento per il parametro globale theta
-angoli_theta = np.linspace(0.0, 2 * np.pi, 10)
-risultati = []
+jax_batch = jnp.array(griglia_globale, dtype=jnp.float64)
 
-# Eseguiamo un ciclo di riscaldamento (Warmup) per stabilizzare la cache JIT
-print("⏳ Compilazione del grafo hardware XLA in corso...")
-sim.set_initial_state()
-sim.run_parametric_batch_jit(base_ops, jnp.array([[0.0] * N_Q, [SHIFT] * N_Q, [-SHIFT] * N_Q], dtype=jnp.float64))
+t_global_start = time.perf_counter()
 
-for idx, theta in enumerate(angoli_theta):
-    t_start = time.perf_counter()
-    
-    # Per calcolare il gradiente analitico rispetto a un parametro globale theta,
-    # generiamo un batch con tre configurazioni di parametri:
-    # 1. Il punto centrale theta
-    # 2. Il punto spostato in avanti (theta + pi/2)
-    # 3. Il punto spostato all'indietro (theta - pi/2)
-    p_centro = np.array([theta] * N_Q)
-    p_plus   = np.array([theta + SHIFT] * N_Q)
-    p_minus  = np.array([theta - SHIFT] * N_Q)
-    
-    # Inviamo l'intero batch a JAX vmap (Esecuzione parallela istantanea)
-    jax_batch = jnp.array([p_centro, p_plus, p_minus], dtype=jnp.float64)
-    statevectors = sim.run_parametric_batch_jit(base_ops, jax_batch)
-    
-    # Estraiamo l'energia <H_zz> per ciascuno dei tre stati calcolati in parallelo
-    energies = []
-    for sv in statevectors:
-        # Calcoliamo le probabilità dal vettore di stato restituito
-        # Usiamo una proiezione simulata per ricavare l'aspettazione del ground state
-        prob_local = jnp.abs(sv)**2
-        E_local = - float(prob_local[0] + prob_local[-1])
-        energies.append(E_local)
-    
-    E_attuale = energies[0]
-    E_plus    = energies[1]
-    E_minus   = energies[2]
-    
-    # --- PARAMETER-SHIFT RULE ANALITICA ---
-    # dE/dtheta = 0.5 * (E(theta + pi/2) - E(theta - pi/2))
-    # Questa è la derivata quantistica ESATTA, non un'approssimazione numerica
-    grad_analitico = 0.5 * (E_plus - E_minus)
-    
-    latenza = time.perf_counter() - t_start
-    print(f"Punto {idx+1:02d}/10 | Theta: {theta:.2f} | Energia: {E_attuale:.4f} | Gradiente: {grad_analitico:.6f} | Tempo: {latenza:.2f}s")
-    risultati.append({"Theta": float(theta), "Gradiente_Analitico": grad_analitico})
+statevectors_batch = sim.run_parametric_batch_jit(base_ops, jax_batch)
 
-# Rendering grafico finale
-df = pd.DataFrame(risultati)
+print("📊 Unpacking statevectors and measuring observables...")
+dati_parameter_shift = []
+
+for idx, theta in enumerate(punti_theta):
+    sv_curr = statevectors_batch[idx * 3]
+    sv_plus = statevectors_batch[idx * 3 + 1]
+    sv_minus = statevectors_batch[idx * 3 + 2]
+    
+    E_curr = calcola_aspettazione_da_sv(sv_curr)
+    E_plus = calcola_aspettazione_da_sv(sv_plus)
+    E_minus = calcola_aspettazione_da_sv(sv_minus)
+    
+    gradiente_psr = 0.5 * (E_plus - E_minus)
+    
+    if (idx + 1) % 250 == 0 or idx == 0 or idx == N_STEPS - 1:
+        print(f"Step {idx+1:04d}/3500 | θ: {theta:.3f} rad | E(θ): {E_curr:+.4f} eV | PSR Gradient: {gradiente_psr:+.6f}")
+        
+    dati_parameter_shift.append({
+        "Theta": theta,
+        "Energia": E_curr,
+        "Gradiente_PSR": gradiente_psr
+    })
+
+df = pd.DataFrame(dati_parameter_shift)
+df.to_csv("vqe_jax_gradient.csv", index=False)
+
 plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-ax.plot(df["Theta"], df["Gradiente_Analitico"], marker='o', linestyle='-', color='#00FF00', linewidth=2, label=r'Exact Grad $\nabla_\theta \langle H_{zz} \rangle$ (Parameter-Shift)')
-ax.axhline(0, color='#FF007F', linestyle='--', alpha=0.5, label='Barren Plateau Threshold')
+ax1.plot(df["Theta"], df["Energia"], color='#00FF00', linewidth=2.5, label='VQE Energy Surface E(θ)')
+ax1.set_ylabel("Energy (eV)", color='#888888')
+ax1.grid(True, linestyle='--', alpha=0.2, color='#444444')
+ax1.legend(loc="upper right")
+ax1.set_title("Exact Parameter-Shift Rule Gradients (10,500 Parallel JAX Tracks)", fontsize=11, fontweight='bold', pad=15)
 
-ax.set_title("VQE Gradient Landscape: Parameter-Shift Rule (24 Qubits)", fontsize=11, fontweight='bold', pad=15)
-ax.set_xlabel("Variational Parameter (Theta)", color='#888888')
-ax.set_ylabel("Exact Gradient Magnitude", color='#888888')
-ax.grid(True, linestyle='--', alpha=0.3, color='#444444')
-ax.legend(loc="upper right")
+ax2.plot(df["Theta"], df["Gradiente_PSR"], color='#FF007F', linewidth=2, label='Analytic PSR Gradient (dE/dθ)')
+ax2.axhline(0.0, color='#888888', linestyle=':', alpha=0.5)
+ax2.set_xlabel("Variational Parameter θ (radians)", color='#888888')
+ax2.set_ylabel("Gradient Magnitude", color='#888888')
+ax2.grid(True, linestyle='--', alpha=0.2, color='#444444')
+ax2.legend(loc="upper right")
 
 plt.tight_layout()
 plt.savefig("vqe_jax_gradient.png", dpi=300)
-print("\n✅ Grafico esatto salvato in: vqe_jax_gradient.png")
+
+tempo_totale = time.perf_counter() - t_global_start
+print("============================================================")
+print(f"⚡ VMAP COMPILER SUCCESS: 10,500 TRACKS COMPLETATE IN {tempo_totale:.2f} s")
+print("============================================================")
