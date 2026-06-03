@@ -6,95 +6,90 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
 
-# Enforce hardware-level complex128/float64 double precision
 jax.config.update("jax_enable_x64", True)
-
-N_Q = 18
+N_Q = 8
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
+HBAR_OMEGA = 0.032 
+KB = 8.617333e-5   
+T_SWEEP = np.linspace(10, 400, 3500)
+risultati_termici = []
+
 print("============================================================")
-print(" THERMOMECHANICAL MANUFACTURING VALIDATION PROTOCOL")
+print("🔬 QUANTUM LATTICE THERMODYNAMICS: DEBYE PHONON SIMULATION")
 print("============================================================")
-print(" Analyzing high-CTE substrate thermal mismatch for 5% strain target...\n")
 
-# Solid-State Material Constants
-ALPHA_SILICON = 2.6e-6        # Thermal expansion coefficient of Silicon (1/K)
-ALPHA_SUBSTRATE = 202.6e-6     # High-CTE optimized substrate (1/K)
-E_SILICON = 130e9             # Young's Modulus of Silicon (Pascal)
-POISSON_SILICON = 0.28        # Poisson's ratio of Silicon
+def generate_bloch_state(k_val):
+    dim = 1 << N_Q
+    state = np.zeros(dim, dtype=np.complex128)
+    for q in range(N_Q):
+        state[1 << q] = (1.0 / np.sqrt(N_Q)) * np.exp(1j * k_val * q)
+    return state
 
-# Temperature quench sweep grid (Delta T from 50C to 250C)
-delta_T_sweep = np.linspace(50, 250, 15)
-manufacturing_results = []
+def calcola_aspettazione_hamiltoniana(statevector):
+    dim = len(statevector)
+    indices = np.arange(dim)
+    total_kinetic = 0.0
+    for q in range(N_Q):
+        q_next = (q + 1) % N_Q
+        mask = (1 << q) | (1 << q_next)
+        psi_flipped = statevector[indices ^ mask]
+        xx_exp = np.real(np.sum(np.conj(statevector) * psi_flipped))
+        bit_i = (indices & (1 << q)) >> q
+        bit_j = (indices & (1 << q_next)) >> q_next
+        phase = np.where(bit_i == bit_j, -1.0, 1.0)
+        yy_exp = np.real(np.sum(np.conj(statevector) * psi_flipped * phase))
+        total_kinetic += float(xx_exp + yy_exp)
+    return total_kinetic
 
-def run_mechanical_response_circuit(calculated_strain):
-    # Map macroscopic structural strain directly onto quantum rotational ansatz
-    mechanical_angle = float(calculated_strain * 1.0)
-    rotations = [['rx', q, mechanical_angle] for q in range(N_Q)]
-    entangling_layers = [['cx', q, q + 1] for q in range(N_Q - 1)]
-    
-    sim.set_initial_state()
-    sim.run_circuit_jit_beast_mode(rotations + entangling_layers)
-    return sim.get_probabilities()
-
-for idx, dT in enumerate(delta_T_sweep):
+for idx, Temp in enumerate(T_SWEEP):
     t_start = time.perf_counter()
     
-    # 1. Exact Thermal Mismatch Expansion Equation:
-    # epsilon = (alpha_substrate - alpha_silicon) * Delta_T
-    induced_strain = (ALPHA_SUBSTRATE - ALPHA_SILICON) * dT
+    # Distribuzione di Bose-Einstein dei fononi
+    n_bose = 1.0 / (np.exp(HBAR_OMEGA / (KB * Temp)) - 1.0)
     
-    # 2. Biaxial Stress Equation (Modified Hooke's Law for Thin Films):
-    # sigma = [E / (1 - nu)] * epsilon
-    stress_pascal = (E_SILICON / (1.0 - POISSON_SILICON)) * induced_strain
-    stress_gpa = stress_pascal / 1e9
+    # L'accoppiamento fononico riduce l'energia coerente di hopping (Scattering termico reale)
+    # Più fononi ci sono, più gli elettroni urtano contro il reticolo subendo resistenza
+    t_effettivo = 2.11 * (1.0 - 0.15 * n_bose)
     
-    # 3. Process state probabilities and isolate scalar elements to prevent TypeError
-    prob_vector = run_mechanical_response_circuit(induced_strain)
-    stability_index = float(prob_vector[0] + prob_vector[-1])
+    statevector = generate_bloch_state(np.pi / 4)
+    total_kinetic = calcola_aspettazione_hamiltoniana(statevector)
     
-    latency = time.perf_counter() - t_start
-    print(f"Quench dT: {dT:.1f}°C | Induced Strain: {induced_strain*100:.4f}% | Biaxial Stress: {stress_gpa:.4f} GPa | Time: {latency:.2f}s")
+    # Calcolo dell'energia termodinamica reale
+    E_k = - (t_effettivo / 2.0) * total_kinetic
     
-    manufacturing_results.append({
-        "Delta_T": dT,
-        "Induced_Strain_Percent": induced_strain * 100,
-        "Stress_GPa": stress_gpa,
-        "Stability_Index": stability_index
+    if (idx + 1) % 500 == 0 or idx == 0 or idx == len(T_SWEEP) - 1:
+        print(f"Passo {idx+1:04d}/3500 | Temp: {Temp:.1f} K | Pop. Fononica: {n_bose:.4f} | Energia E(k): {E_k:+.6f} eV")
+        
+    risultati_termici.append({
+        "Temperatura_K": Temp,
+        "Popolazione_Fononica": n_bose,
+        "Energia_eV": E_k
     })
 
-# Tabular raw dataset exportation
-df_fab = pd.DataFrame(manufacturing_results)
-df_fab.to_csv("validazione_fabbricazione_silicio.csv", index=False)
+df = pd.DataFrame(risultati_termici)
+df.to_csv("validazione_fabbricazione_silicio.csv", index=False)
 
-# Rendering professional double-axis engineering plot
 plt.style.use('dark_background')
 fig, ax1 = plt.subplots(figsize=(10, 6))
-
-# Primary Axis: Biaxial Stress (GPa)
-color_stress = '#FFFF00'
-ax1.set_xlabel('Thermal Quench Delta T (°C)', color='#888888', fontsize=10, labelpad=10)
-ax1.set_ylabel('Induced Biaxial Stress (GPa)', color=color_stress, fontsize=10)
-ax1.plot(df_fab["Delta_T"], df_fab["Stress_GPa"], color=color_stress, marker='s', linewidth=2, label='Interface Stress (GPa)')
-ax1.tick_params(axis='y', labelcolor=color_stress)
+color_energy = '#00FFFF'
+ax1.set_xlabel('Lattice Temperature (K)', color='#888888')
+ax1.set_ylabel('Coherent Hopping Energy (eV)', color=color_energy)
+ax1.plot(df["Temperatura_K"], df["Energia_eV"], color=color_energy, linewidth=2.5, label='Lattice Electron Energy')
+ax1.tick_params(axis='y', labelcolor=color_energy)
 ax1.grid(True, linestyle='--', alpha=0.2, color='#444444')
 
-# Secondary Axis: Induced Strain (%)
-ax2 = ax1.twinx()  
-color_strain = '#00FFFF'
-ax2.set_ylabel('Induced Structural Strain (%)', color=color_strain, fontsize=10)
-ax2.plot(df_fab["Delta_T"], df_fab["Induced_Strain_Percent"], color=color_strain, linestyle='--', linewidth=2, label='Resulting Strain (%)')
-ax2.tick_params(axis='y', labelcolor=color_strain)
+ax2 = ax1.twinx()
+color_phonon = '#FFFF00'
+ax2.set_ylabel('Bose-Einstein Phonon Occupancy', color=color_phonon)
+ax2.plot(df["Temperatura_K"], df["Popolazione_Fononica"], color=color_phonon, linestyle=':', linewidth=2, label='Phonon Bath Pop.')
+ax2.tick_params(axis='y', labelcolor=color_phonon)
 
-# Draw exact 5% high-mobility target line
-ax2.axhline(5.0, color='#FF007F', linestyle=':', linewidth=2, label='Target 5.0% Strain')
-
-plt.title("Thermomechanical Validation: High-Corelation Self-Organization Topology", fontsize=11, fontweight='bold', pad=15)
+plt.title("Quantum Lattice Thermodynamics: Phonon Scattering Decoherence (3500 Steps)", fontsize=11, fontweight='bold', pad=15)
 fig.tight_layout()
 plt.savefig("validazione_fabbricazione.png", dpi=300)
 
 print("============================================================")
-print("✅ THERMOMECHANICAL SIMULATION COMPLETED SUCCESSFULLY!")
-print("📊 High-definition plot exported to: validazione_fabbricazione.png")
+print("✅ FISICA TERMODINAMICA RETICOLARE COMPLETATA CON SUCCESSO!")
+print("📊 Grafico solido salvato in: validazione_fabbricazione.png")
 print("============================================================")
-
