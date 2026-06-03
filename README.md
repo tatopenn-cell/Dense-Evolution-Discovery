@@ -23,16 +23,32 @@ We present a rigorous physical validation of the longitudinal spin-correlation o
 $$H = -\sum_{i} Z_i Z_{i+1} - g\sum_{i} X_i$$
 As the transverse field coupling strength $g$ sweeps from $0.0$ to $2.5$, the structural expectation value smoothly decays from an absolute ferromagnetic alignment of $-1.0000$ down to $-0.6975$. This continuous trajectory maps the exact critical boundaries where quantum fluctuations dismantle long-range magnetic ordering, steering the system toward a disordered paramagnetic regime.
 
+<p align="center">
+  <img src="curva_transizione_ising.png" alt="Ideal Transverse Field Ising Model Phase Transition" width="80%">
+</p>
+
 ### 2. Physical Impact of Thermal Decoherence ($T_1$)
 By injecting a non-unitary *Amplitude Damping* channel acting point-to-point on the statevector with a probability factor of $p = 0.04$, we isolated the precise bias of environmental thermal relaxation. The environment breaks the unitary symmetry of the parametric rotations, artificially accelerating the degradation of parallel spin alignment along the computational $Z$-axis and simulating a false thermal phase transition.
+
+<p align="center">
+  <img src="confronto_transizione_noisy.png" alt="Ideal vs Noisy TFIM Curve Comparison" width="80%">
+</p>
 
 ### 3. Error Mitigation via Richardson Zero-Noise Extrapolation (ZNE)
 To circumvent non-unitary noise without physical hardware overhead, a classical-quantum hybrid mitigation protocol was deployed. By scaling the noise density via stretching coefficients ($\lambda_1 = 1.0, \lambda_2 = 2.0$), a linear Richardson extrapolation was computed:
 $$E(0) = 2E(\lambda_1) - E(\lambda_2)$$
 Despite local statistical variances (*shot noise*) emerging from stochastically evaluated Kraus jumps, the ZNE protocol successfully reconstructed the unperturbed, zero-noise ideal target trajectory with extreme numerical accuracy.
 
+<p align="center">
+  <img src="transizione_ising_mitigata.png" alt="Zero-Noise Extrapolation Results" width="80%">
+</p>
+
 ### 4. Experimental Isolation of Barren Plateaus in VQE Landscape
 A critical challenge in Variational Quantum Eigensolvers (VQE) and Quantum Machine Learning (QML) was experimentally confirmed. We tracked a massive "dead zone" exhibiting a vanishing gradient magnitude ($\nabla_\theta \langle H_{zz} \rangle = 0.000000$) across a wide parameter band between $\theta = 1.40$ and $\theta = 4.89$. This phenomenon provides empirical proof of the exponential flattening of the cost landscape induced by Hilbert space over-dilution as non-local entanglement cascades through deep entangling CNOT layers.
+
+<p align="center">
+  <img src="vqe_gradient_landscape.png" alt="VQE Analytical Gradient Landscape and Barren Plateau Identification" width="80%">
+</p>
 
 ---
 
