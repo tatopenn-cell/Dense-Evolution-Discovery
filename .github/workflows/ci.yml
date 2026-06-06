@@ -1,4 +1,4 @@
-name: Cross-Validation CI
+name: Pipeline CI
 
 on:
   push:
