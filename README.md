@@ -1,87 +1,211 @@
 # 🔬 Quantum Phase Transitions, Variational Gradients, and Error Mitigation (12 Qubits)
 
-This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.0.7)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM) and Tight-Binding Fermionic dynamics.
+This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.0.7)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
 ---
 
 ## 📊 Repository Architecture & Ecosystem
 
-*   **`scan_ising.py`**: Automated data pipeline responsible for high-resolution parameter sweeps and graphical rendering of the ideal ferromagnetic phase transition using a true variational ansatz.
-*   **`plot_ising.py`**: Computes the first-order numerical derivative (quantum susceptibility) to locate the exact critical phase boundary.
-*   **`zne_mitigation.py`**: Mathematical implementation of a stochastic Richardson Zero-Noise Extrapolation (ZNE) protocol over discrete Pauli-Z phase dephasing channels.
-*   **`vqe_gradient.py`**: Exact numerical finite-difference gradient tracker mapping the variational energy landscape and locating stationary points.
-*   **`vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact non-fictitious Parameter-Shift Rule over a massively parallel 10,500-track JAX batch array.
-*   **`quantum_defect_scanner.py`**: Isotropic resilience topology mapper evaluating node-by-node quantum coherence under localized parameter-driven Kraus noise.
-*   **`next_gen_silicon.py`**: Solid-state bandstructure designer tracking continuous dispersion shifts induced by mechanical lattice straining.
-*   **`test_manufacturing_formula.py`**: Lattice thermodynamics simulator modeling electron-phonon scattering and decoherence via Bose-Einstein statistical distributions.
-*   **`vqe_silicon_molecular.py`**: Variational Quantum Eigensolver tracking self-consistent Potential Energy Curves (PEC) and Born-Oppenheimer molecular dissociation limits.
-*   **`transizione_fase_ising.csv`**: Raw tabular dataset capturing exact computational basis probabilities extracted directly from JAX memory slices.
+- **`scan_ising.py`**: Automated data pipeline responsible for high-resolution parameter sweeps and graphical rendering of the ideal ferromagnetic phase transition using a true variational ansatz. Produces `transizione_fase_ising.csv`.
+- **`plot_ising.py`**: Computes the first-order numerical derivative (quantum susceptibility) from the CSV dataset to locate the exact critical phase boundary. Produces `curva_transizione_ising.png`.
+- **`zne_mitigation.py`**: Mathematical implementation of a stochastic Richardson Zero-Noise Extrapolation (ZNE) protocol over discrete Pauli-Z phase dephasing channels with 2,000 hardware shot sampling. Produces `dati_mitigazione_zne.csv` and `transizione_ising_mitigata.png`.
+- **`vqe_gradient.py`**: Exact numerical finite-difference gradient tracker (`h = 1e-5`) mapping the variational energy landscape and locating stationary points. Produces `vqe_gradient_landscape.csv` and `vqe_gradient_landscape.png`.
+- **`vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact non-fictitious Parameter-Shift Rule over a massively parallel 10,500-track JAX batch array. Produces `vqe_jax_gradient.csv` and `vqe_jax_gradient.png`.
+- **`quantum_defect_scanner.py`**: Isotropic resilience topology mapper evaluating node-by-node quantum coherence under localized parameter-driven Kraus noise via `run_parametric_batch_jit()`. Produces `mappa_difetti_silicio.csv` and `mappa_difetti_silicio.png`.
+- **`next_gen_silicon.py`**: Solid-state bandstructure designer tracking continuous dispersion shifts induced by 5% mechanical lattice tensile strain via Harrison's hopping law. Produces `bande_nuovo_silicio.csv` and `confronto_nuovo_silicio.png`.
+- **`test_manufacturing_formula.py`**: Quantum lattice thermodynamics simulator modeling electron-phonon scattering and decoherence via Bose-Einstein statistical distributions over a 10–400 K temperature sweep. Produces `validazione_fabbricazione_silicio.csv` and `validazione_fabbricazione.png`.
+- **`vqe_silicon_molecular.py`**: Variational Quantum Eigensolver tracking self-consistent Potential Energy Curves (PEC) and Born-Oppenheimer molecular dissociation limits for a silicon dimer. Produces `vqe_molecola_silicio.csv` and `curva_potenziale_silicio.png`.
+- **`transizione_fase_ising.csv`**: Raw tabular dataset (3,501 rows) capturing exact `<H_zz>` spin-spin correlations extracted directly from JAX statevector memory across the full g ∈ [0.0, 2.5] sweep.
 
 ---
 
 ## 🔬 Scientific Discoveries & Empirical Evidence
 
 ### 1. Quantum Phase Transition & Order Parameters
+
 We present a rigorous physical validation of the longitudinal spin-correlation order parameter $\langle H_{zz} \rangle$ governed by the 1D Transverse Field Ising Model Hamiltonian:
-$$H = -\sum_{i} Z_i Z_{i+1} - g\sum_{i} X_i$$ 
+
+$$H = -\sum_{i} Z_i Z_{i+1} - g\sum_{i} X_i$$
+
 As the transverse field coupling strength $g$ sweeps from $0.0$ to $2.5$ over 3,500 high-resolution steps, the structural expectation value smoothly decays from an absolute ferromagnetic alignment of $+1.0000$ down to $+0.0050$. This continuous trajectory maps the exact critical boundaries where quantum fluctuations dismantle long-range magnetic ordering, steering the system toward a disordered paramagnetic regime. The critical phase transition boundary is resolved via quantum susceptibility metrics at exactly **$g = 1.309$** with a maximum peak susceptibility of **$1.0000$** under zero-drift conditions.
 
-<p align="center">
-  <img src="curva_transizione_ising.png" alt="Quantum Ising Phase Scan and Susceptibility" width="85%">
-</p>
+The ansatz deploys alternating CX–RZ–CX entangling blocks across all 11 nearest-neighbor qubit pairs on a 12-qubit chain, followed by parametric RX rotations scaled to the transverse field strength ($\theta = 0.6 \cdot g$). The `<H_zz>` order parameter is computed analytically from the statevector probability distribution via bitwise parity extraction.
+
+[![Quantum Ising Phase Scan and Susceptibility](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/curva_transizione_ising.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/curva_transizione_ising.png)
+
+---
 
 ### 2. Quantum Error Mitigation via Real Stochastic Richardson Extrapolation (ZNE)
+
 To circumvent non-unitary noise without physical hardware overhead, a classical-quantum hybrid mitigation protocol was deployed under a realistic stochastic Pauli-Z dephasing Kraus channel. By scaling the noise density via stretching coefficients ($\lambda_1 = 1.0, \lambda_2 = 2.0$) over $2,000$ discrete hardware shots, a linear Richardson extrapolation was computed:
-$$E(0) = 2E(\lambda_1) - E(\lambda_2)$$ 
+
+$$E(0) = 2E(\lambda_1) - E(\lambda_2)$$
+
+The protocol operates on Bloch wavevector states $|\psi(k)\rangle = \frac{1}{\sqrt{N}} \sum_q e^{iqk} |1_q\rangle$ injected over 25 k-points spanning the full Brillouin zone $[-\pi, \pi]$. The base dephasing probability per qubit is $p = 0.06 \cdot \lambda$, applied stochastically via per-shot Kraus channel sampling with controlled seeds.
+
 The ZNE protocol successfully reconstructed the unperturbed, zero-noise ideal target trajectory, forcing the corrupted noisy minimum at $k=0$ (degraded up to $-3.3155\text{ eV}$) back to its true analytic target value of **$-4.2467\text{ eV}$** without introducing non-linear artifacts.
 
-<p align="center">
-  <img src="confronto_transizione_noisy.png" alt="Stochastic Zero-Noise Extrapolation Results" width="85%">
-</p>
+[![Stochastic Zero-Noise Extrapolation Results](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/confronto_transizione_noisy.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/confronto_transizione_noisy.png)
 
-### 3. Exact Multi-Particle Variational Optimization (VQE)
-Utilizing a mathematically sound hardware-efficient excitation-preserving ansatz based on continuous Givens rotations, we tracked the accurate convergence profile of a single-electron state inside the crystal lattice. By maintaining strict Fock space conservation throughout the parameter optimization loop, the classical-hybrid optimizer successfully isolated the exact analytic minimum bound of the kinetic field:
-$$E_{ground} = -2 \cdot t_{hopping}$$ 
+---
+
+### 3. Numerical Finite-Difference Gradient Mapping (VQE Energy Landscape)
+
+A brute-force numerical gradient sweep over the full VQE variational energy landscape was executed using a centered finite-difference scheme with step $h = 10^{-5}$ radians:
+
+$$\frac{\partial E}{\partial \theta} \approx \frac{E(\theta + h) - E(\theta - h)}{2h}$$
+
+The ansatz uses Givens rotation excitation-preserving blocks (CX–RY–CX–RY–CX chains) initialized from a single-excitation Fock state $|100000\rangle$, preserving strict particle-number conservation throughout. 3,500 continuous $\theta$ values spanning $[0, 2\pi]$ are evaluated over a 6-qubit tight-binding Hamiltonian with $t_{hopping} = 2.11$ eV.
+
+The gradient landscape confirms the exact analytic minimum bound at:
+
+$$E_{ground} = -2 \cdot t_{hopping} = -4.22 \text{ eV}$$
+
+with all stationary points and gradient zero-crossings fully resolved, and no vanishing gradient plateaus present under the compact excitation-preserving ansatz.
+
+> **Note:** This script (`vqe_gradient.py`) uses classical finite-difference differentiation. For exact quantum-native analytical gradients via Parameter-Shift Rule, see Section 6 (`vqe_jax_grad.py`).
+
+---
 
 ### 4. Parallel Quantum Defect Mapping via JAX Parallel Batching
-Using the native `run_parametric_batch_jit()` engine, we mapped the isotropic resilience of an entangled state against localized dephasing noise. By altering the noise parameter along the matrix diagonal, JAX XLA compiled $12$ concurrent execution tracks in a single hardware cycle. The evaluation maps the systematic loss of $\langle X \rangle$ single-qubit coherence, capturing the directed noise-propagation properties across deep entangling layers. The system isolates an asymmetric boundary resilience, retaining exactly **$42.0735\%$** residual coherence at the edge node (Qubit 11) while completely depolarizing the internal bulk nodes.
 
-<p align="center">
-  <img src="mappa_difetti_silicio.png" alt="True Quantum Defect Mapping Graph" width="85%">
-</p>
+Using the native `run_parametric_batch_jit()` engine, we mapped the isotropic resilience of an entangled state against localized dephasing noise. A 12-qubit entangled chain is prepared by uniform RY($\pi/4$) rotations followed by a full CX entangling ladder. A parametric RZ dephasing gate is injected node-by-node on the diagonal of the batch parameter grid, resulting in 12 concurrent independent execution tracks compiled in a single JAX XLA macro-cycle.
+
+The evaluation maps the systematic loss of $\langle X \rangle$ single-qubit coherence:
+
+$$\langle X_q \rangle = \text{Re}\left[\sum_i \psi_i^* \psi_{i \oplus 2^q}\right]$$
+
+The system isolates an asymmetric boundary resilience, retaining exactly **$42.0735\%$** residual coherence at the edge node (Qubit 11) while completely depolarizing the internal bulk nodes. This asymmetry captures the directed noise-propagation properties across deep entangling layers with open boundary conditions.
+
+[![True Quantum Defect Mapping Graph](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/mappa_difetti_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/mappa_difetti_silicio.png)
+
+---
 
 ### 5. Rigorous 1D Crystalline Lattice Dispersion
-We resolved the exact 1-electron fermionic Bloch state dispersion relation mapped via Jordan-Wigner transformations. By evaluating the pure exchange interactions ($\langle X_i X_{i+1} + Y_i Y_{i+1} \rangle$) and applying strict periodic boundary conditions (PBC), the engine resolves the full, continuous single-band cosine energy spectrum:
-$$E(k) = -2t \cos(k)$$ 
-This eliminates artificial scaling factors and rigid offsets, delivering an honest statevector simulation of tight-binding quantum dynamics under strict 1-fermion subspace conservation.
 
-<p align="center">
-  <img src="bande_silicio_ibrido.png" alt="Rigorous Quantum Tight-Binding Dispersion" width="85%">
-</p>
+We resolved the exact 1-electron fermionic Bloch state dispersion relation mapped via Jordan-Wigner transformations. By evaluating the pure exchange interactions ($\langle X_i X_{i+1} + Y_i Y_{i+1} \rangle$) and applying strict periodic boundary conditions (PBC), the engine resolves the full, continuous single-band cosine energy spectrum:
+
+$$E(k) = -2t \cos(k)$$
+
+This eliminates artificial scaling factors and rigid offsets, delivering an honest statevector simulation of tight-binding quantum dynamics under strict 1-fermion subspace conservation. The Bloch states are analytically constructed as $|\psi(k)\rangle = \frac{1}{\sqrt{N}} \sum_q e^{iqk} |1_q\rangle$ over 8 qubits, with the kinetic energy expectation evaluated via tensor-product bitwise XY-operator matrix elements.
+
+[![Rigorous Quantum Tight-Binding Dispersion](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/bande_silicio_ibrido.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/bande_silicio_ibrido.png)
+
+---
 
 ### 6. Analytical Gradients via Parallel Parameter-Shift Rule
-To evaluate the variational optimization landscape with absolute machine-epsilon stability, we successfully deployed an analytical Parameter-Shift Rule framework mapped across parallel virtual execution tracks:
-$$\frac{\partial E}{\partial \theta} = \frac{1}{2} \left[ E\left(\theta + \frac{\pi}{2}\right) - E\left(\theta - \frac{\pi}{2}\right) \right]$$ 
-By packing shifted parameters concurrently into `run_parametric_batch_jit()`, JAX XLA processed **10,500 continuous configurations** in a single macro-batch execution cycle completed in **58.26 seconds** on CPU. The exact quantum derivatives successfully map continuous trajectories, verifying the total absence of vanishing gradient dead-zones or artificial plateaus under compact excitation-conserving ansatze.
 
-<p align="center">
-  <img src="vqe_jax_gradient.png" alt="Exact Parameter-Shift Rule Gradients" width="85%">
-</p>
+To evaluate the variational optimization landscape with absolute machine-epsilon stability, we successfully deployed an analytical Parameter-Shift Rule framework mapped across parallel virtual execution tracks:
+
+$$\frac{\partial E}{\partial \theta} = \frac{1}{2} \left[ E\left(\theta + \frac{\pi}{2}\right) - E\left(\theta - \frac{\pi}{2}\right) \right]$$
+
+By packing shifted parameters concurrently into `run_parametric_batch_jit()`, JAX XLA processed **10,500 continuous configurations** in a single macro-batch execution cycle completed in **58.26 seconds** on CPU. Each of the 3,500 $\theta$ values generates 3 independent parameter tracks: the current point, the forward shift $(\theta + \pi/2)$, and the backward shift $(\theta - \pi/2)$, all packed as a single `(10500, 2)` JAX float64 array.
+
+The exact quantum derivatives successfully map continuous trajectories, verifying the total absence of vanishing gradient dead-zones or artificial plateaus under compact excitation-conserving ansatze.
+
+[![Exact Parameter-Shift Rule Gradients](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/vqe_jax_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/vqe_jax_gradient.png)
+
+---
 
 ### 7. Strained Silicon Bandstructure Engineering (3,500-Point Sweep)
+
 We modeled a continuous dispersion profile mapping a high-mobility Strained Silicon configuration under a $5\%$ tensile strain ($\varepsilon = 0.05$). By perturbing the atomic equilibrium distances, the physical Hamiltonian undergoes an exponential inter-orbital hopping decay dictated by Harrison's law:
-$$t(\varepsilon) = t_0 \cdot \frac{1}{(1 + \varepsilon)^2}$$ 
-The high-resolution 3,500-point k-space parameter sweep executed via JAX maps the physical contraction of the modal hopping energy from the standard $\pm 4.2200\text{ eV}$ limits down to the accurate engineered boundary of **$\pm 3.8277\text{ eV}$** across the Brillouin zone.
 
-<p align="center">
-  <img src="confronto_nuovo_silicio.png" alt="Strained Silicon Next-Gen Bandstructure" width="85%">
-</p>
+$$t(\varepsilon) = \frac{t_0}{(1 + \varepsilon)^2}$$
 
-### 8. Molecular VQE and Potential Energy Dissociation Curves
+The high-resolution 3,500-point k-space parameter sweep executed via JAX maps the physical contraction of the modal hopping energy from the standard $\pm 4.2200\text{ eV}$ limits down to the accurate engineered boundary of **$\pm 3.8277\text{ eV}$** across the Brillouin zone. The simulation uses 8-qubit fermionic Bloch states with Jordan-Wigner XY exchange operators evaluated over all 8 bonds under periodic boundary conditions.
+
+[![Strained Silicon Next-Gen Bandstructure](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/confronto_nuovo_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/confronto_nuovo_silicio.png)
+
+---
+
+### 8. Quantum Lattice Thermodynamics: Phonon Scattering & Decoherence
+
+A quantum-statistical simulation of electron-phonon scattering decoherence was executed over a 10–400 K temperature sweep at 3,500 discrete points, modeling the thermal degradation of coherent electronic hopping in a silicon lattice.
+
+The Debye-Bose-Einstein phonon occupancy is computed as:
+
+$$\bar{n}(\omega, T) = \frac{1}{\exp\!\left(\frac{\hbar\omega}{k_B T}\right) - 1}$$
+
+with $\hbar\omega = 32\text{ meV}$ (silicon optical phonon branch). The effective hopping integral degrades with phonon bath population according to:
+
+$$t_{\text{eff}}(T) = t_0 \left(1 - 0.15 \cdot \bar{n}(\omega, T)\right)$$
+
+This captures the physical mechanism by which thermally-activated phonon scattering reduces long-range electronic coherence. A fixed Bloch state $|\psi(k = \pi/4)\rangle$ is used as the probe state on 8 qubits; the coherent kinetic energy $E(k, T)$ is evaluated via XY-operator matrix elements at each temperature step, tracking the monotonic energy suppression from cryogenic to room temperature.
+
+[![Quantum Lattice Thermodynamics: Phonon Decoherence](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/validazione_fabbricazione.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/validazione_fabbricazione.png)
+
+---
+
+### 9. Molecular VQE and Potential Energy Dissociation Curves
+
 We mapped the exact Born-Oppenheimer Potential Energy Curve (PEC) for a silicon dimer system via a classical-quantum hybrid variational loop. The effective Hamiltonian tracks electronic hopping integrals $t(R)$ alongside nuclear Coulomb repulsion fields $V_{rep}(R)$ decaying over the interatomic coordinate:
-$$t(R) = t_0 e^{-\beta(R - R_0)}, \quad V_{rep}(R) = V_0 e^{-\gamma(R - R_0)}$$ 
-The 3,500-point variational sweep cleanly resolves the stable binding landscape, isolating the exact molecular equilibrium bond length and asymptotic dissociation limits without numerical instabilities.
 
-<p align="center">
-  <img src="curva_potenziale_silicio.png" alt="Silicon Dimer Potential Energy Curve" width="85%">
-</p>
+$$t(R) = t_0 \, e^{-\beta(R - R_0)}, \qquad V_{rep}(R) = V_0 \, e^{-\gamma(R - R_0)}$$
+
+with $t_0 = 2.11$ eV, $\beta = 1.5$ Å$^{-1}$, $R_0 = 2.35$ Å, $V_0 = 5.4$ eV, $\gamma = 3.0$ Å$^{-1}$. The ansatz is a 6-qubit excitation-preserving Givens circuit initialized from the single-fermion Fock state $|100000\rangle$, with a fixed optimal variational angle $\theta^* = 0.38$ rad resolved from the gradient landscape.
+
+The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves the stable binding landscape, isolating the exact molecular equilibrium bond length and asymptotic dissociation limits without numerical instabilities.
+
+[![Silicon Dimer Potential Energy Curve](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/curva_potenziale_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/curva_potenziale_silicio.png)
+
+---
+
+## ⚙️ Technical Stack
+
+| Component | Version / Detail |
+|---|---|
+| Simulator | Dense Evolution v8.0.7 |
+| Backend | DenseSVSimulator (Statevector) |
+| Precision | `complex128` (64-bit double) |
+| Compilation | JAX XLA JIT static compilation |
+| Parallelism | `run_parametric_batch_jit()` — up to 10,500 tracks/cycle |
+| Gradient engine | Parameter-Shift Rule + finite-difference |
+| Noise model | Stochastic Pauli-Z Kraus dephasing channel |
+| Phonon model | Bose-Einstein / Debye |
+| Bandstructure | Jordan-Wigner XY tight-binding, Harrison's law strain |
+| Python deps | `jax`, `jaxlib`, `numpy`, `pandas`, `matplotlib` |
+
+---
+
+## 🚀 Reproducing the Results
+
+```bash
+# Install Dense Evolution
+pip install dense-evolution
+
+# Run experiments in order:
+python scan_ising.py              # → transizione_fase_ising.csv
+python plot_ising.py              # → curva_transizione_ising.png
+python zne_mitigation.py          # → dati_mitigazione_zne.csv, confronto_transizione_noisy.png
+python vqe_gradient.py            # → vqe_gradient_landscape.csv, vqe_gradient_landscape.png
+python vqe_jax_grad.py            # → vqe_jax_gradient.csv, vqe_jax_gradient.png
+python quantum_defect_scanner.py  # → mappa_difetti_silicio.csv, mappa_difetti_silicio.png
+python next_gen_silicon.py        # → bande_nuovo_silicio.csv, confronto_nuovo_silicio.png
+python test_manufacturing_formula.py  # → validazione_fabbricazione_silicio.csv, validazione_fabbricazione.png
+python vqe_silicon_molecular.py   # → vqe_molecola_silicio.csv, curva_potenziale_silicio.png
+```
+
+> **Hardware note:** All benchmarks were executed on CPU. The JAX XLA engine will automatically utilize GPU acceleration if available via `use_gpu=True` in the simulator constructor.
+
+---
+
+## 📁 Output Datasets
+
+| CSV File | Description | Rows |
+|---|---|---|
+| `transizione_fase_ising.csv` | TFIM order parameter vs transverse field g | 3,500 |
+| `dati_mitigazione_zne.csv` | ZNE ideal / noisy / mitigated energies vs k | 25 |
+| `vqe_gradient_landscape.csv` | VQE energy and finite-diff gradient vs θ | 3,500 |
+| `vqe_jax_gradient.csv` | VQE energy and PSR gradient vs θ (JAX batch) | 3,500 |
+| `mappa_difetti_silicio.csv` | Residual qubit coherence vs defect node position | 12 |
+| `bande_nuovo_silicio.csv` | Strained Si valence/conduction bands vs k | 3,500 |
+| `validazione_fabbricazione_silicio.csv` | Phonon occupancy and hopping energy vs temperature | 3,500 |
+| `vqe_molecola_silicio.csv` | Born-Oppenheimer PEC vs interatomic distance R | 3,500 |
+
+---
+
+## 📜 License
+
+MIT License — © 2026 Salvatore Pennacchio (tatopenn-cell)
+This repository depends on Dense Evolution, licensed under Business Source License 1.1. See https://github.com/tatopenn-cell/Dense-Evolution for license terms.
