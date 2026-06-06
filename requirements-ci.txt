@@ -1,0 +1,4 @@
+dense-evolution
+pennylane
+pytest
+numpy
