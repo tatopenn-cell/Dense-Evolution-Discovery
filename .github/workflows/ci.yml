@@ -33,3 +33,14 @@ jobs:
 
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
         run: pytest tests/ -v --tb=short
+
+      - name: Upload Simulation Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: silicon-vqe-results
+          path: |
+            vqe_molecola_silicio.csv
+            curva_potenziale_silicio.png
+          retention-days: 7
+
