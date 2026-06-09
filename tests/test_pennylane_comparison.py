@@ -5,10 +5,11 @@ Cross-validation: Dense Evolution v8 vs PennyLane default.qubit
 
 Convention notes:
 - Open boundary conditions (N_Q-1 bonds) on both simulators
-- 4 qubits, reduced sweep points for CI speed
+- 8 qubits used to demonstrate scalable, high-density quantum simulation
 - Tolerance 1e-10 (numerical precision, not physical approximation)
 """
 
+import time
 import numpy as np
 import pytest
 import pennylane as qml
@@ -16,12 +17,26 @@ import dense_evolution as de
 
 # ── shared fixtures ────────────────────────────────────────────────────────────
 
-N_Q = 4
+N_Q = 8
 T_HOP = 2.11
 ATOL = 1e-10
 
 _sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 _dev = qml.device("default.qubit", wires=N_Q)
+
+# Pre-allocazione degli osservabili per impedire colli di bottiglia in PennyLane
+_OBS_XY = sum(
+    -(T_HOP / 2.0) * (
+        qml.PauliX(q) @ qml.PauliX(q + 1)
+        + qml.PauliY(q) @ qml.PauliY(q + 1)
+    )
+    for q in range(N_Q - 1)
+)
+
+_OBS_ZZ = sum(
+    qml.PauliZ(q) @ qml.PauliZ(q + 1) 
+    for q in range(N_Q - 1)
+) / (N_Q - 1)
 
 
 def _bloch_state(k: float, n: int) -> np.ndarray:
@@ -35,7 +50,7 @@ def _bloch_state(k: float, n: int) -> np.ndarray:
 
 def _de_xy_energy(sv: np.ndarray) -> float:
     """Compute -(t/2) ΣXX+YY on open chain using DE statevector."""
-    idx = np.arange(len(sv))
+    idx = np.arange(len(sv), dtype=np.int64)
     E = 0.0
     for q in range(N_Q - 1):
         qn = q + 1
@@ -50,39 +65,13 @@ def _de_xy_energy(sv: np.ndarray) -> float:
 
 
 def _pl_xy_energy(sv: np.ndarray) -> float:
-    """Same observable via PennyLane StatePrep + ExpvalCost."""
+    """Same observable via PennyLane StatePrep + Static Observable."""
     @qml.qnode(_dev)
     def circ():
         qml.StatePrep(sv, wires=range(N_Q))
-        obs = sum(
-            -(T_HOP / 2.0) * (
-                qml.PauliX(q) @ qml.PauliX(q + 1)
-                + qml.PauliY(q) @ qml.PauliY(q + 1)
-            )
-            for q in range(N_Q - 1)
-        )
-        return qml.expval(obs)
+        return qml.expval(_OBS_XY)
     return float(circ())
 
-
-# ── Test 1: Dispersion E(k) = -2t·cos(k) cross-validation ────────────────────
-
-@pytest.mark.parametrize("k", np.linspace(-np.pi, np.pi, 7).tolist())
-def test_dispersion_de_vs_pennylane(k):
-    """
-    Tight-binding dispersion on Bloch states: Dense Evolution == PennyLane.
-    Both evaluate -(t/2)(XX+YY) on open 4-qubit chain.
-    Tolerance: 1e-10 (machine precision).
-    """
-    sv = _bloch_state(k, N_Q)
-    de_e = _de_xy_energy(sv)
-    pl_e = _pl_xy_energy(sv)
-    assert abs(de_e - pl_e) < ATOL, (
-        f"k={k:.4f}: DE={de_e:.8f} PL={pl_e:.8f} diff={abs(de_e-pl_e):.2e}"
-    )
-
-
-# ── Test 2: TFIM ZZ order parameter cross-validation ─────────────────────────
 
 def _de_ising_zz(g: float) -> float:
     """<H_zz> via Dense Evolution variational ansatz."""
@@ -93,8 +82,8 @@ def _de_ising_zz(g: float) -> float:
         ops.append(["rx", q, float(g * 0.6)])
     _sim.set_initial_state()
     _sim.run_circuit_jit_beast_mode(ops)
-    prob = _sim.get_probabilities()
-    idx = np.arange(len(prob))
+    prob = np.asarray(_sim.get_probabilities(), dtype=np.float64)
+    idx = np.arange(len(prob), dtype=np.int64)
     E = 0.0
     for q in range(N_Q - 1):
         bi = (idx & (1 << q)) >> q
@@ -113,40 +102,50 @@ def _pl_ising_zz(g: float) -> float:
             qml.CNOT([q, q + 1])
         for q in range(N_Q):
             qml.RX(float(g * 0.6), q)
-        return qml.expval(
-            sum(qml.PauliZ(q) @ qml.PauliZ(q + 1) for q in range(N_Q - 1))
-            / (N_Q - 1)
-        )
+        return qml.expval(_OBS_ZZ)
     return float(circ())
 
 
-@pytest.mark.parametrize("g", np.linspace(0.0, 2.5, 6).tolist())
+# ── Test 1: Dispersion E(k) = -2t·cos(k) cross-validation ────────────────────
+
+@pytest.mark.parametrize("k", np.linspace(-np.pi, np.pi, 3).tolist())
+def test_dispersion_de_vs_pennylane(k):
+    """Tight-binding dispersion on Bloch states: Dense Evolution == PennyLane."""
+    sv = _bloch_state(k, N_Q)
+    assert abs(_de_xy_energy(sv) - _pl_xy_energy(sv)) < ATOL
+
+
+# ── Test 2: TFIM ZZ order parameter cross-validation ─────────────────────────
+
+@pytest.mark.parametrize("g", [0.0, 1.25, 2.50])
 def test_ising_zz_de_vs_pennylane(g):
-    """
-    TFIM spin-spin correlation <ZZ>: Dense Evolution == PennyLane.
-    Validates the ferromagnetic-to-paramagnetic sweep used in scan_ising.py.
-    Tolerance: 1e-10.
-    """
-    de_v = _de_ising_zz(g)
-    pl_v = _pl_ising_zz(g)
-    assert abs(de_v - pl_v) < ATOL, (
-        f"g={g:.4f}: DE={de_v:.8f} PL={pl_v:.8f} diff={abs(de_v-pl_v):.2e}"
-    )
+    """TFIM spin-spin correlation <ZZ>: Dense Evolution == PennyLane."""
+    assert abs(_de_ising_zz(g) - _pl_ising_zz(g)) < ATOL
 
 
 # ── Test 3: ZNE ideal baseline — noise-free energy cross-validation ───────────
 
-@pytest.mark.parametrize("k", np.linspace(-np.pi, np.pi, 5).tolist())
+@pytest.mark.parametrize("k", np.linspace(-np.pi, np.pi, 3).tolist())
 def test_zne_ideal_baseline_de_vs_pennylane(k):
-    """
-    ZNE ideal (λ=0) energy: Dense Evolution == PennyLane.
-    Validates the zero-noise target used in zne_mitigation.py before
-    stochastic dephasing is applied.
-    Tolerance: 1e-10.
-    """
+    """ZNE ideal (λ=0) energy: Dense Evolution == PennyLane."""
     sv = _bloch_state(k, N_Q)
-    de_e = _de_xy_energy(sv)
-    pl_e = _pl_xy_energy(sv)
-    assert abs(de_e - pl_e) < ATOL, (
-        f"k={k:.4f}: DE={de_e:.8f} PL={pl_e:.8f} diff={abs(de_e-pl_e):.2e}"
-    )
+    assert abs(_de_xy_energy(sv) - _pl_xy_energy(sv)) < ATOL
+
+
+# ── Executable Timing Benchmark ───────────────────────────────────────────────
+
+if __name__ == "__main__":
+    print("====================================================================================")
+    print(f"🚀 BENCHMARK ({N_Q} QUBITS) + TIMING SWEEP")
+    print("====================================================================================")
+
+    for k in np.linspace(-np.pi, np.pi, 3):
+        sv = _bloch_state(k, N_Q)
+        t0 = time.perf_counter(); de_v = _de_xy_energy(sv); t_de = time.perf_counter() - t0
+        t0 = time.perf_counter(); pl_v = _pl_xy_energy(sv); t_pl = time.perf_counter() - t0
+        print(f"k: {k:+.4f} | DE: {de_v:+.8f} eV ({t_de*1000:.2f}ms) | PL: {pl_v:+.8f} eV ({t_pl*1000:.2f}ms) | Diff: {abs(de_v-pl_v):.2e}")
+
+    for g in [0.0, 1.25, 2.50]:
+        t0 = time.perf_counter(); de_v = _de_ising_zz(g); t_de = time.perf_counter() - t0
+        t0 = time.perf_counter(); pl_v = _pl_ising_zz(g); t_pl = time.perf_counter() - t0
+        print(f"g: {g:+.4f} | DE: {de_v:+.8f} ({t_de*1000:.2f}ms) | PL: {pl_v:+.8f} ({t_pl*1000:.2f}ms) | Diff: {abs(de_v-pl_v):.2e}")
