@@ -6,3 +6,4 @@ jax
 jaxlib
 pandas
 matplotlib
+pytest-recording
