@@ -2,3 +2,5 @@ dense-evolution
 pennylane
 pytest
 numpy
+jax
+jaxlib
