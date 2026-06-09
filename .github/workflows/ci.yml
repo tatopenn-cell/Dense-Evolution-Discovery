@@ -42,5 +42,5 @@ jobs:
           path: |
             vqe_molecola_silicio.csv
             curva_potenziale_silicio.png
+            vqe_parameter_shift_plot.png
           retention-days: 7
-
