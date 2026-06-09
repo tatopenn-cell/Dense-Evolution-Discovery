@@ -1,4 +1,4 @@
-name: Pipeline CI
+Pipeline CI
 
 on:
   push:
@@ -31,19 +31,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-ci.txt
 
-      - name: Cache Network Mock Cassettes
-        id: cache-vcr
-        uses: actions/cache@v4
-        with:
-          path: tests/cassettes/
-          key: vcr-network-responses-${{ hashFiles('tests/**') }}
-          restore-keys: |
-            vcr-network-responses-
-
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
         run: pytest tests/ -v --tb=short
-        env:
-          PYTEST_RECORDING_MODE: ${{ steps.cache-vcr.outputs.cache-hit == 'true' && 'none' || 'all' }}
 
       - name: Upload Simulation Artifacts
         if: always()
