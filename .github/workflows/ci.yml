@@ -29,9 +29,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements-ci.txt
-         
+        run: pip install -r requirements-ci.txt
 
       - name: Cache Network Mock Cassettes
         id: cache-vcr
@@ -43,12 +41,9 @@ jobs:
             vcr-network-responses-
 
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
-        run: |
-          if [ "${{ steps.cache-vcr.outputs.cache-hit }}" = "true" ]; then
-            pytest tests/ -v --tb=short --vcr-mode=none
-          else
-            pytest tests/ -v --tb=short --vcr-mode=all
-          fi
+        run: pytest tests/ -v --tb=short
+        env:
+          PYTEST_RECORDING_MODE: ${{ steps.cache-vcr.outputs.cache-hit == 'true' && 'none' || 'all' }}
 
       - name: Upload Simulation Artifacts
         if: always()
