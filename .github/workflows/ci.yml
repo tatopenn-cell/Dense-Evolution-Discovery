@@ -29,10 +29,26 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        run: pip install -r requirements-ci.txt
+        run: |
+          pip install -r requirements-ci.txt
+          pip install pytest-recording
+
+      - name: Cache Network Mock Cassettes
+        id: cache-vcr
+        uses: actions/cache@v4
+        with:
+          path: tests/cassettes/
+          key: vcr-network-responses-${{ hashFiles('tests/**') }}
+          restore-keys: |
+            vcr-network-responses-
 
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
-        run: pytest tests/ -v --tb=short
+        run: |
+          if [ "${{ steps.cache-vcr.outputs.cache-hit }}" = "true" ]; then
+            pytest tests/ -v --tb=short --vcr-mode=none
+          else
+            pytest tests/ -v --tb=short --vcr-mode=all
+          fi
 
       - name: Upload Simulation Artifacts
         if: always()
