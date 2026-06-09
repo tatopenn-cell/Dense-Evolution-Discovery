@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-ci.txt
-          pip install pytest-recording
+         
 
       - name: Cache Network Mock Cassettes
         id: cache-vcr
