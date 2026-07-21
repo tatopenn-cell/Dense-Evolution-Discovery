@@ -110,17 +110,19 @@ def test_pec_shape():
 
 # ── Test 2: PEC binding minimum ───────────────────────────────────────────────
 
-@pytest.mark.parametrize("R", np.linspace(2.5, 4.5, 8).tolist())
+@pytest.mark.parametrize("R", np.linspace(3.0, 4.5, 8).tolist())
 def test_pec_minimum_is_negative(R):
     """
-    The PEC minimum region (R ∈ [2.5, 4.5] Å) must contain at least one
-    negative-energy point, confirming a stable bound state exists.
-    Exact minimum at R ≈ 3.32 Å with E ≈ -0.302 eV.
+    The well core (R in [3.0, 4.5] A, empirically confirmed bound at every
+    sampled point -- see test_pec_global_minimum_negative for the wider
+    [2.5, 4.5] existence check) must be negative everywhere, confirming a
+    stable bound state, not merely finite. The docstring here used to
+    promise this but the assertion only checked np.isfinite -- found
+    during the dense-evolution 8.1.21 audit.
+    Exact minimum at R ~ 3.32 A with E ~ -0.302 eV.
     """
     E = _vqe_pec(R)
-    # At least the minimum region point R=3.3 must be negative
-    # All other points checked for continuity (no NaN/Inf)
-    assert np.isfinite(E), f"E(R={R:.3f}) is not finite: {E}"
+    assert E < -0.01, f"E(R={R:.3f}) should be bound (<-0.01 eV), got {E:.6f} eV"
 
 
 def test_pec_global_minimum_negative():

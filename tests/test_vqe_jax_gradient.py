@@ -23,13 +23,41 @@ def _get_e(state_vector: np.ndarray) -> float:
         energy += np.real(np.sum(np.conj(state_vector) * flipped_state_vector * np.where(((indices & (1 << q)) >> q) == ((indices & (1 << qn)) >> qn), -1.0, 1.0)))
     return -(TUNNELING_HOPPING_PARAM / 2.0) * energy
 
+# run_parametric_batch_jit treats EVERY rotation gate as a positional
+# parameter slot -- each of the NUM_QUBITS-1 bonds contributes 2 ry gates
+# (param_vqe, param_vqe_inv), so parameter_batch needs 2*(NUM_QUBITS-1)
+# columns, not 2 fixed. With only 2 columns, only the first bond got the
+# intended (t, -t*0.5); the other 10 bonds ran out of bounds and JAX
+# silently clipped to the last valid column instead of raising.
+N_BONDS = NUM_QUBITS - 1
+N_PARAMS = 2 * N_BONDS
+
+def _build_operations() -> list:
+    operations = [['x', 0]]
+    for q in range(NUM_QUBITS - 1):
+        operations.extend([['cx', q + 1, q], ['ry', q + 1, 'param_vqe'], ['cx', q, q + 1], ['ry', q + 1, 'param_vqe_inv'], ['cx', q + 1, q]])
+    return operations
+
+def _row(t: float):
+    return [t, -t * 0.5] * N_BONDS
+
 def _build_grid(points: np.ndarray) -> np.ndarray:
-    grid = np.zeros((len(points) * 3, 2), dtype=np.float64)
+    grid = np.zeros((len(points) * 3, N_PARAMS), dtype=np.float64)
     for idx, t in enumerate(points):
-        grid[idx * 3]     = [t, -t * 0.5]
-        grid[idx * 3 + 1] = [t + np.pi / 2, -(t + np.pi / 2) * 0.5]
-        grid[idx * 3 + 2] = [t - np.pi / 2, -(t - np.pi / 2) * 0.5]
+        grid[idx * 3]     = _row(t)
+        grid[idx * 3 + 1] = _row(t + np.pi / 2)
+        grid[idx * 3 + 2] = _row(t - np.pi / 2)
     return grid
+
+def _energy_single(theta: float) -> float:
+    """Independent reference: single-circuit run_circuit_jit_beast_mode,
+    not the batch/vmap code path -- every bond gets the same (theta, -theta*0.5)."""
+    ops = [['x', 0]]
+    for q in range(NUM_QUBITS - 1):
+        ops.extend([['cx', q + 1, q], ['ry', q + 1, float(theta)], ['cx', q, q + 1], ['ry', q + 1, float(-theta * 0.5)], ['cx', q + 1, q]])
+    _sim.set_initial_state()
+    _sim.run_circuit_jit_beast_mode(ops)
+    return _get_e(np.asarray(_sim.get_statevector()))
 
 def _run_chunked(operations: list, parameter_grid: np.ndarray, chunk_size: int) -> np.ndarray:
     results = []
@@ -42,15 +70,33 @@ def _run_chunked(operations: list, parameter_grid: np.ndarray, chunk_size: int) 
 def test_vqe_jax_parameter_shift_rule():
     _guard.check("Pytest Pre-flight")
     points = np.linspace(0.1, 2 * np.pi - 0.1, POINTS_FOR_PYTEST)
-    operations = [['x', 0]]
-    for q in range(NUM_QUBITS - 1):
-        operations.extend([['cx', q + 1, q], ['ry', q + 1, 'param_vqe'], ['cx', q, q + 1], ['ry', q + 1, 'param_vqe_inv'], ['cx', q + 1, q]])
+    operations = _build_operations()
     grid = _build_grid(points)
     state_vector_batch = _run_chunked(operations, grid, CHUNK_SIZE)
     assert len(state_vector_batch) == (POINTS_FOR_PYTEST * 3)
     energy_plus = _get_e(state_vector_batch[1])
     energy_minus = _get_e(state_vector_batch[2])
     assert not np.isnan(0.5 * (energy_plus - energy_minus))
+
+def test_vqe_jax_batch_grid_has_one_column_per_rotation_slot():
+    """Regression guard for the audit finding: run_parametric_batch_jit
+    consumes one parameter_batch column per rotation gate IN ORDER, even
+    when base_circuit passes a string placeholder -- there is no name
+    matching. With NUM_QUBITS-1 bonds x 2 ry gates/bond, the grid used to
+    have only 2 fixed columns, so only the first bond got the intended
+    (t, -t*0.5); the other 10 silently ran on a clipped out-of-bounds
+    read instead of raising. Cross-checked against an independent
+    single-circuit run_circuit_jit_beast_mode reference."""
+    theta0 = 1.7
+    grid = _build_grid(np.array([theta0]))
+    assert grid.shape[1] == N_PARAMS == 2 * (NUM_QUBITS - 1)
+
+    batch = _sim.run_parametric_batch_jit(_build_operations(), jnp.array(grid, dtype=jnp.float64))
+    e_batch = _get_e(np.asarray(batch[0]))
+    e_ref = _energy_single(theta0)
+    assert abs(e_batch - e_ref) < 1e-9, (
+        f"batch energy {e_batch:.10f} != independent single-circuit reference {e_ref:.10f}"
+    )
 
 def run_main_benchmark():
     print("==================================================================================")
@@ -60,9 +106,7 @@ def run_main_benchmark():
     ram_start = _get_ram()
     t0 = time.perf_counter()
     points = np.linspace(0.1, 2 * np.pi - 0.1, POINTS_FOR_MAIN_BENCHMARK)
-    operations = [['x', 0]]
-    for q in range(NUM_QUBITS - 1):
-        operations.extend([['cx', q + 1, q], ['ry', q + 1, 'param_vqe'], ['cx', q, q + 1], ['ry', q + 1, 'param_vqe_inv'], ['cx', q + 1, q]])
+    operations = _build_operations()
     grid = _build_grid(points)
     ram_grid = _get_ram()
     state_vector_batch = _run_chunked(operations, grid, CHUNK_SIZE)

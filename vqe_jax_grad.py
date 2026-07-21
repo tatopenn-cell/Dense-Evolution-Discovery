@@ -48,15 +48,29 @@ print("============================================================")
 print("🚀 MASSIVE JAX BATCH: COMPILING 10,500 PARALLEL INSTANCES...")
 print("============================================================")
 
-griglia_globale = np.zeros((N_STEPS * 3, 2), dtype=np.float64)
+# run_parametric_batch_jit tratta OGNI gate di rotazione come uno slot
+# parametrico preso in ordine posizionale da parameter_batch -- ogni legame
+# contribuisce 2 gate ry (param_vqe, param_vqe_inv), quindi servono
+# 2*(N_Q-1) colonne, non 2 fisse (con 2 sole colonne solo il primo legame
+# riceveva i valori giusti; gli altri finivano fuori indice e JAX clippava
+# silenziosamente all'ultima colonna valida).
+N_BONDS = N_Q - 1
+N_PARAMS = 2 * N_BONDS
+
+
+def _riga(theta: float):
+    return [theta, -theta] * N_BONDS
+
+
+griglia_globale = np.zeros((N_STEPS * 3, N_PARAMS), dtype=np.float64)
 
 for idx, theta in enumerate(punti_theta):
     theta_plus = float(theta + np.pi / 2)
     theta_minus = float(theta - np.pi / 2)
-    
-    griglia_globale[idx * 3]     = [theta, -theta]
-    griglia_globale[idx * 3 + 1] = [theta_plus, -theta_plus]
-    griglia_globale[idx * 3 + 2] = [theta_minus, -theta_minus]
+
+    griglia_globale[idx * 3]     = _riga(theta)
+    griglia_globale[idx * 3 + 1] = _riga(theta_plus)
+    griglia_globale[idx * 3 + 2] = _riga(theta_minus)
 
 jax_batch = jnp.array(griglia_globale, dtype=jnp.float64)
 
