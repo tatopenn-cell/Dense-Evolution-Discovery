@@ -26,9 +26,16 @@ for q in range(N_Q):
 for q in range(N_Q - 1):
     base_ops.append(['cx', q, q + 1])  
 
-griglia_parametri = np.zeros((N_Q, N_Q), dtype=np.float64)
+# run_parametric_batch_jit tratta OGNI gate di rotazione (rx/ry/rz/p) come
+# uno slot parametrico preso in ordine posizionale da parameter_batch, anche
+# quando l'argomento passato a base_ops e' un float letterale — il valore
+# letterale viene ignorato. Servono quindi 2*N_Q colonne: le prime N_Q per
+# gli RY(pi/4) (costanti, ripetute identiche su ogni riga), le successive
+# N_Q per gli RZ("batch_param_q") (il pattern diagonale voluto).
+griglia_parametri = np.zeros((N_Q, 2 * N_Q), dtype=np.float64)
+griglia_parametri[:, :N_Q] = np.pi / 4
 for q in range(N_Q):
-    griglia_parametri[q, q] = 0.5  
+    griglia_parametri[q, N_Q + q] = 0.5
 
 jax_batch = jnp.array(griglia_parametri, dtype=jnp.float64)
 
