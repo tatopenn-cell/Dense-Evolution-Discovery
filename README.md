@@ -11,8 +11,8 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 - **`plot_ising.py`**: Computes the first-order numerical derivative (quantum susceptibility) from the CSV dataset to locate the exact critical phase boundary. Produces `curva_transizione_ising.png`.
 - **`zne_mitigation.py`**: Mathematical implementation of a stochastic Richardson Zero-Noise Extrapolation (ZNE) protocol over discrete Pauli-Z phase dephasing channels with 2,000 hardware shot sampling. Produces `dati_mitigazione_zne.csv` and `transizione_ising_mitigata.png`.
 - **`vqe_gradient.py`**: Exact numerical finite-difference gradient tracker (`h = 1e-5`) mapping the variational energy landscape and locating stationary points. Produces `vqe_gradient_landscape.csv` and `vqe_gradient_landscape.png`.
-- **`vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact non-fictitious Parameter-Shift Rule over a massively parallel 10,500-track JAX batch array. Produces `vqe_jax_gradient.csv` and `vqe_jax_gradient.png`.
-- **`quantum_defect_scanner.py`**: Isotropic resilience topology mapper evaluating node-by-node quantum coherence under localized parameter-driven Kraus noise via `run_parametric_batch_jit()`. Produces `mappa_difetti_silicio.csv` and `mappa_difetti_silicio.png`.
+- **`vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact Parameter-Shift Rule gate-by-gate via the chain rule over a massively parallel 73,500-track JAX batch array. Produces `vqe_jax_gradient.csv` and `vqe_jax_gradient.png`.
+- **`quantum_defect_scanner.py`**: Isotropic resilience topology mapper evaluating node-by-node quantum coherence under a localized parametric RZ dephasing rotation via `run_parametric_batch_jit()`. Produces `mappa_difetti_silicio.csv` and `mappa_difetti_silicio.png`.
 - **`next_gen_silicon.py`**: Solid-state bandstructure designer tracking continuous dispersion shifts induced by 5% mechanical lattice tensile strain via Harrison's hopping law. Produces `bande_nuovo_silicio.csv` and `confronto_nuovo_silicio.png`.
 - **`manufacturing_thermodynamics.py`**: Quantum lattice thermodynamics simulator modeling electron-phonon scattering and decoherence via Bose-Einstein statistical distributions over a 10–400 K temperature sweep. Produces `validazione_fabbricazione_silicio.csv` and `validazione_fabbricazione.png`.
 - **`vqe_silicon_molecular.py`**: Variational Quantum Eigensolver tracking self-consistent Potential Energy Curves (PEC) and Born-Oppenheimer molecular dissociation limits for a silicon dimer. Produces `vqe_molecola_silicio.csv` and `curva_potenziale_silicio.png`.
@@ -80,7 +80,9 @@ The evaluation maps the systematic loss of $\langle X \rangle$ single-qubit cohe
 
 $$\langle X_q \rangle = \text{Re}\left[\sum_i \psi_i^* \psi_{i \oplus 2^q}\right]$$
 
-The system isolates an asymmetric boundary resilience, retaining exactly **$42.0735\%$** residual coherence at the edge node (Qubit 11) while completely depolarizing the internal bulk nodes. This asymmetry captures the directed noise-propagation properties across deep entangling layers with open boundary conditions.
+> **Correction (audit finding, dense-evolution 8.1.21):** `run_parametric_batch_jit()` assigns one `parameter_batch` column per rotation gate *in the order the gates appear*, even when a gate is given a literal float instead of a string placeholder — the literal is silently discarded. The batch grid used to have only 12 columns while the circuit has 24 rotation slots (12 fixed RY(π/4) + 12 varying RZ), so the RY gates absorbed the intended RZ values and the true RZ columns ran out of bounds (silently clipped by JAX instead of raising). Fixed by supplying all 24 slots explicitly; the numbers below are from the corrected run.
+
+The system retains **$70.71\%$** residual coherence at the chain's first node (Qubit 0), dips to **$43.88\%$** at Qubit 6, and sits at exactly **$50.00\%$** everywhere else. Unlike the pre-fix output, this is not a smooth symmetric boundary-decay profile — it reflects the specific interplay between the fixed RY(π/4) layer and the CX entangling ladder at the points where each node's local RZ dephasing is actually applied.
 
 [![True Quantum Defect Mapping Graph](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/raw/main/mappa_difetti_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/blob/main/mappa_difetti_silicio.png)
 
@@ -100,11 +102,15 @@ This eliminates artificial scaling factors and rigid offsets, delivering an hone
 
 ### 6. Analytical Gradients via Parallel Parameter-Shift Rule
 
-To evaluate the variational optimization landscape with absolute machine-epsilon stability, we successfully deployed an analytical Parameter-Shift Rule framework mapped across parallel virtual execution tracks:
+> **Correction (audit finding, dense-evolution 8.1.21):** the original implementation shifted the *shared* variational parameter $t$ by $\pm\pi/2$ and read the resulting energies straight off the batch. The textbook Parameter-Shift Rule is only exact when a **single gate's own parameter** is shifted while every other gate is held fixed — here each bond applies *two* `ry` gates both driven by $t$ (`param_vqe = t`, `param_vqe_inv = -t`), so the shared-shift reading conflated their contributions. Verified against an independent finite-difference reference: the old heuristic could disagree with the true $dE/dt$ by 100%, including the wrong sign.
 
-$$\frac{\partial E}{\partial \theta} = \frac{1}{2} \left[ E\left(\theta + \frac{\pi}{2}\right) - E\left(\theta - \frac{\pi}{2}\right) \right]$$
+The corrected, mathematically exact gradient follows from the chain rule over every gate parameter individually:
 
-By packing shifted parameters concurrently into `run_parametric_batch_jit()`, JAX XLA processed **10,500 continuous configurations** in a single macro-batch execution cycle completed in **58.26 seconds** on CPU. Each of the 3,500 $\theta$ values generates 3 independent parameter tracks: the current point, the forward shift $(\theta + \pi/2)$, and the backward shift $(\theta - \pi/2)$, all packed as a single `(10500, 2)` JAX float64 array.
+$$\frac{dE}{dt} = \sum_{q} \left[ \frac{\partial E}{\partial \theta_{A,q}} \cdot \frac{d\theta_{A,q}}{dt} + \frac{\partial E}{\partial \theta_{B,q}} \cdot \frac{d\theta_{B,q}}{dt} \right], \qquad \frac{\partial E}{\partial \theta} = \frac{1}{2}\left[E(\theta+\tfrac{\pi}{2}) - E(\theta-\tfrac{\pi}{2})\right]$$
+
+where each $\partial E/\partial \theta$ is a genuine single-gate Parameter-Shift Rule evaluation (only that one gate shifted, all 21 others held at their base value), and $d\theta_A/dt = 1$, $d\theta_B/dt = -1$ are the known chain-rule coefficients. Verified against finite differences: agreement to $\sim 10^{-9}$, limited by finite-difference truncation rather than by the PSR itself.
+
+By packing every shifted configuration concurrently into `run_parametric_batch_jit()`, JAX XLA processed **73,500 continuous configurations** (3,500 $\theta$ values $\times$ 21 tracks each: 1 center point + 2 shifts $\times$ 10 gate parameters) in a single chunked macro-batch execution completed in **570 seconds** on CPU — substantially more expensive than the old (incorrect) shortcut, since an exact gradient over a shared parameter genuinely requires one PSR evaluation per gate it drives, not one shift of the shared variable.
 
 The exact quantum derivatives successfully map continuous trajectories, verifying the total absence of vanishing gradient dead-zones or artificial plateaus under compact excitation-conserving ansatze.
 
@@ -164,8 +170,8 @@ The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves th
 | Backend | DenseSVSimulator (Statevector) |
 | Precision | `complex128` (64-bit double) |
 | Compilation | JAX XLA JIT static compilation |
-| Parallelism | `run_parametric_batch_jit()` — up to 10,500 tracks/cycle |
-| Gradient engine | Parameter-Shift Rule + finite-difference |
+| Parallelism | `run_parametric_batch_jit()` — up to 73,500 tracks/cycle |
+| Gradient engine | Exact chain-rule Parameter-Shift Rule + finite-difference |
 | Noise model | Stochastic Pauli-Z Kraus dephasing channel |
 | Phonon model | Bose-Einstein / Debye |
 | Bandstructure | Jordan-Wigner XY tight-binding, Harrison's law strain |
@@ -190,8 +196,8 @@ To ensure absolute core-level stability without relying on third-party framework
 The suite enforces verification across five distinct physical and algorithmic benchmarks:
 
 1. **Potential Energy Curve (PEC) Topography (`test_pec_shape`)**: Validates the qualitative Born-Oppenheimer energy landscape of molecular Silicon systems. It guarantees that the simulation resolves the correct three-region behavior: a steep repulsive wall at short range ($R = 1.4\text{ Å}, E > 0$), a stable binding well at intermediate distance ($R = 3.3\text{ Å}, E < 0$), and asymptotic stabilization near the dissociation limit ($R = 7.0\text{ Å}, |E| < 0.01\text{ eV}$).
-2. **Bound-State Existence (`test_pec_minimum_is_negative`)**: Scans the molecular valley ($R \in [2.5, 4.5]\text{ Å}$) to confirm numerical continuity, proving that a stable ground state exists without producing unphysical anomalies or `NaN`/`Inf` singularities.
-3. **Exact Parameter-Shift Rule (`test_psr_exactness_ry_z`)**: Mathematically benchmarks the VQE gradient engine (`vqe_jax_grad.py`). By tracking an $RY(\theta)|0\rangle$ state followed by a $\langle Z \rangle$ measurement, it verifies that the computed gradient perfectly mirrors the exact analytical identity $\frac{dE}{d\theta} = -\sin(\theta)$.
+2. **Bound-State Existence (`test_pec_minimum_is_negative`)**: Scans the well core ($R \in [3.0, 4.5]\text{ Å}$, empirically confirmed bound at every sampled point) and asserts $E < -0.01\text{ eV}$ at each one, proving a genuine stable ground state rather than merely finite output — tightened during the dense-evolution 8.1.21 audit, when this test was found asserting only `np.isfinite` despite its docstring's stronger claim.
+3. **Exact Parameter-Shift Rule (`test_psr_exactness_ry_z`)**: Mathematically benchmarks the single-gate PSR primitive underlying the VQE gradient engine (`vqe_jax_grad.py`). By tracking an $RY(\theta)|0\rangle$ state followed by a $\langle Z \rangle$ measurement, it verifies that the computed gradient perfectly mirrors the exact analytical identity $\frac{dE}{d\theta} = -\sin(\theta)$. `tests/test_vqe_jax_gradient.py` extends this same exactness check to the full multi-gate, chain-rule PSR gradient used in production.
 4. **Harrison's Hopping Law (`test_harrison_strain_ratio`)**: Verifies the bandstructure deformation engine under mechanical stress (`next_gen_silicon.py`). It enforces that the exact ratio of strained to unstrained tight-binding energies follows Harrison's solid-state scaling law, $t(\varepsilon) = \frac{t_0}{(1+\varepsilon)^2}$, at every non-trivial $k$-point across the Brillouin zone.
 5. **Time-Reversal Dispersion Symmetry (`test_dispersion_time_reversal_symmetry`)**: Checks the underlying algebraic symmetry of the tight-binding Bloch states, ensuring that the dispersion relation satisfies the strict time-reversal constraint $E(k) \equiv E(-k)$ to isolate and prevent unphysical symmetry-breaking artifacts.
 
