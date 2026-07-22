@@ -1,7 +1,7 @@
 # 🔬 Quantum Phase Transitions, Variational Gradients, and Error Mitigation 
 [![Cross-Validation CI](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml/badge.svg)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml)
 
-This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.0.7)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
+This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
 ---
 
@@ -177,7 +177,7 @@ The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves th
 
 | Component | Version / Detail |
 |---|---|
-| Simulator | Dense Evolution v8.0.7 |
+| Simulator | Dense Evolution v8.1.21 |
 | Backend | DenseSVSimulator (Statevector) |
 | Precision | `complex128` (64-bit double) |
 | Compilation | JAX XLA JIT static compilation |
@@ -194,7 +194,7 @@ The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves th
 To guarantee the mathematical stability and absolute physical accuracy of the simulated quantum dynamics, the repository includes a strict continuous integration (CI) pipeline executed via GitHub Actions (`ci.yml`). 
 
 The test suite (`test_pennylane_comparison.py`) establishes an automated cross-validation layer by mirroring the statevector computations on two completely independent software architectures:
-- **Target Simulator:** Dense Evolution (v8.0.7) accelerated via JAX XLA.
+- **Target Simulator:** Dense Evolution (v8.1.21) accelerated via JAX XLA.
 - **Baseline Reference:** PennyLane.
 
 The pipeline runs on every code splotch or pull request, evaluating the numerical consistency of the 1D Transverse Field Ising Model (TFIM) expectation values, variational gradients, and Bloch state rotations. By testing the outputs across both engines, the CI automatically flags floating-point drift or algebraic regressions exceeding machine-epsilon tolerances.
