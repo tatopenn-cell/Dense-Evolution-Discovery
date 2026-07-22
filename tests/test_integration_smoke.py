@@ -16,7 +16,7 @@ functions directly, cross-checked against an independent reference
 (PennyLane, or a closed-form value) -- not a re-implementation of the
 same formula.
 
-4 tests, target < 30s total.
+22 tests, target < 30s total.
 """
 
 import importlib.util
@@ -87,6 +87,23 @@ def test_vqe_gradient_calcola_energia_vqe_matches_pennylane(theta):
     assert abs(e_de - e_pl) < 1e-9, (
         f"theta={theta}: dense-evolution={e_de:.10f}, pennylane={e_pl:.10f}, "
         f"diff={abs(e_de - e_pl):.2e}"
+    )
+
+
+@pytest.mark.parametrize("theta", [0.0, 0.4471315065697962, 1.3416407865, 2.0,
+                                    3.14069479915893, 4.7, 2 * np.pi - 0.01])
+def test_vqe_gradient_closed_form_matches_real_circuit_exactly(theta):
+    """energia_forma_chiusa(theta) -- no quantum circuit simulation, O(N_Q)
+    to evaluate -- must reproduce the REAL calcola_energia_vqe(theta) to
+    machine precision. This isn't PennyLane cross-validation (a different
+    library computing the same thing); it's a genuine analytic identity:
+    the periodic kinetic sum, expanded via the exact amplitude cascade of
+    the shared-theta Givens ansatz, has a closed form."""
+    e_circuit = vqe_gradient.calcola_energia_vqe(theta)
+    e_closed_form = vqe_gradient.energia_forma_chiusa(theta)
+    assert e_circuit == pytest.approx(e_closed_form, abs=1e-9), (
+        f"theta={theta}: circuit={e_circuit:.12f}, closed_form={e_closed_form:.12f}, "
+        f"diff={abs(e_circuit - e_closed_form):.2e}"
     )
 
 

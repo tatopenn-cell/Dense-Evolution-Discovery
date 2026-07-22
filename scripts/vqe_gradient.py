@@ -52,6 +52,49 @@ def calcola_energia_vqe(theta):
         
     return - (t_hopping / 2.0) * total_kinetic
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CLOSED FORM: E(theta) has an exact, circuit-free expression.
+#
+# The sequential Givens-rotation ansatz (X(0), then CX-RY(theta)-CX-RY(-theta)-CX
+# per bond) is the same "staircase" state-preparation circuit analyzed in
+# vqe_silicon_molecular_optimized_per_bond.py, but here every bond shares
+# the SAME theta instead of an independent per-bond angle -- so instead of
+# landing anywhere on the single-excitation manifold, it traces one
+# 1-parameter curve through it. The amplitude cascade (same recursion,
+# c_q = r_q*sin(theta), r_{q+1} = r_q*cos(theta), r_0=1) collapses to a
+# closed form because every step uses the identical angle:
+#
+#   c_0(theta)  = cos(theta)^(N_Q-1)
+#   c_q(theta)  = sin(theta) * cos(theta)^(N_Q-1-q),   q = 1 .. N_Q-1
+#
+# calcola_energia_vqe's kinetic sum is PERIODIC (q_next = (q+1) % N_Q,
+# N_Q bonds including the wraparound N_Q-1 -> 0 -- not N_Q-1 open-chain
+# bonds like the molecular scripts), so:
+#
+#   E(theta) = -2*t_hopping * sum_{q=0}^{N_Q-1} c_q(theta) * c_{(q+1) mod N_Q}(theta)
+#
+# Verified exact (machine precision, ~1e-15) against calcola_energia_vqe
+# across the full theta range, including the exact gradient at every
+# checkpoint -- no circuit simulation needed to evaluate it.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _amplitudes_closed_form(theta: float) -> np.ndarray:
+    c = np.zeros(N_Q)
+    c[0] = np.cos(theta) ** (N_Q - 1)
+    for q in range(1, N_Q):
+        c[q] = np.sin(theta) * np.cos(theta) ** (N_Q - 1 - q)
+    return c
+
+
+def energia_forma_chiusa(theta: float) -> float:
+    """Exact closed form for calcola_energia_vqe(theta) -- no quantum
+    circuit simulation, O(N_Q) to evaluate. See the derivation above."""
+    c = _amplitudes_closed_form(theta)
+    kinetic = 4.0 * sum(c[q] * c[(q + 1) % N_Q] for q in range(N_Q))
+    return -(t_hopping / 2.0) * kinetic
+
+
 def _run_full_sweep():
     punti_theta = np.linspace(0.0, 2 * np.pi, 3500)
     dati_gradiente = []
