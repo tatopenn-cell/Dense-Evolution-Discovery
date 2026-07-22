@@ -15,7 +15,7 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def _import_script(name: str):
-    path = _REPO_ROOT / f"{name}.py"
+    path = _REPO_ROOT / "scripts" / f"{name}.py"
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module

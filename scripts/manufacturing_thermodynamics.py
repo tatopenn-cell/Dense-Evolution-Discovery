@@ -1,10 +1,16 @@
-﻿import time
+﻿import pathlib
+import time
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 jax.config.update("jax_enable_x64", True)
 N_Q = 8
@@ -68,7 +74,7 @@ for idx, Temp in enumerate(T_SWEEP):
     })
 
 df = pd.DataFrame(risultati_termici)
-df.to_csv("validazione_fabbricazione_silicio.csv", index=False)
+df.to_csv(_DATA_DIR / "validazione_fabbricazione_silicio.csv", index=False)
 
 plt.style.use('dark_background')
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -87,7 +93,7 @@ ax2.tick_params(axis='y', labelcolor=color_phonon)
 
 plt.title("Quantum Lattice Thermodynamics: Phonon Scattering Decoherence (3500 Steps)", fontsize=11, fontweight='bold', pad=15)
 fig.tight_layout()
-plt.savefig("validazione_fabbricazione.png", dpi=300)
+plt.savefig(_IMAGES_DIR / "validazione_fabbricazione.png", dpi=300)
 
 print("============================================================")
 print("✅ FISICA TERMODINAMICA RETICOLARE COMPLETATA CON SUCCESSO!")

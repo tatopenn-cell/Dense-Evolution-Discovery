@@ -1,5 +1,8 @@
-import time, psutil, pytest, numpy as np, jax, jax.numpy as jnp, dense_evolution as de
+import pathlib, time, psutil, pytest, numpy as np, jax, jax.numpy as jnp, dense_evolution as de
 import matplotlib.pyplot as plt
+
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 NUM_QUBITS, TUNNELING_HOPPING_PARAM, CHUNK_SIZE, MEMORY_THRESHOLD_PERCENT, POINTS_FOR_MAIN_BENCHMARK = 12, 2.11, 4000, 0.15, 300
 jax.config.update("jax_enable_x64", True)
@@ -196,7 +199,7 @@ def run_main_benchmark():
     ax2.grid(True, linestyle=':', alpha=0.3, color='#444444')
     ax2.legend(loc='upper right', framealpha=0.1)
     plt.tight_layout()
-    plt.savefig("vqe_parameter_shift_plot.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "vqe_parameter_shift_plot.png", dpi=300)
     plt.close()
 
 if __name__ == "__main__":

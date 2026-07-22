@@ -14,3 +14,9 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Generated results -- not tracked so a fresh clone/run is unambiguous
+# about what was just produced. Pre-made results for browsing are attached
+# to GitHub Releases instead: https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases
+/data/
+/images/

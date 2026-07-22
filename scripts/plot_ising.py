@@ -1,8 +1,13 @@
+import pathlib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("transizione_fase_ising.csv")
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_IMAGES_DIR.mkdir(exist_ok=True)
+
+df = pd.read_csv(_DATA_DIR / "transizione_fase_ising.csv")
 
 g = df["Campo_g"].values
 E_zz = df["Expectation_H_zz"].values
@@ -30,7 +35,7 @@ ax2.grid(True, linestyle='--', alpha=0.2, color='#444444')
 ax2.legend(loc="upper right")
 
 plt.tight_layout()
-plt.savefig("transizione_fase_ising.png", dpi=300)
+plt.savefig(_IMAGES_DIR / "transizione_fase_ising.png", dpi=300)
 
 print("============================================================")
 print(f"📊 Grafico esportato! Punto critico rilevato a g = {g_critico:.3f}")

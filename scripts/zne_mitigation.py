@@ -1,3 +1,4 @@
+import pathlib
 import time
 import jax
 import jax.numpy as jnp
@@ -6,12 +7,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
 
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
+
 jax.config.update("jax_enable_x64", True)
 
 N_Q = 6
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 t_hopping = 2.11
-NUM_SHOTS = 2000 
+NUM_SHOTS = 2000
 
 def generate_bloch_state(k_val):
     dim = 1 << N_Q
@@ -96,7 +102,7 @@ def _run_full_sweep():
         })
 
     df = pd.DataFrame(zne_results)
-    df.to_csv("dati_mitigazione_zne.csv", index=False)
+    df.to_csv(_DATA_DIR / "dati_mitigazione_zne.csv", index=False)
 
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -112,7 +118,7 @@ def _run_full_sweep():
     ax.legend(loc="upper right")
 
     plt.tight_layout()
-    plt.savefig("transizione_ising_mitigata.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "transizione_ising_mitigata.png", dpi=300)
 
 
 if __name__ == "__main__":

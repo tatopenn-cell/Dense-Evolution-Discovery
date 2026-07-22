@@ -1,10 +1,16 @@
-﻿import time
+﻿import pathlib
+import time
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -61,7 +67,7 @@ def _run_full_sweep():
         })
 
     df = pd.DataFrame(risultati_pec)
-    df.to_csv("vqe_molecola_silicio.csv", index=False)
+    df.to_csv(_DATA_DIR / "vqe_molecola_silicio.csv", index=False)
 
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -72,7 +78,7 @@ def _run_full_sweep():
     ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
     ax.legend(loc="upper right")
     plt.tight_layout()
-    plt.savefig("curva_potenziale_silicio.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "curva_potenziale_silicio.png", dpi=300)
 
 
 if __name__ == "__main__":

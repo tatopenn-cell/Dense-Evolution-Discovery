@@ -34,7 +34,7 @@ def _import_script(name: str):
     """Import a top-level repo script as a module without running it as
     __main__ -- their sweep/CSV/plot pipelines are guarded behind
     `if __name__ == "__main__":` precisely so this is side-effect-free."""
-    path = _REPO_ROOT / f"{name}.py"
+    path = _REPO_ROOT / "scripts" / f"{name}.py"
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module

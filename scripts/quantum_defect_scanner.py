@@ -1,3 +1,4 @@
+import pathlib
 import time
 import jax
 import jax.numpy as jnp
@@ -6,9 +7,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
 
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
+
 jax.config.update("jax_enable_x64", True)
 
-N_Q = 12  
+N_Q = 12
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
 print("============================================================")
@@ -66,7 +72,7 @@ for local_qubit in range(N_Q):
     })
 
 df = pd.DataFrame(risultati_ispezione)
-df.to_csv("mappa_difetti_silicio.csv", index=False)
+df.to_csv(_DATA_DIR / "mappa_difetti_silicio.csv", index=False)
 
 plt.style.use('dark_background')
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -82,7 +88,7 @@ ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
 ax.legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig("mappa_difetti_silicio.png", dpi=300)
+plt.savefig(_IMAGES_DIR / "mappa_difetti_silicio.png", dpi=300)
 
 print("\n============================================================")
 print("✅ STRUMENTO DI ISPEZIONE QUANTISTICA CORRETTO E FUNZIONANTE!")

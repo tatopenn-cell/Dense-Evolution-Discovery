@@ -1,3 +1,4 @@
+import pathlib
 import time
 import jax
 import jax.numpy as jnp
@@ -5,6 +6,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -74,7 +80,7 @@ def _run_full_sweep():
         })
 
     df = pd.DataFrame(dati_gradiente)
-    df.to_csv("vqe_gradient_landscape.csv", index=False)
+    df.to_csv(_DATA_DIR / "vqe_gradient_landscape.csv", index=False)
 
     plt.style.use('dark_background')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
@@ -93,7 +99,7 @@ def _run_full_sweep():
     ax2.legend(loc="upper right")
 
     plt.tight_layout()
-    plt.savefig("vqe_gradient_landscape.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "vqe_gradient_landscape.png", dpi=300)
 
     tempo_totale = time.perf_counter() - t_global_start
     print("============================================================")

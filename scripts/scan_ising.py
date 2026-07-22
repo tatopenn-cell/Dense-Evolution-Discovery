@@ -1,9 +1,13 @@
+import pathlib
 import time
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import dense_evolution as de
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_DATA_DIR.mkdir(exist_ok=True)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -57,7 +61,7 @@ def _run_full_sweep():
         })
 
     df = pd.DataFrame(risultati)
-    df.to_csv("transizione_fase_ising.csv", index=False)
+    df.to_csv(_DATA_DIR / "transizione_fase_ising.csv", index=False)
 
     tempo_totale = time.perf_counter() - t_global_start
     print("============================================================")

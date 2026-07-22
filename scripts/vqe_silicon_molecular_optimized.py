@@ -1,3 +1,4 @@
+import pathlib
 import time
 import jax
 import jax.numpy as jnp
@@ -5,6 +6,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -159,10 +165,10 @@ def _run_full_sweep():
         "Energia_Ottimizzata_eV": E_star,
         "Gradiente_Finale": grad_final,
     })
-    df.to_csv("vqe_molecola_silicio_ottimizzata.csv", index=False)
+    df.to_csv(_DATA_DIR / "vqe_molecola_silicio_ottimizzata.csv", index=False)
 
     try:
-        df_fixed = pd.read_csv("vqe_molecola_silicio.csv")
+        df_fixed = pd.read_csv(_DATA_DIR / "vqe_molecola_silicio.csv")
         has_fixed = True
     except FileNotFoundError:
         has_fixed = False
@@ -193,7 +199,7 @@ def _run_full_sweep():
     ax2.legend(loc="upper right")
 
     plt.tight_layout()
-    plt.savefig("curva_potenziale_silicio_ottimizzata.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "curva_potenziale_silicio_ottimizzata.png", dpi=300)
 
     print("============================================================")
     print(f"✅ OTTIMIZZAZIONE COMPLETATA IN {tempo_totale:.2f} s")

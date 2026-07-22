@@ -1,6 +1,11 @@
-import time, jax, numpy as np, pandas as pd, matplotlib.pyplot as plt, dense_evolution as de
+import pathlib, time, jax, numpy as np, pandas as pd, matplotlib.pyplot as plt, dense_evolution as de
 import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)
+
+_DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
+_IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_DATA_DIR.mkdir(exist_ok=True)
+_IMAGES_DIR.mkdir(exist_ok=True)
 
 def test_vqe_silicon_complete_simulation():
     N_Q, THETA = 6, 0.38
@@ -26,7 +31,7 @@ def test_vqe_silicon_complete_simulation():
     t0 = time.perf_counter()
     pec = [{"Distanza_R": r, "Energia_Totale_eV": _vqe(r)} for r in R_SPACE]
     df = pd.DataFrame(pec)
-    df.to_csv("vqe_molecola_silicio.csv", index=False)
+    df.to_csv(_DATA_DIR / "vqe_molecola_silicio.csv", index=False)
     
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
@@ -36,7 +41,7 @@ def test_vqe_silicon_complete_simulation():
     ax.scatter(rm, em, color='#00FFFF', s=50, zorder=5)
     ax.annotate(f"Min: {em:.3f} eV @ {rm:.2f} A", xy=(rm, em), xytext=(rm + 0.3, em + 0.5), arrowprops=dict(arrowstyle="->", color='#00FFFF', lw=1), color='#00FFFF', fontsize=9)
     plt.tight_layout()
-    plt.savefig("curva_potenziale_silicio.png", dpi=300)
+    plt.savefig(_IMAGES_DIR / "curva_potenziale_silicio.png", dpi=300)
     plt.close()
     
     assert len(df) == 3500 and not df["Energia_Totale_eV"].isnull().any() and em < 0
