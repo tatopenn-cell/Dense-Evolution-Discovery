@@ -8,12 +8,7 @@ import dense_evolution as de
 
 jax.config.update("jax_enable_x64", True)
 
-print("============================================================")
-print("🔬 REAL PHYSICAL ZNE ENGINE: STOCHASTIC KRAUS SAMPLING")
-print("============================================================")
-print("🔍 Running true non-deterministic Richardson Extrapolation...\n")
-
-N_Q = 6 
+N_Q = 6
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 t_hopping = 2.11
 NUM_SHOTS = 2000 
@@ -76,44 +71,53 @@ def calcola_aspettazione_hamiltoniana(statevector):
         
     return - (t_hopping / 2.0) * total_kinetic
 
-punti_k = np.linspace(-np.pi, np.pi, 25)
-zne_results = []
+def _run_full_sweep():
+    punti_k = np.linspace(-np.pi, np.pi, 25)
+    zne_results = []
 
-for idx, k in enumerate(punti_k):
-    t_start = time.perf_counter()
-    
-    seed_punto = int(abs(k) * 100000) + (idx * 500)
-    
-    E_noise_l1 = measure_energy_with_shots(k, noise_scale=1.0, base_seed=seed_punto)
-    E_noise_l2 = measure_energy_with_shots(k, noise_scale=2.0, base_seed=seed_punto + NUM_SHOTS)
-    E_mitigated = 2.0 * E_noise_l1 - E_noise_l2
-    E_ideal = measure_energy_with_shots(k, noise_scale=0.0, base_seed=0)
-    
-    latency = time.perf_counter() - t_start
-    print(f"k: {k:+.2f} | Ideal: {E_ideal:+.4f} | Noisy (λ=1): {E_noise_l1:+.4f} | Mitigated (ZNE): {E_mitigated:+.4f} | {latency:.2f}s")
-    
-    zne_results.append({
-        "k": k,
-        "Ideal": E_ideal,
-        "Noisy": E_noise_l1,
-        "Mitigated": E_mitigated
-    })
+    for idx, k in enumerate(punti_k):
+        t_start = time.perf_counter()
 
-df = pd.DataFrame(zne_results)
-df.to_csv("dati_mitigazione_zne.csv", index=False)
+        seed_punto = int(abs(k) * 100000) + (idx * 500)
 
-plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
+        E_noise_l1 = measure_energy_with_shots(k, noise_scale=1.0, base_seed=seed_punto)
+        E_noise_l2 = measure_energy_with_shots(k, noise_scale=2.0, base_seed=seed_punto + NUM_SHOTS)
+        E_mitigated = 2.0 * E_noise_l1 - E_noise_l2
+        E_ideal = measure_energy_with_shots(k, noise_scale=0.0, base_seed=0)
 
-ax.plot(df["k"], df["Ideal"], color='#00FF00', linewidth=2.5, label='True Zero-Noise Target')
-ax.plot(df["k"], df["Noisy"], color='#FF3333', linestyle=':', linewidth=2, label='Real Noisy Data (λ = 1.0)')
-ax.plot(df["k"], df["Mitigated"], color='#FFFF00', marker='o', markersize=4, linestyle='-', linewidth=1.5, label='True Richardson Mitigated (ZNE)')
+        latency = time.perf_counter() - t_start
+        print(f"k: {k:+.2f} | Ideal: {E_ideal:+.4f} | Noisy (λ=1): {E_noise_l1:+.4f} | Mitigated (ZNE): {E_mitigated:+.4f} | {latency:.2f}s")
 
-ax.set_title("Quantum Error Mitigation: Real Stochastic Kraus & Shot Noise ZNE", fontsize=11, fontweight='bold', pad=15)
-ax.set_xlabel("Wavevector k", color='#888888')
-ax.set_ylabel("Energy Level (eV)", color='#888888')
-ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
-ax.legend(loc="upper right")
+        zne_results.append({
+            "k": k,
+            "Ideal": E_ideal,
+            "Noisy": E_noise_l1,
+            "Mitigated": E_mitigated
+        })
 
-plt.tight_layout()
-plt.savefig("transizione_ising_mitigata.png", dpi=300)
+    df = pd.DataFrame(zne_results)
+    df.to_csv("dati_mitigazione_zne.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.plot(df["k"], df["Ideal"], color='#00FF00', linewidth=2.5, label='True Zero-Noise Target')
+    ax.plot(df["k"], df["Noisy"], color='#FF3333', linestyle=':', linewidth=2, label='Real Noisy Data (λ = 1.0)')
+    ax.plot(df["k"], df["Mitigated"], color='#FFFF00', marker='o', markersize=4, linestyle='-', linewidth=1.5, label='True Richardson Mitigated (ZNE)')
+
+    ax.set_title("Quantum Error Mitigation: Real Stochastic Kraus & Shot Noise ZNE", fontsize=11, fontweight='bold', pad=15)
+    ax.set_xlabel("Wavevector k", color='#888888')
+    ax.set_ylabel("Energy Level (eV)", color='#888888')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    ax.legend(loc="upper right")
+
+    plt.tight_layout()
+    plt.savefig("transizione_ising_mitigata.png", dpi=300)
+
+
+if __name__ == "__main__":
+    print("============================================================")
+    print("🔬 REAL PHYSICAL ZNE ENGINE: STOCHASTIC KRAUS SAMPLING")
+    print("============================================================")
+    print("🔍 Running true non-deterministic Richardson Extrapolation...\n")
+    _run_full_sweep()
