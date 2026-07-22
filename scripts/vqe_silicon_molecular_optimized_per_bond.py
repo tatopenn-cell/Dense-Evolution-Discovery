@@ -47,6 +47,62 @@ N_PARAMS = 2 * N_BONDS              # 10
 ROWS_PER_POINT = 1 + 4 * N_BONDS    # 21: 1 base + 2 shifts x 2 gates/bond
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# CLOSED-FORM DISCOVERY: the Adam-optimized per-bond angles are not arbitrary.
+#
+# The sequential Givens-rotation ansatz starting from |100...0> can prepare
+# ANY normalized single-excitation state exactly (it's a universal staircase
+# state-preparation circuit for that Hilbert-space sector) -- so maximizing
+# the total nearest-neighbor kinetic term K(theta) = sum_q <XX+YY> over this
+# ansatz is UNCONSTRAINED within that sector: it finds the true maximum of
+# K over ALL single-excitation states, which is exactly the top eigenvalue
+# problem of the open tight-binding chain (path graph) -- i.e. the discrete
+# "particle in a box" ground state:
+#
+#   c_q ∝ sin((q+1)*pi/(N+1)),  q = 0..N-1  (N = n_bonds+1 sites)
+#   K_max = 4*cos(pi/(N+1))
+#
+# and the per-bond Givens angle that PREPARES this amplitude profile via the
+# sequential CX-RY-CX-RY-CX construction has the closed form:
+#
+#   theta_q = arcsin(c_q / r_q),  r_q = sqrt(sum_{k=q}^{N-1} c_k^2)
+#
+# Verified to MACHINE PRECISION (no optimizer involved) for N_Q in
+# {4,5,6,7,8,10}: plugging theta_ground_state_closed_form() straight into
+# the circuit reproduces kinetic_max_closed_form() and the sine-mode
+# amplitude profile to ~1e-15/1e-16. No Adam run needed to reach it --
+# the numerical optimizer was just rediscovering this exact analytic state.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def ground_state_amplitudes_closed_form(n_bonds: int) -> np.ndarray:
+    """Exact tight-binding-chain ground-state amplitude profile for an
+    (n_bonds+1)-site open chain: c_q ∝ sin((q+1)*pi/(N+1))."""
+    n = n_bonds + 1
+    j = np.arange(1, n + 1)
+    c = np.sin(j * np.pi / (n + 1))
+    return c / np.linalg.norm(c)
+
+
+def theta_ground_state_closed_form(n_bonds: int) -> np.ndarray:
+    """Exact per-bond Givens angles that prepare
+    ground_state_amplitudes_closed_form(n_bonds) via the sequential
+    CX-RY-CX-RY-CX construction -- no optimization needed."""
+    c = ground_state_amplitudes_closed_form(n_bonds)
+    n = n_bonds + 1
+    r = np.empty(n + 1)
+    r[0] = 1.0
+    for q in range(n):
+        r[q + 1] = np.sqrt(max(r[q] ** 2 - c[q] ** 2, 0.0))
+    return np.array([np.arcsin(np.clip(c[q] / r[q], -1.0, 1.0)) for q in range(n_bonds)])
+
+
+def kinetic_max_closed_form(n_bonds: int) -> float:
+    """Exact maximum achievable kinetic energy K = sum_q <XX+YY> for an
+    (n_bonds+1)-site open chain: 4*cos(pi/(N+1))."""
+    n = n_bonds + 1
+    return 4.0 * np.cos(np.pi / (n + 1))
+
+
 def _build_ops() -> list:
     ops = [['x', 0]]
     for q in range(N_BONDS):
