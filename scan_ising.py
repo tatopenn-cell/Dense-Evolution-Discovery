@@ -10,13 +10,6 @@ jax.config.update("jax_enable_x64", True)
 N_Q = 12
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
-punti_g = np.linspace(0.0, 2.5, 3500)
-risultati = []
-
-print("============================================================")
-print(f"🔬 ULTRA-HIGH RESOLUTION QUANTUM ISING SCAN: 3500 STEPS")
-print("============================================================")
-
 def esegui_circuito_ising_reale(g_campo):
     ansatz_circuit = []
     
@@ -45,25 +38,36 @@ def calcola_vera_correlazione_zz(prob_array):
         
     return somma_zz / (N_Q - 1)
 
-t_global_start = time.perf_counter()
+def _run_full_sweep():
+    punti_g = np.linspace(0.0, 2.5, 3500)
+    risultati = []
 
-for idx, g in enumerate(punti_g):
-    prob = esegui_circuito_ising_reale(g)
-    E_zz = calcola_vera_correlazione_zz(prob)
-    
-    if (idx + 1) % 250 == 0 or idx == 0 or idx == len(punti_g) - 1:
-        print(f"Step {idx+1:04d}/3500 | Campo g: {g:.3f} | Correlazione <H_zz>: {E_zz:+.6f}")
-    
-    risultati.append({
-        "Campo_g": g,
-        "Expectation_H_zz": E_zz
-    })
+    t_global_start = time.perf_counter()
 
-df = pd.DataFrame(risultati)
-df.to_csv("transizione_fase_ising.csv", index=False)
+    for idx, g in enumerate(punti_g):
+        prob = esegui_circuito_ising_reale(g)
+        E_zz = calcola_vera_correlazione_zz(prob)
 
-tempo_totale = time.perf_counter() - t_global_start
-print("============================================================")
-print(f"✅ SCANSIONE ULTRA-RISOLTA COMPLETATA IN {tempo_totale:.2f} s")
-print("============================================================")
+        if (idx + 1) % 250 == 0 or idx == 0 or idx == len(punti_g) - 1:
+            print(f"Step {idx+1:04d}/3500 | Campo g: {g:.3f} | Correlazione <H_zz>: {E_zz:+.6f}")
+
+        risultati.append({
+            "Campo_g": g,
+            "Expectation_H_zz": E_zz
+        })
+
+    df = pd.DataFrame(risultati)
+    df.to_csv("transizione_fase_ising.csv", index=False)
+
+    tempo_totale = time.perf_counter() - t_global_start
+    print("============================================================")
+    print(f"✅ SCANSIONE ULTRA-RISOLTA COMPLETATA IN {tempo_totale:.2f} s")
+    print("============================================================")
+
+
+if __name__ == "__main__":
+    print("============================================================")
+    print("🔬 ULTRA-HIGH RESOLUTION QUANTUM ISING SCAN: 3500 STEPS")
+    print("============================================================")
+    _run_full_sweep()
 

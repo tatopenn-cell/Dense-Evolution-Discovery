@@ -8,14 +8,15 @@ physics but not the scripts: both real bugs found during the dense-evolution
 wrong batch grid) lived in scripts that had zero test coverage of their own
 -- nothing that actually executed them could have caught either one.
 
-This file imports vqe_gradient.py and zne_mitigation.py as modules (both
-now guard their expensive sweep/CSV/plot pipeline behind
-`if __name__ == "__main__":` specifically so they CAN be imported without
-side effects) and calls their real functions directly, cross-checked
-against an independent reference (PennyLane, or a closed-form value) --
-not a re-implementation of the same formula.
+This file imports vqe_gradient.py, zne_mitigation.py, scan_ising.py and
+next_gen_silicon.py as modules (all four now guard their expensive
+sweep/CSV/plot pipeline behind `if __name__ == "__main__":` specifically
+so they CAN be imported without side effects) and calls their real
+functions directly, cross-checked against an independent reference
+(PennyLane, or a closed-form value) -- not a re-implementation of the
+same formula.
 
-2 tests, target < 15s total.
+4 tests, target < 30s total.
 """
 
 import importlib.util
@@ -43,6 +44,8 @@ def _import_script(name: str):
 
 vqe_gradient = _import_script("vqe_gradient")
 zne_mitigation = _import_script("zne_mitigation")
+scan_ising = _import_script("scan_ising")
+next_gen_silicon = _import_script("next_gen_silicon")
 
 
 # ── vqe_gradient.py: calcola_energia_vqe cross-validated against PennyLane ──
@@ -129,4 +132,79 @@ def test_zne_mitigation_real_functions_are_internally_consistent():
     assert np.allclose(sv_dephased, expected, atol=1e-12), (
         "apply_stochastic_dephasing(p_error=1.0) must deterministically "
         "apply a Z-dephasing phase on every qubit"
+    )
+
+
+# ── scan_ising.py: real functions cross-validated against PennyLane ─────────
+
+_N_Q_ISING = scan_ising.N_Q
+_dev_ising = qml.device("default.qubit", wires=_N_Q_ISING)
+_OBS_ZZ_ISING = sum(
+    qml.PauliZ(q) @ qml.PauliZ(q + 1) for q in range(_N_Q_ISING - 1)
+) / (_N_Q_ISING - 1)
+
+
+def _pl_ising_zz(g: float) -> float:
+    @qml.qnode(_dev_ising)
+    def circ():
+        for q in range(_N_Q_ISING - 1):
+            qml.CNOT(wires=[q, q + 1])
+            qml.RZ(1.2, wires=q + 1)
+            qml.CNOT(wires=[q, q + 1])
+        for q in range(_N_Q_ISING):
+            qml.RX(float(g * 0.6), wires=q)
+        return qml.expval(_OBS_ZZ_ISING)
+    return float(circ())
+
+
+@pytest.mark.parametrize("g", [0.0, 0.8, 1.6, 2.5])
+def test_scan_ising_correlazione_zz_matches_pennylane(g):
+    """Calls the REAL esegui_circuito_ising_reale + calcola_vera_correlazione_zz
+    from scan_ising.py (not hand-copied versions) and cross-checks against
+    an independent PennyLane circuit of the same ansatz, at the script's
+    actual N_Q=12 (not a smaller stand-in scale)."""
+    prob = scan_ising.esegui_circuito_ising_reale(g)
+    e_de = scan_ising.calcola_vera_correlazione_zz(prob)
+    e_pl = _pl_ising_zz(g)
+    assert abs(e_de - e_pl) < 1e-9, (
+        f"g={g}: dense-evolution={e_de:.10f}, pennylane={e_pl:.10f}, "
+        f"diff={abs(e_de - e_pl):.2e}"
+    )
+
+
+# ── next_gen_silicon.py: real functions cross-validated against PennyLane ──
+
+_N_Q_SI = next_gen_silicon.N_Q
+_dev_si = qml.device("default.qubit", wires=_N_Q_SI)
+_OBS_PERIODIC_XY_SI = sum(
+    qml.PauliX(q) @ qml.PauliX((q + 1) % _N_Q_SI) + qml.PauliY(q) @ qml.PauliY((q + 1) % _N_Q_SI)
+    for q in range(_N_Q_SI)
+)
+
+
+def _pl_total_kinetic(k: float) -> float:
+    sv = next_gen_silicon.genera_stato_bloch_puro(k, _N_Q_SI)
+
+    @qml.qnode(_dev_si)
+    def circ():
+        qml.StatePrep(sv, wires=range(_N_Q_SI))
+        return qml.expval(_OBS_PERIODIC_XY_SI)
+    return float(circ())
+
+
+@pytest.mark.parametrize("k", [-2.5, -1.0, 0.0, 1.3, 2.8])
+def test_next_gen_silicon_hopping_expectation_matches_pennylane(k):
+    """Calls the REAL genera_stato_bloch_puro + compute_jordan_wigner_hopping_expectation
+    from next_gen_silicon.py (not hand-copied versions), summed over the same
+    periodic N_Q bonds the script itself sums over, cross-checked against
+    an independent PennyLane observable on the same Bloch state."""
+    sv = next_gen_silicon.genera_stato_bloch_puro(k, _N_Q_SI)
+    total_de = sum(
+        next_gen_silicon.compute_jordan_wigner_hopping_expectation(sv, q, _N_Q_SI)
+        for q in range(_N_Q_SI)
+    )
+    total_pl = _pl_total_kinetic(k)
+    assert abs(total_de - total_pl) < 1e-9, (
+        f"k={k}: dense-evolution={total_de:.10f}, pennylane={total_pl:.10f}, "
+        f"diff={abs(total_de - total_pl):.2e}"
     )

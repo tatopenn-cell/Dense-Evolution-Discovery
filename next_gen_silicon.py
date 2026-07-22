@@ -15,13 +15,6 @@ t_0 = 2.11
 STRAIN = 0.05
 t_strained = t_0 / ((1.0 + STRAIN) ** 2)
 
-punti_k = np.linspace(-np.pi, np.pi, 3500)
-risultati_nuovo_silicio = []
-
-print("============================================================")
-print("🔬 NEXT-GEN SILICON DESIGNER: HIGH-RESOLUTION SWEEP")
-print("============================================================")
-
 def genera_stato_bloch_puro(k_val, n_qubits):
     dim = 1 << n_qubits
     state = np.zeros(dim, dtype=np.complex128)
@@ -48,58 +41,67 @@ def compute_jordan_wigner_hopping_expectation(statevector, idx, n_qubits):
     
     return float(xx_exp + yy_exp)
 
-for idx, k in enumerate(punti_k):
-    t_start = time.perf_counter()
-    
-    statevector = genera_stato_bloch_puro(k, N_Q)
-    
-    total_kinetic_energy = 0.0
-    for q in range(N_Q):
-        total_kinetic_energy += compute_jordan_wigner_hopping_expectation(statevector, q, N_Q)
-        
-    E_k = - (t_strained / 2.0) * total_kinetic_energy
-    
-    valence_energy = -abs(E_k)
-    conduction_energy = abs(E_k)
-    
-    if idx % 500 == 0 or idx == len(punti_k) - 1:
-        print(f"Step {idx+1:04d}/3500 | k: {k:+.3f} rad/a | Valence: {valence_energy:+.4f} eV | Conduction: {conduction_energy:+.4f} eV")
-        
-    risultati_nuovo_silicio.append({
-        "Wavevector_k": k,
-        "Valence_Strained": valence_energy,
-        "Conduction_Strained": conduction_energy
-    })
+def _run_full_sweep():
+    punti_k = np.linspace(-np.pi, np.pi, 3500)
+    risultati_nuovo_silicio = []
 
-df_nuovo = pd.DataFrame(risultati_nuovo_silicio)
-df_nuovo.to_csv("bande_nuovo_silicio.csv", index=False)
+    for idx, k in enumerate(punti_k):
+        statevector = genera_stato_bloch_puro(k, N_Q)
 
-try:
-    df_vecchio = pd.read_csv("bande_silicio_ibrido.csv")
-    ha_vecchio = True
-except:
-    ha_vecchio = False
+        total_kinetic_energy = 0.0
+        for q in range(N_Q):
+            total_kinetic_energy += compute_jordan_wigner_hopping_expectation(statevector, q, N_Q)
 
-plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
+        E_k = - (t_strained / 2.0) * total_kinetic_energy
 
-if ha_vecchio and "Valence_eV" in df_vecchio.columns:
-    ax.plot(df_vecchio["k"], df_vecchio["Valence_eV"], linestyle=':', color='#00FF00', alpha=0.5, label='Standard Valence')
-    ax.plot(df_vecchio["k"], df_vecchio["Conduction_eV"], linestyle=':', color='#FF007F', alpha=0.5, label='Standard Conduction')
+        valence_energy = -abs(E_k)
+        conduction_energy = abs(E_k)
 
-ax.plot(df_nuovo["Wavevector_k"], df_nuovo["Valence_Strained"], color='#00FFFF', linewidth=2.5, label='Strained Valence (Harrison hopping)')
-ax.plot(df_nuovo["Wavevector_k"], df_nuovo["Conduction_Strained"], color='#FFFF00', linewidth=2.5, label='Strained Conduction (Harrison hopping)')
+        if idx % 500 == 0 or idx == len(punti_k) - 1:
+            print(f"Step {idx+1:04d}/3500 | k: {k:+.3f} rad/a | Valence: {valence_energy:+.4f} eV | Conduction: {conduction_energy:+.4f} eV")
 
-ax.set_title("Strained Solid-State Bandstructure Engineering (3500 Points)", fontsize=11, fontweight='bold', pad=15)
-ax.set_xlabel("Wavevector k (Brillouin Zone)", color='#888888')
-ax.set_ylabel("Electron Energy Level (eV)", color='#888888')
-ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
-ax.legend(loc="upper right")
+        risultati_nuovo_silicio.append({
+            "Wavevector_k": k,
+            "Valence_Strained": valence_energy,
+            "Conduction_Strained": conduction_energy
+        })
 
-plt.tight_layout()
-plt.savefig("confronto_nuovo_silicio.png", dpi=300)
+    df_nuovo = pd.DataFrame(risultati_nuovo_silicio)
+    df_nuovo.to_csv("bande_nuovo_silicio.csv", index=False)
 
-print("============================================================")
-print("✅ SCANSIONE COMPLETATA CON SUCCESSO! VERO COMPORTAMENTO FISICO.")
-print("📊 Grafico salvato in: confronto_nuovo_silicio.png")
-print("============================================================")
+    try:
+        df_vecchio = pd.read_csv("bande_silicio_ibrido.csv")
+        ha_vecchio = True
+    except:
+        ha_vecchio = False
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    if ha_vecchio and "Valence_eV" in df_vecchio.columns:
+        ax.plot(df_vecchio["k"], df_vecchio["Valence_eV"], linestyle=':', color='#00FF00', alpha=0.5, label='Standard Valence')
+        ax.plot(df_vecchio["k"], df_vecchio["Conduction_eV"], linestyle=':', color='#FF007F', alpha=0.5, label='Standard Conduction')
+
+    ax.plot(df_nuovo["Wavevector_k"], df_nuovo["Valence_Strained"], color='#00FFFF', linewidth=2.5, label='Strained Valence (Harrison hopping)')
+    ax.plot(df_nuovo["Wavevector_k"], df_nuovo["Conduction_Strained"], color='#FFFF00', linewidth=2.5, label='Strained Conduction (Harrison hopping)')
+
+    ax.set_title("Strained Solid-State Bandstructure Engineering (3500 Points)", fontsize=11, fontweight='bold', pad=15)
+    ax.set_xlabel("Wavevector k (Brillouin Zone)", color='#888888')
+    ax.set_ylabel("Electron Energy Level (eV)", color='#888888')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    ax.legend(loc="upper right")
+
+    plt.tight_layout()
+    plt.savefig("confronto_nuovo_silicio.png", dpi=300)
+
+    print("============================================================")
+    print("✅ SCANSIONE COMPLETATA CON SUCCESSO! VERO COMPORTAMENTO FISICO.")
+    print("📊 Grafico salvato in: confronto_nuovo_silicio.png")
+    print("============================================================")
+
+
+if __name__ == "__main__":
+    print("============================================================")
+    print("🔬 NEXT-GEN SILICON DESIGNER: HIGH-RESOLUTION SWEEP")
+    print("============================================================")
+    _run_full_sweep()
