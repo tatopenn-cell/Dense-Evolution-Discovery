@@ -11,13 +11,6 @@ jax.config.update("jax_enable_x64", True)
 N_Q = 6
 sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
 
-distanze_R = np.linspace(1.2, 4.5, 3500)
-risultati_pec = []
-
-print("============================================================")
-print("🔬 MOLECULAR VQE: EXACT POTENTIAL ENERGY CURVE (PEC)")
-print("============================================================")
-
 def calcola_energia_molecolare(R, theta):
     t_R = 2.11 * np.exp(-1.5 * (R - 2.35))
     V_rep = 5.4 * np.exp(-3.0 * (R - 2.35))
@@ -51,29 +44,40 @@ def calcola_energia_molecolare(R, theta):
     E_elettronica = - (t_R / 2.0) * total_kinetic
     return E_elettronica + V_rep
 
-for idx, R in enumerate(distanze_R):
-    theta_ottimale = 0.38
-    E_totale = calcola_energia_molecolare(R, theta_ottimale)
-    
-    if (idx + 1) % 500 == 0 or idx == 0 or idx == len(distanze_R) - 1:
-        print(f"Distanza R: {R:.3f} Å | Energia Totale Molecola: {E_totale:+.6f} eV")
-        
-    risultati_pec.append({
-        "Distanza_R": R,
-        "Energia_Totale_eV": E_totale
-    })
+def _run_full_sweep():
+    distanze_R = np.linspace(1.2, 4.5, 3500)
+    risultati_pec = []
 
-df = pd.DataFrame(risultati_pec)
-df.to_csv("vqe_molecola_silicio.csv", index=False)
+    for idx, R in enumerate(distanze_R):
+        theta_ottimale = 0.38
+        E_totale = calcola_energia_molecolare(R, theta_ottimale)
 
-plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(df["Distanza_R"], df["Energia_Totale_eV"], color='#FF007F', linewidth=2.5, label='VQE Born-Oppenheimer PEC')
-ax.set_title("Silicon Dimer (Si2) Dissociation Curve: Variational Quantum Chemistry", fontsize=11, fontweight='bold', pad=15)
-ax.set_xlabel("Interatomic Distance R (Angstrom)", color='#888888')
-ax.set_ylabel("Total Molecular Energy (eV)", color='#888888')
-ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
-ax.legend(loc="upper right")
-plt.tight_layout()
-plt.savefig("curva_potenziale_silicio.png", dpi=300)
+        if (idx + 1) % 500 == 0 or idx == 0 or idx == len(distanze_R) - 1:
+            print(f"Distanza R: {R:.3f} Å | Energia Totale Molecola: {E_totale:+.6f} eV")
+
+        risultati_pec.append({
+            "Distanza_R": R,
+            "Energia_Totale_eV": E_totale
+        })
+
+    df = pd.DataFrame(risultati_pec)
+    df.to_csv("vqe_molecola_silicio.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df["Distanza_R"], df["Energia_Totale_eV"], color='#FF007F', linewidth=2.5, label='VQE Born-Oppenheimer PEC')
+    ax.set_title("Silicon Dimer (Si2) Dissociation Curve: Variational Quantum Chemistry", fontsize=11, fontweight='bold', pad=15)
+    ax.set_xlabel("Interatomic Distance R (Angstrom)", color='#888888')
+    ax.set_ylabel("Total Molecular Energy (eV)", color='#888888')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+    plt.savefig("curva_potenziale_silicio.png", dpi=300)
+
+
+if __name__ == "__main__":
+    print("============================================================")
+    print("🔬 MOLECULAR VQE: EXACT POTENTIAL ENERGY CURVE (PEC)")
+    print("============================================================")
+    _run_full_sweep()
 
