@@ -1,4 +1,5 @@
 import pathlib
+import zlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -307,6 +308,17 @@ def _rmse(vals: np.ndarray, exact: float) -> float:
     return float(np.sqrt(bias ** 2 + vals.std() ** 2))
 
 
+def _stable_seed(*parts) -> int:
+    """Deterministic, cross-process-stable seed -- Python's built-in hash()
+    is NOT stable across process invocations for tuples containing strings
+    (hash randomization, PYTHONHASHSEED defaults to random), so trial data
+    seeded via hash((tag, theta, trial)) % 2**32 silently differed between
+    runs despite looking deterministic. zlib.crc32 has no such
+    randomization."""
+    s = "_".join(str(p) for p in parts)
+    return zlib.crc32(s.encode()) % (2 ** 32)
+
+
 def _run_stabilization_study():
     print("============================================================")
     print("ADAPTIVE ZNE-PRE-PSR GRADIENT STABILIZATION STUDY")
@@ -322,11 +334,11 @@ def _run_stabilization_study():
         static_vals = np.empty(N_TRIALS)
         adaptive_vals = np.empty(N_TRIALS)
         for trial in range(N_TRIALS):
-            rng_naive = np.random.default_rng(hash(("naive", theta, trial)) % (2 ** 32))
+            rng_naive = np.random.default_rng(_stable_seed("naive", theta, trial))
             naive_vals[trial] = psr_gradient_naive_noisy(theta, BASE_P, N_SHOTS, rng_naive)
-            rng_static = np.random.default_rng(hash(("static", theta, trial)) % (2 ** 32))
+            rng_static = np.random.default_rng(_stable_seed("static", theta, trial))
             static_vals[trial] = psr_gradient_zne_static(theta, BASE_P, N_SHOTS, rng_static)
-            rng_adaptive = np.random.default_rng(hash(("adaptive", theta, trial)) % (2 ** 32))
+            rng_adaptive = np.random.default_rng(_stable_seed("adaptive", theta, trial))
             adaptive_vals[trial] = psr_gradient_adaptive_zne(theta, BASE_P, N_SHOTS, rng_adaptive,
                                                               TARGET_SIGMA_IDEAL, K_SENSITIVITY)
 

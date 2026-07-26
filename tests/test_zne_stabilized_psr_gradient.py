@@ -9,6 +9,7 @@ theta values and reused by the tests that need it.
 import importlib.util
 import pathlib
 import sys
+import zlib
 
 import numpy as np
 import pytest
@@ -23,6 +24,19 @@ def _import_script(name: str):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _stable_seed(*parts) -> int:
+    """Deterministic, cross-process-stable seed. Python's built-in hash()
+    is NOT stable across process invocations for tuples containing strings
+    (hash randomization, PYTHONHASHSEED defaults to random) -- verified
+    directly during development: the same hash((tag, theta, trial)) % 2**32
+    expression gave a different value on every fresh Python process, so
+    trial data (and any RMSE comparison built on it) silently differed
+    between runs even with "the same" seed expression. zlib.crc32 has no
+    such randomization and is stable across processes/platforms."""
+    s = "_".join(str(p) for p in parts)
+    return zlib.crc32(s.encode()) % (2 ** 32)
 
 
 m = _import_script("zne_stabilized_psr_gradient")
@@ -45,9 +59,9 @@ def _collect_trials(theta):
     naive_vals = np.empty(_N_TRIALS)
     zne_vals = np.empty(_N_TRIALS)
     for trial in range(_N_TRIALS):
-        rng_naive = np.random.default_rng(hash(("naive", theta, trial)) % (2 ** 32))
+        rng_naive = np.random.default_rng(_stable_seed("naive", theta, trial))
         naive_vals[trial] = m.psr_gradient_naive_noisy(theta, m.BASE_P, _N_SHOTS, rng_naive)
-        rng_zne = np.random.default_rng(hash(("zne", theta, trial)) % (2 ** 32))
+        rng_zne = np.random.default_rng(_stable_seed("zne", theta, trial))
         zne_vals[trial] = m.psr_gradient_zne_stabilized(theta, m.BASE_P, _N_SHOTS, rng_zne)
     return exact, naive_vals, zne_vals
 
