@@ -1,4 +1,5 @@
 import pathlib
+import zlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -226,6 +227,17 @@ N_TRIALS = 40
 N_SHOTS = 200
 
 
+def _stable_seed(*parts) -> int:
+    """Deterministic, cross-process-stable seed -- Python's built-in hash()
+    is NOT stable across process invocations for tuples containing strings
+    (hash randomization, PYTHONHASHSEED defaults to random), so trial data
+    seeded via hash((tag, theta, trial)) % 2**32 silently differed between
+    runs despite looking deterministic. zlib.crc32 has no such
+    randomization."""
+    s = "_".join(str(p) for p in parts)
+    return zlib.crc32(s.encode()) % (2 ** 32)
+
+
 def _run_stabilization_study():
     print("============================================================")
     print("ZNE-PRE-PSR GRADIENT STABILIZATION STUDY")
@@ -239,9 +251,9 @@ def _run_stabilization_study():
         naive_vals = np.empty(N_TRIALS)
         zne_vals = np.empty(N_TRIALS)
         for trial in range(N_TRIALS):
-            rng_naive = np.random.default_rng(hash(("naive", theta, trial)) % (2 ** 32))
+            rng_naive = np.random.default_rng(_stable_seed("naive", theta, trial))
             naive_vals[trial] = psr_gradient_naive_noisy(theta, BASE_P, N_SHOTS, rng_naive)
-            rng_zne = np.random.default_rng(hash(("zne", theta, trial)) % (2 ** 32))
+            rng_zne = np.random.default_rng(_stable_seed("zne", theta, trial))
             zne_vals[trial] = psr_gradient_zne_stabilized(theta, BASE_P, N_SHOTS, rng_zne)
 
         naive_bias = naive_vals.mean() - exact

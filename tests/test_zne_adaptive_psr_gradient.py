@@ -15,6 +15,7 @@ in that honest finding, not an assumed improvement.
 import importlib.util
 import pathlib
 import sys
+import zlib
 
 import numpy as np
 import pytest
@@ -31,6 +32,19 @@ def _import_script(name: str):
     return module
 
 
+def _stable_seed(*parts) -> int:
+    """Deterministic, cross-process-stable seed. Python's built-in hash()
+    is NOT stable across process invocations for tuples containing strings
+    (hash randomization, PYTHONHASHSEED defaults to random) -- verified
+    directly during development of a later ZNE-PSR study in this repo: the
+    same hash((tag, theta, trial)) % 2**32 expression gave a different
+    value on every fresh Python process, so trial data silently differed
+    between runs despite looking deterministic. zlib.crc32 has no such
+    randomization and is stable across processes/platforms."""
+    s = "_".join(str(p) for p in parts)
+    return zlib.crc32(s.encode()) % (2 ** 32)
+
+
 m = _import_script("zne_adaptive_psr_gradient")
 
 _TEST_THETAS = [0.38, 0.62, 1.0]
@@ -44,11 +58,11 @@ def _collect_trials(theta):
     static_vals = np.empty(_N_TRIALS)
     adaptive_vals = np.empty(_N_TRIALS)
     for trial in range(_N_TRIALS):
-        r1 = np.random.default_rng(hash(("naive", theta, trial)) % (2 ** 32))
+        r1 = np.random.default_rng(_stable_seed("naive", theta, trial))
         naive_vals[trial] = m.psr_gradient_naive_noisy(theta, m.BASE_P, _N_SHOTS, r1)
-        r2 = np.random.default_rng(hash(("static", theta, trial)) % (2 ** 32))
+        r2 = np.random.default_rng(_stable_seed("static", theta, trial))
         static_vals[trial] = m.psr_gradient_zne_static(theta, m.BASE_P, _N_SHOTS, r2)
-        r3 = np.random.default_rng(hash(("adaptive", theta, trial)) % (2 ** 32))
+        r3 = np.random.default_rng(_stable_seed("adaptive", theta, trial))
         adaptive_vals[trial] = m.psr_gradient_adaptive_zne(
             theta, m.BASE_P, _N_SHOTS, r3, m.TARGET_SIGMA_IDEAL, m.K_SENSITIVITY)
     return exact, naive_vals, static_vals, adaptive_vals
