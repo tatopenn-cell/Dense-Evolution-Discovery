@@ -303,19 +303,36 @@ if __name__ == "__main__":
 
     pd.DataFrame(gaas_result).to_csv(_DATA_DIR / "vqe_tmi_material_design_gaas_real.csv", index=False)
 
-    fig, ax = plt.subplots(figsize=(9, 5.5))
-    ax.plot(result["U"], result["E_exact_ground"], "g-", lw=2, label="Exact ground state (diagonalization)")
-    ax.plot(result["U"], result["E_vqe_optimized"], "b-o", lw=2, label=f"VQE-optimized ({N_STARTS} restarts, Adam)")
-    ax.plot(result["U"], result["E_random_baseline"], "r--", lw=1.5, label="Fixed random theta (original draft)")
-    ax.scatter([U_GAAS_BARE_EV], [gaas_result["E_vqe_optimized"][0]], color="black", marker="*", s=180,
-               zorder=5, label="Real GaAs (DFT t1, bare U)")
-    ax.scatter([U_GAAS_SCREENED_EV], [gaas_result["E_vqe_optimized"][1]], color="black", marker="D", s=70,
-               zorder=5, label="Real GaAs (DFT t1, screened U)")
-    ax.set_xlabel("Mott repulsion U (eV)")
-    ax.set_ylabel("Ground-state energy (eV)")
-    ax.set_title("Topological Mott Isolator: real optimization closes most of the gap")
-    ax.legend()
-    ax.grid(alpha=0.3)
+    # Two panels: the arbitrary-unit sweep (U in [0, 6] eV) and the real GaAs
+    # points (U up to 38 eV, bare) do NOT share a readable x-axis -- plotting
+    # them together crushes the sweep into an unreadable sliver in the
+    # corner. Left panel: the sweep alone. Right panel: a grouped bar chart
+    # (same visual language as the Loschmidt echo plot) comparing exact vs.
+    # VQE-optimized energy at the two real GaAs points.
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
+
+    ax1.plot(result["U"], result["E_exact_ground"], "g-", lw=2, label="Exact ground state (diagonalization)")
+    ax1.plot(result["U"], result["E_vqe_optimized"], "b-o", lw=2, label=f"VQE-optimized ({N_STARTS} restarts, Adam)")
+    ax1.plot(result["U"], result["E_random_baseline"], "r--", lw=1.5, label="Fixed random theta (original draft)")
+    ax1.set_xlabel("Mott repulsion U (eV)")
+    ax1.set_ylabel("Ground-state energy (eV)")
+    ax1.set_title(f"Arbitrary-unit U sweep (0-{U_RANGE[-1]:.0f} eV)")
+    ax1.legend()
+    ax1.grid(alpha=0.3)
+
+    labels = ["Bare U\n(unscreened)", "Screened U\n(÷ε=12.9)"]
+    x = np.arange(2)
+    width = 0.35
+    ax2.bar(x - width / 2, gaas_result["E_exact_ground"], width, color="#2ecc71", label="Exact ground state")
+    ax2.bar(x + width / 2, gaas_result["E_vqe_optimized"], width, color="#3498db", label="VQE-optimized")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(labels)
+    ax2.set_ylabel("Ground-state energy (eV)")
+    ax2.set_title("Real GaAs point (DFT t1 = 7.917 eV)")
+    ax2.legend()
+    ax2.grid(alpha=0.3, axis="y")
+
+    fig.suptitle("Topological Mott Isolator: real optimization closes most of the gap")
     fig.tight_layout()
     fig.savefig(_IMAGES_DIR / "vqe_tmi_material_design.png", dpi=150)
     print(f"\nsaved plot: {_IMAGES_DIR / 'vqe_tmi_material_design.png'}")

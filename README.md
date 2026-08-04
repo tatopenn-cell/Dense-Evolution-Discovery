@@ -1,7 +1,32 @@
 # 🔬 Quantum Phase Transitions, Variational Gradients, and Error Mitigation 
+
 [![Cross-Validation CI](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml/badge.svg)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-tatopenn--cell.github.io-00e5ff?style=flat-square)](https://tatopenn-cell.github.io/Dense-Evolution/)
+[![Dense Evolution](https://img.shields.io/pypi/v/dense-evolution?style=flat-square&color=00e5ff&label=dense-evolution)](https://pypi.org/project/dense-evolution/)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![JAX](https://img.shields.io/badge/Backend-JAX_XLA-f9ab00?style=flat-square&logo=google&logoColor=white)](https://github.com/google/jax)
+[![Latest Release](https://img.shields.io/github/v/release/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square&color=blueviolet)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/commits/main)
+[![Issues](https://img.shields.io/github/issues/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/issues)
+[![Stars](https://img.shields.io/github/stars/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square&color=yellow)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/stargazers)
+
+📖 **[Dense Evolution -- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution/)**
 
 This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
+
+**New here?** Jump straight to the [Scientific Discoveries](#-scientific-discoveries--empirical-evidence) section below and explore any result that catches your eye — every claim links to the exact script that produced it, so you can run it yourself. Or start with the three newest, most rigorously validated additions:
+
+---
+
+## 🆕 Latest Results (start here)
+
+All three of these found and fixed a *real* error in an AI-drafted physics claim, not just implemented what was proposed as-is:
+
+- **[Loschmidt Echo](#17-loschmidt-echo-a-real-time-reversal-test-not-a-static-noise-channel)** — a claimed ZNE fidelity recovery turned out to come from dead code that never actually evolved anything. The real kicked-Ising forward/backward circuit recovers return fidelity from **0.7769 → 0.9965**.
+- **[A Real VQE Optimization Loop](#18-topological-mott-isolator-a-real-optimization-loop-validated-against-exact-diagonalization)** — a reported "ground state" was actually the energy of one random, unoptimized guess. Real gradient-descent optimization, validated against exact diagonalization, closes nearly all of the gap.
+- **[Real DFT-Derived Material Parameters](#19-from-a-made-up-u-to-a-real-one-dft-and-dielectric-screening-for-actual-gaas)** — a non-converged DFT calculation was used anyway. Fixed the convergence, caught a genuine wavefunction-stability trap along the way, then grounded the result in GaAs's real dielectric constant.
+
+[![Loschmidt echo: raw vs. ZNE-corrected return fidelity](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)
 
 ---
 
@@ -402,11 +427,32 @@ The dividing line isn't "any two channels" — it's **Pauli vs. non-Pauli**. Pha
 
 ### 17. Loschmidt Echo: A Real Time-Reversal Test, Not a Static Noise Channel
 
-A draft proposed for the main Dense-Evolution README's benchmarks section ("Eco di Loschmidt", authored by Gemini) claimed ZNE could recover the return fidelity of a chaotic forward/backward circuit under noise — but its own `run_noisy_eco()` built `forward_ops`/`backward_ops`/`h_fields` and never applied any of them; it only ever called `NoiseModel.apply_to_sv` on one static state, so there was no time-reversal and nothing was actually being echoed. The reported "recovery" was an artifact of that dead code.
+In a closed quantum system, evolving forward in time under a chaotic unitary $U$ and then backward under $U^{-1}$ reconstructs the initial state exactly ($F=1.0$). Coupling to an environment along the way breaks that time-reversal symmetry — the **Loschmidt echo** fidelity
 
-`scripts/loschmidt_echo_zne.py` runs the real thing on a 4-qubit "kicked Ising" chain (random longitudinal RZ disorder field + fixed transverse RX kick + nearest-neighbor CX coupling, 4 Trotter steps): the forward circuit, then its exact inverse (`RZ(θ)⁻¹=RZ(-θ)`, `RX(θ)⁻¹=RX(-θ)`, CX self-inverse, gates in reverse order) backward, with an amplitude-damping channel injected between every layer and reinjected into the simulator via `set_initial_state` so each subsequent layer acts on the actually-noisy state. A noiseless self-check (`p=0` must return fidelity exactly 1.0) gates the noisy results before they're trusted — a broken inverse would otherwise still look like a plausible echo.
+$$F = \left|\langle\psi_0|\,U^{-1}\,\mathcal{N}\,U\,|\psi_0\rangle\right|^2$$
 
-Measured result over 300 Monte Carlo trajectories per noise scale: raw noisy return fidelity **0.7769**, ZNE-corrected (density-matrix Richardson extrapolation) **0.9965** — a net gain of **+0.2195**, this time from a genuine chaotic evolution instead of a static channel.
+decays below 1 as noise $\mathcal{N}$ is injected mid-evolution. A draft proposed for the main Dense-Evolution README's benchmarks section ("Eco di Loschmidt", authored by Gemini) claimed ZNE could recover this fidelity — but its own `run_noisy_eco()` built `forward_ops`/`backward_ops`/`h_fields` and never applied any of them; it only ever called `NoiseModel.apply_to_sv` on one static state, so $U$ and $U^{-1}$ were never actually run. There was no time-reversal, and nothing was being echoed — the reported "recovery" was an artifact of that dead code.
+
+**The real model**, one Trotter step of a "kicked Ising" chain:
+
+$$U_{\text{step}} = \left(\prod_{i} \text{CX}_{i,i+1}\right)\left(\prod_i RX_i(\pi/4)\right)\left(\prod_i RZ_i(h_i)\right), \qquad h_i \sim \mathcal{U}(-2, 2)$$
+
+— a fixed transverse "kick" ($RX$), a fresh random longitudinal disorder field per step ($RZ$), and nearest-neighbor coupling ($CX$), the standard toy model for quantum chaos. `scripts/loschmidt_echo_zne.py` runs this circuit forward for 4 steps, then its **exact** inverse backward ($RZ(\theta)^{-1}=RZ(-\theta)$, $RX(\theta)^{-1}=RX(-\theta)$, $CX^{-1}=CX$, gates in reverse order), with an amplitude-damping channel injected between *every single layer* — forward and backward — and reinjected into the simulator via `set_initial_state` so each subsequent layer acts on the actually-noisy state, not a copy that gets thrown away. A noiseless self-check ($p=0$ must return fidelity exactly $1.0$) gates the noisy results before they're trusted — a broken inverse would otherwise still look like a plausible echo.
+
+| Quantity | Value |
+|---|---|
+| Qubits / Trotter steps | 4 / 4 |
+| Kick angle ($RX$) | $\pi/4$ |
+| Disorder field | $h_i \sim \mathcal{U}(-2, 2)$ rad, resampled every step, per qubit |
+| Noise channel | amplitude damping, injected between every layer |
+| ZNE noise scales | $1.0\lambda,\ 1.5\lambda,\ 2.0\lambda$ ($\lambda = 0.015$) |
+| Monte Carlo trajectories per scale | 300 |
+| **Noiseless self-check fidelity** | **1.000000000000** (exact) |
+| Raw noisy return fidelity ($\lambda=1.0$) | **0.7769** |
+| ZNE-corrected return fidelity | **0.9965** |
+| Net fidelity gain | **+0.2195** |
+
+[![Loschmidt echo: raw vs. ZNE-corrected return fidelity](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)
 
 ---
 
@@ -414,21 +460,57 @@ Measured result over 300 Monte Carlo trajectories per noise scale: raw noisy ret
 
 A related draft ("New Silicon" Haldane-Hubbard material design, same origin as Section 17) built a Topological Mott Isolator Hamiltonian and an RY-CX-RZ ansatz via `de.circuit_to_energy_fn`, then evaluated the energy at a single fixed random `theta` and called the result "the ideal state" — no optimization ever ran, so the reported energies had no relationship to the material's actual ground state.
 
-`scripts/vqe_tmi_material_design.py` runs a real VQE loop instead: exact JAX autodiff (`jax.value_and_grad` straight through `circuit_to_energy_fn`, no finite differences, no dead parameters) drives Adam, with 8 random restarts per Mott-repulsion value U to avoid a bad local minimum, all batched into one `jax.vmap`'d update per epoch. Every result is checked against an independent reference: direct dense diagonalization of the same Hamiltonian, which fixes the true ground energy and the variational bound `E_vqe ≥ E_exact` that any correct implementation must respect.
+**The Hamiltonian**, built directly on computational basis states (site $A$ = qubits $0,1$; site $B$ = qubits $2,3$):
 
-Measured over U ∈ [0, 6] eV: the optimizer respects the bound at every single point (no violations), reaches the exact ground state at U=0 (gap `+0.0000`), and closes nearly all of the gap at weak/moderate U (`+0.0248` at U=0.55 eV). The gap grows with U (up to `+0.5136` at U=6.0 eV) — an honest ansatz-expressivity limit in the strongly-correlated regime, not an optimizer bug: multi-start restarts converge to the same plateau there rather than scattering, which is what a genuine expressivity ceiling looks like. Against the original draft's unoptimized baseline (a single random `theta`, which drifts as high as `+4.72` eV — nowhere near any ground state) the fix is a difference in kind, not degree.
+$$H(U) = \frac{U}{2}\sum_{s\in\{A,B\}} n_s(n_s-1)\; -\; t_1\!\!\sum_{\langle i,j\rangle}\!\!\left(c_i^\dagger c_j + \text{h.c.}\right)\; -\; t_2\!\!\sum_{\langle\langle i,j\rangle\rangle}\!\!\left(e^{i\phi} c_i^\dagger c_j + \text{h.c.}\right)$$
+
+— on-site Mott repulsion $U$, real nearest-neighbor hopping $t_1$, and a complex next-nearest-neighbor "Haldane phase" hopping $t_2 e^{i\phi}$. `build_tmi_hamiltonian` constructs this by touching each unordered basis-state pair exactly once and setting both conjugate entries together, so it's Hermitian by construction, not by luck (`test_hamiltonian_is_hermitian`).
+
+**The fix**: `scripts/vqe_tmi_material_design.py` runs a real VQE loop — exact JAX autodiff (`jax.value_and_grad` straight through `circuit_to_energy_fn`, no finite differences, no dead parameters) drives Adam over an 8-parameter RY-CX-RZ ansatz, with 8 random restarts per Mott-repulsion value $U$ to avoid a bad local minimum, all batched into one `jax.vmap`'d update per epoch. Every result is checked against an independent reference: direct dense diagonalization of the same Hamiltonian, which fixes the true ground energy and the variational bound $E_{\text{VQE}} \geq E_{\text{exact}}$ that any correct implementation must respect — not assumed, asserted.
+
+| $U$ (eV) | Exact ground state | VQE-optimized | Fixed random $\theta$ (original draft) | Gap |
+|---|---|---|---|---|
+| 0.00 | −3.3451 | −3.3451 | −0.0424 | **+0.0000** |
+| 0.55 | −3.1231 | −3.0984 | −1.0628 | +0.0248 |
+| 1.64 | −2.8580 | −2.7145 | +1.5875 | +0.1435 |
+| 3.27 | −2.6608 | −2.3180 | +0.4666 | +0.3428 |
+| 4.91 | −2.5581 | −2.0602 | +4.7166 | +0.4979 |
+| 6.00 | −2.5136 | −2.0000 | +2.4801 | **+0.5136** |
+
+The optimizer respects the bound at every single point in the full 12-point sweep (no violations) and reaches the exact ground state at $U=0$. The gap grows with $U$ — an honest ansatz-expressivity limit in the strongly-correlated regime, not an optimizer bug: multi-start restarts converge to the *same* plateau there rather than scattering, which is what a genuine expressivity ceiling looks like, not under-training. Against the original draft's unoptimized baseline — a single random $\theta$, which drifts as high as $+4.72$ eV, nowhere near any ground state — the fix is a difference in kind, not degree.
+
+[![Topological Mott Isolator: real optimization vs. exact diagonalization](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design.png)
 
 ---
 
-### 19. From a Made-Up U to a Real One: DFT + Dielectric Screening for Actual GaAs
+### 19. From a Made-Up U to a Real One: DFT and Dielectric Screening for Actual GaAs
 
-Section 18's U sweep uses arbitrary units — it explores a hypothetical design space, not a specific material. A companion draft tried to ground `t`/`U` in real chemistry via a PySCF DFT calculation on a GaAs dimer (PBE/STO-3G, the real Ga-As zinc-blende nearest-neighbor bond length of 2.44 Å), but that SCF never converged, and the draft extracted HOMO/LUMO integrals from the non-converged density anyway — numbers with no defined physical meaning.
+Section 18's $U$ sweep uses arbitrary units — it explores a hypothetical design space, not a specific material. A companion draft tried to ground $t$/$U$ in real chemistry via a PySCF DFT calculation on a GaAs dimer (PBE/STO-3G, the real Ga-As zinc-blende nearest-neighbor bond length of 2.44 Å), but that SCF never converged, and the draft extracted HOMO/LUMO integrals from the non-converged density anyway — numbers with no defined physical meaning.
 
-Fixing the SCF took two real, separate problems, not one: a level-shift + ADIIS pre-step followed by PySCF's Newton-Raphson (SOSCF) solver got a *converged* solution, but the first one PySCF found was flagged with a genuine internal instability (stability-Hessian eigenvalues `[-2.37, -2.37, -2.30]` — a real saddle point, not a numerical nuisance). Restarting from the lower-energy orbitals `mf.stability()` provides reached a solution confirmed stable (eigenvalues `[~0, +0.0108, +0.0359]`) — reproduced independently from a second optimization path to 6 significant figures (`E = -4111.969573...` Ha both times), which is what real convergence to the same physical state looks like. (A separate, cruder diagnostic — comparing raw occupied/virtual orbital energies — flagged a "HOMO above LUMO" ordering on this converged, stable solution; that turned out to be a red herring specific to Kohn-Sham DFT, where virtual orbitals see the same N-electron potential as occupied ones rather than an N+1-electron one, so they aren't required to sit above the HOMO the way Hartree-Fock intuition expects. The rigorous test is the stability Hessian, which passed.)
+**Getting to a trustworthy SCF took two separate real problems, not one:**
 
-The converged calculation gives `t = 7.9170 eV` and a *bare* (gas-phase, unscreened) `U = 38.3847 eV`. GaAs isn't conventionally modeled as a Hubbard material in the first place, so there's no literature value to check that against directly — but a bare two-atom-in-vacuum Coulomb integral is expected to badly overestimate a solid's actual on-site repulsion, which is screened by the surrounding crystal's dielectric response. Dividing by GaAs's real static dielectric constant (`ε ≈ 12.9`, Sze) gives `U_screened = 2.9756 eV` — landing at `U/t = 0.376`, deep in the weakly-correlated regime. That is itself a meaningful cross-check: GaAs is a conventional band semiconductor, not a Mott insulator, and the physically-corrected parameter lands exactly where real materials physics says it should, while the naive unscreened value (`U/t = 4.85`) would have implied — wrongly — a strongly-correlated material.
+| Stage | Method | SCF energy (Ha) | Converged? | Stable? |
+|---|---|---|---|---|
+| Original draft | plain CDIIS, 200 cycles | −4111.4032 | ✗ | — |
+| This fix, stage 1 | level-shift (0.3) + ADIIS pre-step | −4111.1869 | ✗ | — |
+| This fix, stage 2 (first attempt) | Newton-Raphson (SOSCF), seeded from stage 1 | −4111.9696 | ✓ | ✗ (genuine saddle point, Hessian eigenvalues `[-2.37, -2.37, -2.30]`) |
+| This fix, stage 3 (restart) | Newton-Raphson, reseeded from `mf.stability()`'s lower-energy orbitals | −4111.9696 | ✓ | ✓ (Hessian eigenvalues `[~0, +0.0108, +0.0359]`) |
 
-`scripts/vqe_tmi_material_design.py` runs the same VQE-vs-diagonalization pipeline from Section 18 at both the bare and screened GaAs points. The variational bound holds at both (`gap = +3.9060` bare, `+0.1028` screened) — the larger gap at the bare point simply reflects that a much larger `U` pushes further outside this fixed ansatz's expressivity, the same honest limitation Section 18 already documents, not a new problem.
+The final stable point was reproduced independently from a second, differently-seeded optimization path to 6 significant figures — real convergence to the same physical state looks exactly like that. Along the way, a cruder diagnostic (comparing raw occupied/virtual orbital energies) flagged a "HOMO above LUMO" ordering on this same converged, stable solution; that turned out to be a red herring specific to Kohn-Sham DFT, where virtual orbitals see the same $N$-electron potential as occupied ones rather than an $N{+}1$-electron one, so they aren't required to sit above the HOMO the way Hartree-Fock intuition expects. The rigorous test is the stability Hessian, which passed.
+
+**From a converged calculation to a real material parameter:**
+
+| Parameter | Value | Source |
+|---|---|---|
+| $t$ (hopping) | **7.9170 eV** | DFT, real 2.44 Å Ga-As bond |
+| $U$ (bare) | 38.3847 eV | DFT, gas-phase / unscreened |
+| GaAs static dielectric constant $\varepsilon$ | 12.9 | Sze, literature value |
+| $U$ (screened) | **2.9756 eV** | $U_{\text{bare}} / \varepsilon$ |
+| $U/t$ (screened) | **0.376** | weakly-correlated regime |
+
+GaAs isn't conventionally modeled as a Hubbard material in the first place, so there's no literature $U$ to check the bare DFT value against directly — but a bare two-atom-in-vacuum Coulomb integral is expected to badly overestimate a solid's actual on-site repulsion, which the surrounding crystal's dielectric response screens. Dividing by GaAs's real static dielectric constant lands $U/t = 0.376$: deep in the weakly-correlated regime. That's itself a meaningful cross-check — GaAs is a conventional band semiconductor, not a Mott insulator, and the physically-corrected parameter lands exactly where real materials physics says it should, while the naive unscreened value ($U/t=4.85$) would have implied, wrongly, a strongly-correlated material.
+
+`scripts/vqe_tmi_material_design.py`'s `run_real_gaas_point()` runs the same VQE-vs-diagonalization pipeline from Section 18 at both the bare and screened points (right panel of the plot above). The variational bound holds at both (gap `+3.9060` bare, `+0.1028` screened) — the larger gap at the bare point simply reflects that a much larger $U$ pushes further outside this fixed ansatz's expressivity, the same honest limitation Section 18 already documents, not a new problem.
 
 ---
 
