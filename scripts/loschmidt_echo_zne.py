@@ -179,15 +179,33 @@ if __name__ == "__main__":
     }])
     df.to_csv(_DATA_DIR / "loschmidt_echo_zne.csv", index=False)
 
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.bar(["Raw (scale=1.0)", "ZNE-corrected"], [raw_fidelity, corrected_fidelity],
-           color=["#c0392b", "#2980b9"])
-    ax.axhline(1.0, color="black", linestyle="--", linewidth=1, label="Ideal echo (F=1.0)")
+    # Per-scale fidelities plus the actual linear Richardson extrapolation
+    # back to zero noise -- the standard way to visualize a ZNE result,
+    # not just a before/after bar pair.
+    scale_fidelities = [float(uhlmann_fidelity(rho_at_scales[i], rho_target)) for i in range(len(SCALES))]
+    fit_slope, fit_intercept = np.polyfit(SCALES, scale_fidelities, 1)
+    fit_x = np.linspace(0.0, max(SCALES) * 1.05, 50)
+    fit_y = fit_intercept + fit_slope * fit_x
+
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+    ax.axhline(1.0, color="#7f8c8d", linestyle=":", linewidth=1.5, label="Ideal echo (F=1.0)")
+    ax.plot(fit_x, fit_y, color="#95a5a6", linestyle="--", linewidth=1.5, zorder=1,
+            label="Linear extrapolation to zero noise")
+    ax.scatter(SCALES, scale_fidelities, s=90, color="#c0392b", zorder=3, label="Measured (noisy)")
+    ax.scatter([0.0], [corrected_fidelity], s=220, color="#2980b9", marker="*", zorder=4,
+               label="ZNE-corrected (extrapolated)")
+    for scale, fid in zip(SCALES, scale_fidelities):
+        ax.annotate(f"{fid:.3f}", (scale, fid), textcoords="offset points", xytext=(0, 10),
+                    ha="center", fontsize=9, color="#c0392b")
+    ax.annotate(f"{corrected_fidelity:.3f}", (0.0, corrected_fidelity), textcoords="offset points",
+                xytext=(12, -4), ha="left", fontsize=10, color="#2980b9", fontweight="bold")
+    ax.set_xlabel("Noise scale $\\lambda$ (base $p$ = 0.015)")
     ax.set_ylabel("Return fidelity")
-    ax.set_ylim(0, 1.05)
+    ax.set_xlim(-0.15, max(SCALES) * 1.15)
+    ax.set_ylim(0, 1.08)
     ax.set_title(f"Loschmidt echo, {N_QUBITS}Q kicked Ising, {STEPS} steps, K={K_TRAJECTORIES}")
-    ax.legend()
-    ax.grid(alpha=0.3, axis="y")
+    ax.legend(loc="lower left")
+    ax.grid(alpha=0.3)
     fig.tight_layout()
     fig.savefig(_IMAGES_DIR / "loschmidt_echo_zne.png", dpi=150)
     print(f"\nsaved plot: {_IMAGES_DIR / 'loschmidt_echo_zne.png'}")
