@@ -1,0 +1,56 @@
+site_name: Dense-Evolution-Ising-Tests
+site_description: Cross-validation and physics experiments built on the Dense-Evolution quantum simulator.
+site_url: https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/
+repo_url: https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests
+repo_name: tatopenn-cell/Dense-Evolution-Ising-Tests
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/atom
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md

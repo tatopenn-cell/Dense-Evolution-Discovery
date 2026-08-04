@@ -92,9 +92,9 @@ def test_optimization_loop_actually_moves_the_energy():
 
 
 def test_real_gaas_point_respects_the_variational_principle():
-    """Same hard correctness gate as the U sweep, applied to the two
-    physically-grounded GaAs points (DFT t1, bare and dielectrically-
-    screened U) instead of the arbitrary-unit sweep."""
+    """Same hard correctness gate as the U sweep, applied to the real
+    GaAs point (DFT t1, dielectrically-screened U) instead of the
+    arbitrary-unit sweep."""
     result = vqe_tmi.run_real_gaas_point(n_starts=4, n_epochs=150, seed=1)
     gap = result["E_vqe_optimized"] - result["E_exact_ground"]
     assert np.all(gap > -1e-6), (

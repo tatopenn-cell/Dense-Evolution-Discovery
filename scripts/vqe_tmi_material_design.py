@@ -31,19 +31,22 @@ an optimizer failure (multi-start restarts consistently converge to the
 same plateau at high U).
 
 In addition to the arbitrary-unit U sweep, run_real_gaas_point() runs the
-same pipeline at a physically-grounded point: t1 and the bare on-site
-Coulomb integral come from dft_gaas_valence_parameters.py's converged,
-wavefunction-stability-confirmed PBE/STO-3G calculation at the real
-Ga-As nearest-neighbor bond length (2.44 A, the actual zinc-blende
-distance). GaAs is not conventionally modeled as a Hubbard material, so
-there is no literature-tabulated "true" U to compare against -- but the
-bare (gas-phase, unscreened) DFT integral can be converted to an
-approximate solid-state value the standard way, by dividing by the
-material's real static dielectric constant (epsilon_r = 12.9, a
-textbook-cited GaAs value, e.g. Sze). t2/phi (the Haldane-phase term)
-have no independent real-GaAs source at all -- no measured "topological
-phase" for this material -- and are kept at the same T2/T1 ratio as the
-toy sweep, an explicit illustrative choice, not a physical parameter.
+same pipeline at a physically-grounded point: t1 comes from
+dft_gaas_valence_parameters.py's converged, wavefunction-stability-
+confirmed PBE/STO-3G calculation at the real Ga-As nearest-neighbor bond
+length (2.44 A, the actual zinc-blende distance). U is that same
+calculation's on-site Coulomb integral, converted from its gas-phase
+value to an approximate solid-state value by dividing by GaAs's real
+static dielectric constant (epsilon_r = 12.9, a textbook-cited value,
+e.g. Sze) -- the standard way to account for the screening a solid's
+surrounding crystal provides that an isolated gas-phase pair cannot. GaAs
+is not conventionally modeled as a Hubbard material, so there is no
+literature-tabulated U to compare against directly; the derived U/t
+ratio landing well below 1 is itself the cross-check (see README Section
+19). t2/phi (the Haldane-phase term) have no independent real-GaAs
+source at all -- no measured "topological phase" for this material --
+and are kept at the same T2/T1 ratio as the toy sweep, an explicit
+illustrative choice, not a physical parameter.
 
 Produces `data/vqe_tmi_material_design.csv`,
 `data/vqe_tmi_material_design_gaas_real.csv`, and
@@ -224,25 +227,19 @@ def run_experiment(u_range=U_RANGE, n_starts=N_STARTS, n_epochs=N_EPOCHS, lr=LEA
 
 
 def run_real_gaas_point(n_starts=N_STARTS, n_epochs=N_EPOCHS, lr=LEARNING_RATE, seed=1):
-    """Same VQE-vs-exact-diagonalization pipeline as run_experiment, but
-    at two physically-grounded points instead of an arbitrary-unit sweep:
-    t1 = T1_GAAS_DFT_EV (real Ga-As bond length, DFT) at U_bare
-    (unscreened) and U_screened (divided by GaAs's real dielectric
-    constant) -- see the module docstring for why there's no single
-    literature "true" value to target instead."""
-    h_bare = build_tmi_hamiltonian(U_GAAS_BARE_EV, t1=T1_GAAS_DFT_EV, t2=T2_GAAS_EV, phi=PHI)
+    """Same VQE-vs-exact-diagonalization pipeline as run_experiment, at
+    the real GaAs point: t1 = T1_GAAS_DFT_EV (real Ga-As bond length, DFT)
+    and U = U_GAAS_SCREENED_EV (the DFT on-site integral, dielectrically
+    screened by GaAs's real static dielectric constant)."""
     h_screened = build_tmi_hamiltonian(U_GAAS_SCREENED_EV, t1=T1_GAAS_DFT_EV, t2=T2_GAAS_EV, phi=PHI)
 
-    e_init, e_final, grad_norm = _adam_optimize([h_bare, h_screened], n_starts, n_epochs, lr, seed)
+    e_init, e_final, grad_norm = _adam_optimize([h_screened], n_starts, n_epochs, lr, seed)
     e_vqe_best, grad_norm_best = _best_over_starts(e_final, grad_norm)
-    e_exact = np.array([
-        float(np.linalg.eigvalsh(h_bare)[0]),
-        float(np.linalg.eigvalsh(h_screened)[0]),
-    ])
+    e_exact = np.array([float(np.linalg.eigvalsh(h_screened)[0])])
     return {
-        "label": np.array(["gaas_bare_unscreened", "gaas_screened_epsilon_12.9"]),
-        "U": np.array([U_GAAS_BARE_EV, U_GAAS_SCREENED_EV]),
-        "t1": np.array([T1_GAAS_DFT_EV, T1_GAAS_DFT_EV]),
+        "label": np.array(["gaas"]),
+        "U": np.array([U_GAAS_SCREENED_EV]),
+        "t1": np.array([T1_GAAS_DFT_EV]),
         "E_exact_ground": e_exact,
         "E_vqe_optimized": e_vqe_best,
         "grad_norm_final": grad_norm_best,
@@ -276,36 +273,31 @@ if __name__ == "__main__":
     df.to_csv(_DATA_DIR / "vqe_tmi_material_design.csv", index=False)
 
     print("\n============================================================")
-    print("Real GaAs point: DFT-derived t1, dielectrically-screened U")
+    print("Real GaAs point: DFT-derived hopping, dielectrically-screened U")
     print("============================================================")
-    print(f"t1 (DFT, real Ga-As bond 2.44 A):        {T1_GAAS_DFT_EV:.4f} eV")
-    print(f"U_bare (DFT, gas-phase/unscreened):       {U_GAAS_BARE_EV:.4f} eV")
-    print(f"U_screened (/ epsilon_r={GAAS_EPSILON_R}):            {U_GAAS_SCREENED_EV:.4f} eV")
+    print(f"t1 (DFT, real Ga-As bond 2.44 A): {T1_GAAS_DFT_EV:.4f} eV")
+    print(f"U (DFT integral / epsilon_r={GAAS_EPSILON_R}):   {U_GAAS_SCREENED_EV:.4f} eV")
 
     gaas_result = run_real_gaas_point()
     gaas_gap = gaas_result["E_vqe_optimized"] - gaas_result["E_exact_ground"]
     assert np.all(gaas_gap > -1e-6), (
-        f"Variational principle violated at the real GaAs point(s): gap={gaas_gap.min():.6f}"
+        f"Variational principle violated at the real GaAs point: gap={gaas_gap.min():.6f}"
     )
-    for label, u, e_ex, e_vqe in zip(
-        gaas_result["label"], gaas_result["U"], gaas_result["E_exact_ground"], gaas_result["E_vqe_optimized"],
-    ):
-        print(f"{label:28s} U={u:8.4f} eV | exact={e_ex:+.4f} | VQE-optimized={e_vqe:+.4f} "
-              f"| gap={e_vqe - e_ex:+.4f}")
+    print(f"exact={gaas_result['E_exact_ground'][0]:+.4f} eV | "
+          f"VQE-optimized={gaas_result['E_vqe_optimized'][0]:+.4f} eV | "
+          f"gap={gaas_gap[0]:+.4f} eV")
 
     u_t_ratio = U_GAAS_SCREENED_EV / T1_GAAS_DFT_EV
-    print(f"\nScreened U/t1 ratio: {u_t_ratio:.3f} -- deep in the weakly-correlated regime "
-          f"(U/t << 1), consistent with GaAs being a conventional band semiconductor rather "
-          f"than a Mott insulator, exactly as expected from real materials physics.")
+    print(f"\nU/t1 ratio: {u_t_ratio:.3f} -- deep in the weakly-correlated regime (U/t << 1), "
+          f"consistent with GaAs being a conventional band semiconductor rather than a Mott insulator.")
 
     pd.DataFrame(gaas_result).to_csv(_DATA_DIR / "vqe_tmi_material_design_gaas_real.csv", index=False)
 
     # Two panels: the arbitrary-unit sweep (U in [0, 6] eV) and the real GaAs
-    # points (U up to 38 eV, bare) do NOT share a readable x-axis -- plotting
-    # them together crushes the sweep into an unreadable sliver in the
-    # corner. Left panel: the sweep alone. Right panel: a grouped bar chart
-    # (same visual language as the Loschmidt echo plot) comparing exact vs.
-    # VQE-optimized energy at the two real GaAs points.
+    # point (U ~ 3 eV but t1 ~ 8 eV, a different absolute energy scale) don't
+    # share a readable x-axis -- plotting them together crushes the sweep
+    # into an unreadable sliver. Left panel: the sweep alone. Right panel:
+    # exact vs. VQE-optimized energy at the real GaAs point.
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
 
     ax1.plot(result["U"], result["E_exact_ground"], "g-", lw=2, label="Exact ground state (diagonalization)")
@@ -317,28 +309,19 @@ if __name__ == "__main__":
     ax1.legend()
     ax1.grid(alpha=0.3)
 
-    labels = ["Bare U\n(unscreened)", "Screened U\n(÷ε=12.9)"]
-    x = np.arange(2)
+    x = np.arange(1)
     width = 0.35
     ax2.bar(x - width / 2, gaas_result["E_exact_ground"], width, color="#2ecc71", label="Exact ground state")
     ax2.bar(x + width / 2, gaas_result["E_vqe_optimized"], width, color="#3498db", label="VQE-optimized")
     ax2.set_xticks(x)
-    ax2.set_xticklabels(labels)
+    ax2.set_xticklabels(["GaAs"])
+    ax2.set_xlim(-1, 1)
     ax2.set_ylabel("Ground-state energy (eV)")
-    ax2.set_title("Real GaAs point (DFT t1 = 7.917 eV)")
+    ax2.set_title(f"Real GaAs point (t1={T1_GAAS_DFT_EV:.3f} eV, U={U_GAAS_SCREENED_EV:.3f} eV)")
     ax2.legend()
     ax2.grid(alpha=0.3, axis="y")
 
-    fig.suptitle("Topological Mott Isolator: real optimization closes most of the gap")
+    fig.suptitle("Topological Mott Isolator: VQE ground-state optimization")
     fig.tight_layout()
     fig.savefig(_IMAGES_DIR / "vqe_tmi_material_design.png", dpi=150)
     print(f"\nsaved plot: {_IMAGES_DIR / 'vqe_tmi_material_design.png'}")
-
-    print("\n--- Conclusion ---")
-    print("Real Adam optimization (exact JAX autodiff, multi-start) closes almost")
-    print("all of the gap to the true ground state at weak/moderate U, and respects")
-    print("the variational bound everywhere. The remaining gap at large U (~0.5 eV")
-    print("at U=6.0) is an honest ansatz-expressivity limit, not an optimizer bug --")
-    print("multi-start restarts converge to the same plateau there. The real GaAs")
-    print("point sits at U/t << 1 -- weakly correlated, consistent with GaAs being a")
-    print("conventional semiconductor, not the Mott-insulating regime this toy sweep explores.")
