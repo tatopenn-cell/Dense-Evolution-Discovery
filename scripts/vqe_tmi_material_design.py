@@ -1,15 +1,13 @@
 """
-Topological Mott Isolator ("New Silicon") material design: a real VQE
-optimization loop, validated against exact diagonalization.
+Topological Mott Isolator ("New Silicon") material design: VQE
+ground-state optimization, validated against exact diagonalization.
 
 A Haldane-Hubbard-flavored toy Hamiltonian (on-site Mott repulsion U +
-real nearest-neighbor hopping t1 + complex Haldane-phase next-nearest-
-neighbor hopping t2) is swept over U. For every U, this script actually
-minimizes E(theta) = <psi(theta)| H(U) |psi(theta)> over a hardware-
-efficient RY-CX-RZ ansatz via real gradient descent (Adam, exact JAX
-autodiff through `dense_evolution.circuit_to_energy_fn` -- no finite
-differences, no dead parameters) instead of evaluating the energy at a
-single fixed random theta and calling the result "the ideal state".
+nearest-neighbor hopping t1 + complex Haldane-phase next-nearest-
+neighbor hopping t2) is swept over U. For every U, this script minimizes
+E(theta) = <psi(theta)| H(U) |psi(theta)> over a hardware-efficient
+RY-CX-RZ ansatz via gradient descent (Adam, exact JAX autodiff through
+`dense_evolution.circuit_to_energy_fn`).
 
 Every U point uses `N_STARTS` independent random initializations,
 optimized in parallel via a single `jax.vmap`'d Adam loop (one JIT'd step
@@ -210,9 +208,8 @@ def vqe_optimize_batch(u_range, n_starts=N_STARTS, n_epochs=N_EPOCHS, lr=LEARNIN
 
 def run_experiment(u_range=U_RANGE, n_starts=N_STARTS, n_epochs=N_EPOCHS, lr=LEARNING_RATE, seed=0):
     """Returns a dict of per-U arrays: exact ground energy, best VQE
-    energy across starts, the single-start (no optimization) random
-    baseline energy the original flawed draft would have reported, and
-    the final gradient norm at the winning start."""
+    energy across starts, an unoptimized single-random-theta baseline
+    energy, and the final gradient norm at the winning start."""
     e_init, e_final, grad_norm = vqe_optimize_batch(u_range, n_starts, n_epochs, lr, seed)
     e_vqe_best, grad_norm_best = _best_over_starts(e_final, grad_norm)
     e_random_baseline = e_init[:, 0]
@@ -313,7 +310,7 @@ if __name__ == "__main__":
 
     ax1.plot(result["U"], result["E_exact_ground"], "g-", lw=2, label="Exact ground state (diagonalization)")
     ax1.plot(result["U"], result["E_vqe_optimized"], "b-o", lw=2, label=f"VQE-optimized ({N_STARTS} restarts, Adam)")
-    ax1.plot(result["U"], result["E_random_baseline"], "r--", lw=1.5, label="Fixed random theta (original draft)")
+    ax1.plot(result["U"], result["E_random_baseline"], "r--", lw=1.5, label="Unoptimized theta (random)")
     ax1.set_xlabel("Mott repulsion U (eV)")
     ax1.set_ylabel("Ground-state energy (eV)")
     ax1.set_title(f"Arbitrary-unit U sweep (0-{U_RANGE[-1]:.0f} eV)")

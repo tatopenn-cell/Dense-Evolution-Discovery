@@ -79,9 +79,8 @@ def test_vqe_at_u_zero_reaches_the_exact_ground_state():
 
 
 def test_optimization_loop_actually_moves_the_energy():
-    """The whole point of this script: the optimized energy must be far
-    below the un-optimized (single fixed random theta) baseline that the
-    original flawed draft would have reported as 'the ideal state'."""
+    """The optimized energy must be far below the unoptimized (single
+    random theta) baseline."""
     result = vqe_tmi.run_experiment(
         u_range=np.array([1.0, 3.0]), n_starts=4, n_epochs=150, seed=1,
     )
