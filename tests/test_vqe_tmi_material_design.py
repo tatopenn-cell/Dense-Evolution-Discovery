@@ -90,3 +90,30 @@ def test_optimization_loop_actually_moves_the_energy():
         f"optimization should substantially lower the energy vs. an unoptimized "
         f"random theta, got improvements {improvement}"
     )
+
+
+def test_real_gaas_point_respects_the_variational_principle():
+    """Same hard correctness gate as the U sweep, applied to the two
+    physically-grounded GaAs points (DFT t1, bare and dielectrically-
+    screened U) instead of the arbitrary-unit sweep."""
+    result = vqe_tmi.run_real_gaas_point(n_starts=4, n_epochs=150, seed=1)
+    gap = result["E_vqe_optimized"] - result["E_exact_ground"]
+    assert np.all(gap > -1e-6), (
+        f"variational principle violated at the real GaAs point(s): gap={gap.min():.6f}"
+    )
+
+
+def test_gaas_screened_u_is_smaller_than_bare_u_by_the_dielectric_constant():
+    """The screened U is a direct division of the bare (unscreened) DFT
+    integral by GaAs's real static dielectric constant -- not a separate
+    fitted number -- so this ratio must hold exactly, not approximately."""
+    assert abs(vqe_tmi.U_GAAS_SCREENED_EV * vqe_tmi.GAAS_EPSILON_R - vqe_tmi.U_GAAS_BARE_EV) < 1e-9
+
+
+def test_gaas_screened_point_is_in_the_weakly_correlated_regime():
+    """The whole physical point of screening: dividing by GaAs's real
+    dielectric constant should land U well below t1 (U/t1 << 1), matching
+    GaAs being a conventional band semiconductor rather than a Mott
+    insulator -- unlike the bare, unscreened value, which does not."""
+    assert vqe_tmi.U_GAAS_SCREENED_EV / vqe_tmi.T1_GAAS_DFT_EV < 1.0
+    assert vqe_tmi.U_GAAS_BARE_EV / vqe_tmi.T1_GAAS_DFT_EV > 1.0
