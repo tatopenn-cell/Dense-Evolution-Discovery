@@ -174,6 +174,42 @@ Gamma:
 - X: -19.351, -15.314, -13.435 (x2), -3.966, -2.880, 0.625 (x2)
 - L: -20.202, -15.582, -11.442 (x2), -6.194, -1.368 (x2), 0.467
 
+## Improved precision: Vogl-Hjalmarson-Dow (1983) material-specific parameters
+
+Harrison's gap error above (2.91 vs 1.42 eV, ~105% high) comes from
+using *universal* parameters -- same eta coefficients for every
+element pair, no per-material fitting. The fix used in practice by
+the tight-binding literature is a *material-specific* fitted
+parameter set: P. Vogl, H. P. Hjalmarson, J. D. Dow, "A Semi-empirical
+tight-binding theory of the electronic structure of semiconductors",
+J. Phys. Chem. Solids 44 (5), 365-378 (1983) -- an sp3s* basis (5
+orbitals/atom, including an extra fitted s* orbital with no literal
+physical meaning, added purely to get the lowest conduction band
+right). Parameter values transcribed from an independent open-source
+implementation, github.com/rpmuller/TightBinding (`TB.py`, fetched
+2026-08-05), which cites the same paper.
+
+Implemented as `dense_evolution/vhd_tb.py`
+(`sp3s_star_hamiltonian`, `direct_gap_at_gamma`, `MATERIALS` for 16
+zinc-blende/diamond semiconductors: C, Si, Ge, Sn, SiC, AlP, AlAs,
+AlSb, GaP, GaAs, GaSb, InP, InAs, InSb, ZnSe, ZnTe).
+
+**Result (run 2026-08-05):** GaAs direct gap at Gamma = **1.55 eV**
+vs. experimental **1.42 eV** -- **9.2% error**, vs. Harrison
+universal's 104.7% error for the same material. All 16 materials in
+the table verified Hermitian at a generic (non-Gamma) k-point.
+
+Note: while porting the reference implementation, its own Hamiltonian
+assembly (`Hac.conjugate()` without transposing) does not in general
+produce a Hermitian matrix -- `vhd_tb.py` fixes this by assembling
+with the proper conjugate *transpose* (`.conj().T`), verified
+Hermitian for all 16 materials.
+
+Tradeoff vs. Harrison: this is *not* one universal table anymore --
+each material needs its own fitted row. It is still zero-dependency
+(no PySCF/OpenFermion, numpy only) and far cheaper than DFT/SCF, just
+no longer "the same 4 numbers for everything."
+
 ## What this does NOT replace
 
 Harrison's model gives a fast, dependency-free *approximation* to
