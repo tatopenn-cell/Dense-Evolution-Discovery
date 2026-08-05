@@ -20,7 +20,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
-- **[Harrison / VHD Tight-Binding Validation](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/harrison_tight_binding/)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
+- **[Harrison / VHD Tight-Binding Validation](#20-harrison--vhd-tight-binding-validation-against-real-experimental-gaps)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
 - **[GaAs Parameters via DFT and Dielectric Screening](#19-gaas-parameters-via-dft-and-dielectric-screening)** — a converged, wavefunction-stability-confirmed PBE/STO-3G calculation grounds the model in GaAs's dielectric constant, landing the material in the weakly-correlated regime expected for a conventional semiconductor.
@@ -504,6 +504,22 @@ $U/t = 0.376$ sits deep in the weakly-correlated regime, consistent with GaAs be
 `scripts/vqe_tmi_material_design.py`'s `run_real_gaas_point()` runs the same VQE-vs-diagonalization pipeline from Section 18 at this point (right panel of the plot below). The variational bound holds (gap `+0.1028`).
 
 [![GaAs: exact vs. VQE-optimized ground-state energy](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)
+
+---
+
+### 20. Harrison / VHD Tight-Binding Validation Against Real Experimental Gaps
+
+The main Dense-Evolution library's `harrison_tb.py` (Harrison's *universal* sp3 tight-binding parameters — one fixed table for every material, no per-material fitting) and `vhd_tb.py` (Vogl-Hjalmarson-Dow's *material-specific* sp3s\* parameters, 1983) are checked here against real experimental band gaps for GaAs, Si, and Ge — not toy numbers, the actual textbook values (1.42, 1.12, 0.66 eV). GaAs is direct-gap (minimum at $\Gamma$); Si and Ge are indirect-gap, with the conduction-band minimum off-$\Gamma$ (along $\Gamma \to X$ for Si, $\Gamma \to L$ for Ge) — found by scanning the relevant k-space line rather than reading only $\Gamma$.
+
+| Material | Gap type | Harrison universal | VHD material-specific | Experimental |
+|---|---|---|---|---|
+| GaAs | direct, $\Gamma$ | 2.906 eV (**104.7%** error) | 1.55 eV (**9.2%** error) | 1.42 eV |
+| Si | indirect, $\Gamma \to X$ | 3.66 eV (**227%** error, CBM misplaced at $\Gamma$) | 1.171 eV (**4.6%** error) | 1.12 eV |
+| Ge | indirect, $\Gamma \to L$ | 1.831 eV (**177.5%** error, CBM misplaced at $\Gamma$) | 0.765 eV (**15.9%** error, correctly finds L below X) | 0.66 eV |
+
+Harrison's universal parameters are qualitatively sane (Hermitian, correct bonding/antibonding structure) but consistently 2-3x off quantitatively, and structurally cannot place the conduction-band minimum correctly for indirect-gap materials — it always lands at $\Gamma$. Vogl-Hjalmarson-Dow's material-specific parameters get within 5-16% of experiment and correctly identify which off-$\Gamma$ valley is the true minimum. Neither replaces this repo's own DFT-derived GaAs parameters (Section 19) when first-principles accuracy is needed — their value is as fast, dependency-free (no PySCF/OpenFermion) estimates. Full write-up: [`docs/harrison_tight_binding.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/harrison_tight_binding/). Produced by `scripts/harrison_vhd_validation.py` → `data/harrison_vhd_gap_comparison.csv`.
+
+[![Harrison universal vs. VHD material-specific tight-binding gaps, GaAs/Si/Ge vs. experiment](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)
 
 ---
 
