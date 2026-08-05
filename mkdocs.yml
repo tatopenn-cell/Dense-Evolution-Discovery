@@ -55,3 +55,4 @@ plugins:
 
 nav:
   - Home: index.md
+  - Harrison / VHD Tight-Binding: harrison_tight_binding.md

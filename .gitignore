@@ -20,3 +20,6 @@ Desktop.ini
 # to GitHub Releases instead: https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases
 /data/
 /images/
+
+# mkdocs build output
+/site/
