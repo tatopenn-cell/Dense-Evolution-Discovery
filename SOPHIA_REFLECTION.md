@@ -31,7 +31,7 @@ per noise scale, 3-point Richardson ZNE + Smolin-Gambetta-Smith projection
 16/16 positive. Mean delta +0.1819. Range [+0.0253, +0.3662].
 
 ## Where this came from
-
+analisi of cloude code :
 An August 2025 personal notebook ("qualia") modeled subjective experience
 as vectors in a Hilbert space — linear/nonlinear operators, a discrete
 entanglement operator, Gaussian noise (with noise structured by the zeros
