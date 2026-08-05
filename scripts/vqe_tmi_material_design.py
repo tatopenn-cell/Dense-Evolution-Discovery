@@ -293,26 +293,29 @@ if __name__ == "__main__":
 
     pd.DataFrame(gaas_result).to_csv(_DATA_DIR / "vqe_tmi_material_design_gaas.csv", index=False)
 
-    # Two panels: the arbitrary-unit sweep (U in [0, 6] eV) and the GaAs
-    # point (U ~ 3 eV but t1 ~ 8 eV, a different absolute energy scale) don't
-    # share a readable x-axis -- plotting them together crushes the sweep
-    # into an unreadable sliver. Left panel: the sweep alone. Right panel:
-    # exact vs. VQE-optimized energy at the GaAs point.
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
-
+    # Two SEPARATE figures, not two panels of one shared image: the
+    # arbitrary-unit sweep and the GaAs point don't share a readable x-axis
+    # (U ~3 eV but t1 ~8 eV -- a different energy scale), AND each belongs
+    # to its own README section (18 and 19) -- one combined image embedded
+    # in both sections would just show the identical picture twice.
+    fig1, ax1 = plt.subplots(figsize=(8, 5.5))
     ax1.plot(result["U"], result["E_exact_ground"], "g-", lw=2, label="Exact ground state (diagonalization)")
     ax1.plot(result["U"], result["E_vqe_optimized"], "b-o", lw=2, label=f"VQE-optimized ({N_STARTS} restarts, Adam)")
     ax1.plot(result["U"], result["E_random_baseline"], "r--", lw=1.5, label="Unoptimized theta (random)")
     ax1.set_xlabel("Mott repulsion U (eV)")
     ax1.set_ylabel("Ground-state energy (eV)")
-    ax1.set_title(f"Arbitrary-unit U sweep (0-{U_RANGE[-1]:.0f} eV)")
+    ax1.set_title(f"Topological Mott Isolator: arbitrary-unit U sweep (0-{U_RANGE[-1]:.0f} eV)")
     ax1.legend()
     ax1.grid(alpha=0.3)
+    fig1.tight_layout()
+    fig1.savefig(_IMAGES_DIR / "vqe_tmi_material_design.png", dpi=150)
+    print(f"\nsaved plot: {_IMAGES_DIR / 'vqe_tmi_material_design.png'}")
 
     # Exact and VQE-optimized differ by only ~0.1 eV out of ~25 eV -- a bar
     # chart starting at 0 would make that gap visually disappear. Zoom the
     # y-axis to the two values themselves so the (correctly small) gap is
     # actually visible.
+    fig2, ax2 = plt.subplots(figsize=(6, 5.5))
     x = np.arange(1)
     width = 0.35
     e_exact_gaas, e_vqe_gaas = gaas_result["E_exact_ground"][0], gaas_result["E_vqe_optimized"][0]
@@ -327,8 +330,6 @@ if __name__ == "__main__":
     ax2.set_title(f"GaAs (t1={T1_GAAS_DFT_EV:.3f} eV, U={U_GAAS_SCREENED_EV:.3f} eV, gap={e_vqe_gaas - e_exact_gaas:+.4f} eV)")
     ax2.legend()
     ax2.grid(alpha=0.3, axis="y")
-
-    fig.suptitle("Topological Mott Isolator: VQE ground-state optimization")
-    fig.tight_layout()
-    fig.savefig(_IMAGES_DIR / "vqe_tmi_material_design.png", dpi=150)
-    print(f"\nsaved plot: {_IMAGES_DIR / 'vqe_tmi_material_design.png'}")
+    fig2.tight_layout()
+    fig2.savefig(_IMAGES_DIR / "vqe_tmi_material_design_gaas.png", dpi=150)
+    print(f"saved plot: {_IMAGES_DIR / 'vqe_tmi_material_design_gaas.png'}")
