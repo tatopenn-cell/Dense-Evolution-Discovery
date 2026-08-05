@@ -210,6 +210,41 @@ each material needs its own fitted row. It is still zero-dependency
 (no PySCF/OpenFermion, numpy only) and far cheaper than DFT/SCF, just
 no longer "the same 4 numbers for everything."
 
+## Silicon: indirect gap, same VHD fix (run 2026-08-05)
+
+Si ("silicio ibrido" in this repo's older band-comparison pipeline,
+`scripts/next_gen_silicon.py` / `data/bande_silicio_ibrido.csv`) is
+an **indirect**-gap material -- unlike GaAs, its conduction-band
+minimum is not at Gamma, it's off-axis along the Gamma->X (Delta)
+line. `direct_gap_at_gamma` alone would give the wrong (too-large)
+number for Si, same mistake as reading off only the Gamma point on a
+material where the real minimum isn't there. Used the new
+`band_extrema_along_path(material, k_start, k_end)` to scan
+Gamma->X and find the true valence-band max and conduction-band min:
+
+- **VHD sp3s* (material-specific):** VBM=0 eV at Gamma (correct,
+  matches known Si band structure), CBM=1.1713 eV at k=0.732 of the
+  way from Gamma to X (literature value is closer to k~0.85 --
+  same Delta-valley, not an exact match, but right regime).
+  **Computed indirect gap = 1.171 eV vs. experimental 1.12 eV (300 K)
+  -- 4.6% error.**
+  Gamma-Gamma direct transition (context only, not the fundamental
+  gap): 3.43 eV -- in the right ballpark for Si's known E0' direct
+  transition (~3.4 eV).
+- **Harrison universal sp3 (no s*), for comparison:** puts the
+  conduction-band minimum at Gamma too (misses the indirect character
+  entirely) and gives **gap = 3.66 eV vs. 1.12 eV -- 227% error**,
+  worse than its own GaAs result. Expected: this is exactly the
+  known failure mode Vogl-Hjalmarson-Dow's s* orbital was added to
+  fix -- a plain sp3 nearest-neighbor model structurally cannot place
+  the lowest conduction band correctly.
+
+Same pattern as GaAs: universal Harrison parameters get the right
+qualitative physics (bonding/antibonding, Hermitian, sane orbital
+picture) but are quantitatively far off; VHD material-specific
+parameters get close to experiment on the one number that matters
+(the gap), material by material.
+
 ## What this does NOT replace
 
 Harrison's model gives a fast, dependency-free *approximation* to
