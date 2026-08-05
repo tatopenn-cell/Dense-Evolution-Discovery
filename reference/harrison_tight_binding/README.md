@@ -245,6 +245,32 @@ picture) but are quantitatively far off; VHD material-specific
 parameters get close to experiment on the one number that matters
 (the gap), material by material.
 
+## Germanium: indirect gap at L (not X), same VHD fix (run 2026-08-05)
+
+Ge is also indirect-gap, but unlike Si its conduction-band minimum is
+at the **L** point (k=(0.5,0.5,0.5) in these units, Gamma->L direction),
+not along Gamma->X. Scanned both directions with
+`band_extrema_along_path` to check the model gets the right valley:
+
+- **VHD sp3s*:** Gamma->X scan: CBM=0.7895 eV at k=0.808 of the way to
+  X. Gamma->L scan: CBM=0.7649 eV at k=(0.5,0.5,0.5), i.e. exactly at
+  L. **L is lower than X (0.765 < 0.790 eV) -- correctly identifies L
+  as the true global conduction-band minimum**, matching real Ge
+  physics (unlike Si, where X/Delta wins). **Computed indirect gap =
+  0.765 eV vs. experimental 0.66 eV (300 K) -- 15.9% error.**
+  Gamma-Gamma direct transition (context only): 0.90 eV, in the right
+  ballpark for Ge's known E0 direct gap (~0.8 eV).
+- **Harrison universal sp3, for comparison:** puts the conduction-band
+  minimum at Gamma on *both* paths (same failure mode as Si -- no
+  s* orbital means it structurally cannot place the true minimum),
+  giving **gap = 1.831 eV vs. 0.66 eV -- 177.5% error**.
+
+Third material, same pattern: Harrison universal is qualitatively
+sane but consistently ~2-3x off and misses indirect-gap valley
+placement entirely (Si and Ge both); VHD material-specific gets
+within ~5-16% of experiment and correctly identifies *which* valley
+(X for Si, L for Ge) is the true minimum.
+
 ## What this does NOT replace
 
 Harrison's model gives a fast, dependency-free *approximation* to
