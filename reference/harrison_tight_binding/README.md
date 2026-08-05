@@ -271,6 +271,20 @@ placement entirely (Si and Ge both); VHD material-specific gets
 within ~5-16% of experiment and correctly identifies *which* valley
 (X for Si, L for Ge) is the true minimum.
 
+## Comparison plot and reproducible script
+
+`scripts/harrison_vhd_validation.py` reruns all three materials'
+Harrison-universal vs. VHD-material-specific gaps against experiment
+in one script (same numbers as the sections above), and writes:
+
+- `data/harrison_vhd_gap_comparison.csv` -- one row per material
+  (`harrison_universal_eV`, `vhd_material_specific_eV`,
+  `experimental_eV`, `harrison_error_pct`, `vhd_error_pct`).
+- `images/harrison_vhd_gap_comparison.png` -- grouped bar chart,
+  all three materials, all three values (Harrison / VHD / experimental)
+  side by side. Also copied to `docs/assets/harrison_tight_binding/`
+  for the docs site page.
+
 ## What this does NOT replace
 
 Harrison's model gives a fast, dependency-free *approximation* to
