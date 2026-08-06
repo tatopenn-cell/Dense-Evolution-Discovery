@@ -20,6 +20,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: sign-dependent teleportation signal peaks at t1=0.60, requires the injected message (control gives I=0 exactly), and peaks near mu~11-12 and t0~0.60 in independent coupling-strength and scrambling-time scans.
 - **[Harrison / VHD Tight-Binding Validation](#20-harrison--vhd-tight-binding-validation-against-real-experimental-gaps)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
@@ -520,6 +521,31 @@ The main Dense-Evolution library's `harrison_tb.py` (Harrison's *universal* sp3 
 Harrison's universal parameters are qualitatively sane (Hermitian, correct bonding/antibonding structure) but consistently 2-3x off quantitatively, and structurally cannot place the conduction-band minimum correctly for indirect-gap materials — it always lands at $\Gamma$. Vogl-Hjalmarson-Dow's material-specific parameters get within 5-16% of experiment and correctly identify which off-$\Gamma$ valley is the true minimum. Neither replaces this repo's own DFT-derived GaAs parameters (Section 19) when first-principles accuracy is needed — their value is as fast, dependency-free (no PySCF/OpenFermion) estimates. Full write-up: [`docs/harrison_tight_binding.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/harrison_tight_binding/). Produced by `scripts/harrison_vhd_validation.py` → `data/harrison_vhd_gap_comparison.csv`.
 
 [![Harrison universal vs. VHD material-specific tight-binding gaps, GaAs/Si/Ge vs. experiment](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)
+
+---
+
+### 21. Traversable-Wormhole-Inspired Quantum Teleportation (SYK Model)
+
+Real reproduction of the Gao-Jafferis-Wall traversable-wormhole teleportation protocol on a chaotic binary sparse N=8 Sachdev-Ye-Kitaev (SYK) model, following **arXiv:2604.10090** — built on `dashboard_core.wormhole` (main library, `dense-evolution>=8.1.49`). An earlier, discarded circuit used the right vocabulary but wasn't real physics: a single-qubit-register readout structurally cannot show sign-dependent behavior (the no-signaling theorem forbids it), verified directly rather than assumed. The real protocol needs two coupled chaotic systems, a message injected via a separate reference-qubit pair, a real bilinear L-R coupling, and a mutual-information readout — all implemented and unit-tested in the main repo.
+
+Instance selection matters: a random draw of which SYK terms to keep does not reliably show the signal. `select_good_instance` reproduces the paper's own criterion (screen candidates by exact commuting/anticommuting term-pair count) — seed 61 matches the paper's ratio (34 commuting / 11 anticommuting) exactly and is used throughout.
+
+| Scan | Peak | Value |
+|---|---|---|
+| t1 (post-coupling evolution) | t1=0.60 | delta=+0.00468 |
+| message vs. no-message control | — | I(P:R)=0 exactly without the message |
+| mu (coupling strength) | mu≈11 | delta=+0.00473 |
+| t0 (pre-coupling scrambling time) | t0≈0.60 | delta=+0.00972 |
+
+The signal requires enough pre-coupling scrambling before it appears (consistent with the protocol's theoretical chaos requirement), peaks at a coupling strength close to the paper's own `mu=12` choice, and vanishes exactly — not just approximately — when the message injection is removed, confirming the sign-dependent asymmetry genuinely comes from the teleported message rather than the L-R coupling alone. The 2D joint optimum over (t0, mu) was not found (each scan holds the other axis fixed) — reported honestly, not glossed over. Full write-up: [`docs/wormhole_syk_teleportation.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/wormhole_syk_teleportation/). Produced by `scripts/wormhole_syk_teleportation.py` → `data/wormhole_*.csv`.
+
+[![Traversable-wormhole teleportation signal vs. t1](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)
+
+[![Control: signal requires the injected message](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_message_control.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_message_control.png)
+
+[![Sign-dependent signal vs. coupling strength mu](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)
+
+[![Sign-dependent signal vs. pre-coupling scrambling time t0](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)
 
 ---
 
