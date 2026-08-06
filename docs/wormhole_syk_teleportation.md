@@ -16,7 +16,7 @@ traversable-wormhole-inspired quantum teleportation in a chaotic binary
 sparse SYK model" (2026) -- a real IBM-hardware reproduction of the
 protocol. This repo runs the equivalent as an exact/near-exact simulation
 (statevector access the paper's own hardware run didn't have) and adds
-four parameter scans the paper itself didn't publish.
+five parameter scans the paper itself didn't publish.
 
 ## Why this exists
 
@@ -173,28 +173,75 @@ injected message before it matters.
 
 Full data: `data/wormhole_t0_scan.csv`.
 
+## Experiment 5: 2D (t0, mu) joint grid search (run 2026-08-06)
+
+Experiments 3 and 4 scanned `mu` and `t0` independently, each holding
+the other fixed at a "reasonable default" -- a quick follow-up check at
+the best `t0=0.60` found the mu-peak shifts higher there (`mu=16` beat
+`mu=12`, still rising at the edge of that check's tested range), meaning
+neither 1D scan alone finds the true joint optimum. This experiment
+resolves that with a real grid: `t0` in `[0.05, 1.50]` (30 values,
+step 0.05) x `mu` in `[2, 30]` (29 values, step 1) = 870 points, `t1`
+held fixed at `0.60` (Experiment 1's own peak), `with_message=True`.
+
+**Global maximum on the grid: `t0=0.65, mu=15.0`, `delta=+0.01167`** --
+noticeably better than either 1D scan's own peak (`t0=0.60,mu=12` gave
+`+0.00972`; `t0=0.30,mu=11` gave `+0.00473`).
+
+| t0 | mu | delta |
+|---|---|---|
+| **0.65** | **15.0** | **+0.01167** |
+| 0.60 | 15.0 | +0.01163 |
+| 0.65 | 16.0 | +0.01161 |
+| 0.60 | 16.0 | +0.01153 |
+| 0.60 | 14.0 | +0.01134 |
+| 0.65 | 14.0 | +0.01133 |
+
+The top points cluster in a compact region (`t0` in `[0.60, 0.70]`, `mu`
+in `[14, 17]`) rather than a single isolated pixel -- a broad, smooth
+plateau, not a grid-resolution artifact. The heatmap below shows a
+single well-defined hill with no secondary peaks, falling off smoothly
+in every direction; far from the peak (`t0 > 1.2` and `mu > 25`) `delta`
+turns negative, an observation not investigated further here.
+
+**Performance note**: `run_wormhole_protocol` rebuilds the SYK/coupling
+Hamiltonians and re-diagonalizes both on every call, even though neither
+depends on `t0`/`mu`/`t1` for a fixed `(seed, n_majorana, k_terms)` --
+measured directly at 4.3-6.4s, versus 0.022s/call for the actual
+`t0`/`mu`-dependent evolution + readout. Precomputing the Hamiltonians
+and their eigendecompositions once, then reusing them for all 870 grid
+points, cut this experiment from an estimated ~2 hours down to **47.6
+seconds** (~165x) -- confirmed by timing both approaches directly, not
+assumed. No multiprocessing needed. See `scripts/wormhole_syk_teleportation.py`'s
+`run_2d_grid_search` for the implementation.
+
+![2D grid search](assets/wormhole_syk_teleportation/wormhole_2d_grid.png)
+
+Full data: `data/wormhole_2d_grid.csv`.
+
 ## What this does NOT show
 
-- **The 2D joint optimum over (t0, mu) has not been found.** Each scan
-  above holds the other axis fixed at a "reasonable default" (`t0=0.3`
-  for the mu scan, `mu=12` for the t0 scan). A quick follow-up check at
-  the best `t0=0.60` found the mu-peak shifts higher (`mu=16` gave a
-  larger delta than `mu=12` at that `t0`, and was still rising at the
-  edge of the tested range) -- so `t0=0.60, mu~12` is not necessarily
-  the true global maximum, only the best point *along each individual
-  axis*. A real 2D grid scan is the obvious next step if the exact
-  optimum matters.
+- **The 3D (t0, mu, t1) joint optimum has not been found.** Experiment
+  5 resolves the 2D (t0, mu) optimum but holds `t1` fixed at `0.60`
+  (Experiment 1's own 1D peak) -- `t1`'s optimum could plausibly also
+  shift once `t0`/`mu` are no longer at their original defaults, same as
+  `mu`'s optimum shifted once `t0` moved. Unverified; a 3D grid (or a
+  proper joint optimizer) would settle it, at correspondingly higher
+  compute cost.
 - **All backend=exact (matrix exponentiation), not the Trotterized
   real-gate-circuit backend.** Both are implemented and cross-verified
   in the main repo's test suite to agree closely at the known peak
   (`I(mu=+12)=0.01301` Trotter vs `0.01326` exact, `I(mu=-12)=0.01821`
   vs `0.01793`) -- exact was used here purely for scan speed (~78 protocol
   calls at ~4-5s each).
-- **No claim that `t0=0.60` or `mu=11` are "special" numbers** in any
-  deeper sense -- they're the best points on a coarse grid (step sizes
-  0.1-0.3 for t0, 1-4 for mu), not precisely-converged optima. Reading
-  more into their exact decimal values than the grid resolution supports
-  would be a mistake.
+- **No claim that `t0=0.65`, `mu=15`, or any other exact decimal value
+  is a "special" number** in any deeper sense -- even Experiment 5's
+  finer grid (step 0.05 for t0, step 1 for mu) is still a grid, not a
+  continuous optimizer; the broad, smooth plateau around the max (six
+  points within 0.0004 of the top value) means the *true* continuum
+  optimum is somewhere in that neighborhood, not necessarily at exactly
+  `(0.65, 15.0)`. Reading more into the specific digits than the grid
+  resolution supports would be a mistake.
 
 ## Reproduce
 
@@ -203,6 +250,9 @@ python scripts/wormhole_syk_teleportation.py
 ```
 
 Requires `dense-evolution>=8.1.49` (`pip install dense-evolution`).
-Regenerates all four CSVs in `data/` and PNGs in `images/` from scratch
+Regenerates all five CSVs in `data/` and PNGs in `images/` from scratch
 -- no pre-computed results are checked into this repo outside of
-`docs/assets/` (see this repo's README for that convention).
+`docs/assets/` (see this repo's README for that convention). Experiments
+1-4 take a few minutes (~78 protocol calls at ~4-5s each); Experiment 5's
+870-point grid takes well under a minute thanks to its precompute-once
+optimization.

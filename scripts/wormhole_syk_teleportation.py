@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs four real, verified experiments, each producing its own
+This script runs five real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -34,24 +34,42 @@ CSV + plot:
    scrambling before it appears (consistent with the theoretical chaos
    requirement of the protocol), and for this specific instance peaks
    later than the paper's own t0=0.3 choice.
+5. 2D (t0, mu) joint grid search -- experiments 3 and 4 scanned each
+   axis independently, holding the other fixed; a quick follow-up check
+   showed the mu-peak shifts as t0 changes, meaning neither 1D scan
+   alone finds the true joint optimum. This grid search resolves that:
+   870 points (30 t0 values x 29 mu values), global max at
+   t0=0.65, mu=15.0 (delta=+0.01167), noticeably better than either 1D
+   scan's own peak.
 
-All four use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
+All five use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
 instance dashboard_core.wormhole.select_good_instance finds when
 screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
 
 Honest caveats, not glossed over:
-- The t0 and mu axes were scanned independently (each holding the other
-  fixed at its "default" value). A quick joint check at the best t0=0.60
-  found the mu-peak shifts higher (mu=16 gave a larger delta than mu=12
-  at that t0, and was still rising) -- the true 2D joint optimum has NOT
-  been found, only that each 1D scan (holding the other axis at a
-  reasonable default) shows a clear peak. Reported as such.
+- Experiment 5's grid holds t1 fixed at 0.60 (the Experiment 1 peak) --
+  a full 3D (t0, mu, t1) joint search was not attempted. t1's own
+  optimum could plausibly also shift once t0/mu are no longer at their
+  original 1D-scan defaults; unverified.
 - All results use the exact-evolution backend (eigendecomposition), not
   the Trotterized real-gate-circuit backend -- both are implemented and
   cross-verified to agree closely (see the main Dense-Evolution repo's
   tests), but the exact backend is what was used here for speed.
+- Experiment 5 bypasses `run_wormhole_protocol`'s public API and calls
+  `dashboard_core.wormhole`'s private layout/evolution helpers directly.
+  Justified by a real, measured cost asymmetry: building the SYK/coupling
+  Hamiltonians and diagonalizing both (`_protocol_layout` + two `eigh`
+  calls) took 4.3-6.4s and does not depend on t0/mu/t1 at all for a
+  fixed (seed, n_majorana, k_terms) -- only the actual per-point
+  evolution + mutual-information readout does, and that alone measured
+  at 0.022s/call. Computing the expensive part once instead of once per
+  grid point cut an 870-point grid from an estimated ~2 hours down to
+  47.6s (~165x) -- confirmed by timing both versions directly, not
+  assumed. `run_wormhole_protocol` itself is unchanged; this script's
+  own helper functions are just a faster way to call the same physics
+  repeatedly at one fixed instance.
 """
 import pathlib
 
@@ -63,6 +81,15 @@ from dashboard_core.wormhole import (
     build_sparse_syk_terms, commuting_pair_count, select_good_instance,
     run_wormhole_protocol,
 )
+# Private helpers, used only by run_2d_grid_search's precompute-once
+# optimization -- see this module's docstring for why. Not part of
+# dashboard_core.wormhole's public API (no __all__ entry); reached into
+# deliberately here rather than duplicated, since re-deriving the same
+# protocol layout independently would risk silently drifting out of sync
+# with the real implementation.
+from dashboard_core.wormhole import _protocol_layout, _initial_state_ops, _evolve
+from dense_evolution import mutual_information
+import dense_evolution as de
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
@@ -196,6 +223,66 @@ def run_t0_scan(seed: int) -> pd.DataFrame:
     return df
 
 
+def run_2d_grid_search(seed: int) -> pd.DataFrame:
+    """Joint (t0, mu) grid search, t1 held fixed at 0.60 (Experiment 1's
+    peak). Precomputes the Hamiltonian/coupling matrices and their
+    eigendecompositions ONCE (the expensive, t0/mu/t1-independent part
+    of run_wormhole_protocol), then reuses them for every grid point --
+    see this module's docstring for the measured ~165x speedup this
+    gives over calling run_wormhole_protocol per point."""
+    n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+    H = de.pauli_hamiltonian_to_matrix(terms_full, n_full)
+    eigvals, eigvecs = np.linalg.eigh(H)
+    V = de.pauli_hamiltonian_to_matrix(v_terms, n_full)
+    v_eigvals, v_eigvecs = np.linalg.eigh(V)
+
+    sim = de.DenseSVSimulator(n_full)
+    sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, with_message=True))
+    sv0 = sim.get_statevector()
+
+    def mi_at(t0, mu, t1=0.60):
+        sv = _evolve(sv0, eigvals, eigvecs, t0)
+        sv = _evolve(sv, v_eigvals, v_eigvecs, mu)
+        sv = _evolve(sv, eigvals, eigvecs, t1)
+        return mutual_information(sv, n_full, [P], [R[0]])
+
+    t0_values = np.round(np.arange(0.05, 1.55, 0.05), 3)
+    mu_values = np.round(np.arange(2.0, 31.0, 1.0), 1)
+
+    rows = []
+    delta_grid = np.zeros((len(mu_values), len(t0_values)))
+    for i, mu in enumerate(mu_values):
+        for j, t0 in enumerate(t0_values):
+            i_pos = mi_at(t0, +mu)
+            i_neg = mi_at(t0, -mu)
+            delta = i_neg - i_pos
+            delta_grid[i, j] = delta
+            rows.append({"t0": t0, "mu": mu, "I_pos": i_pos, "I_neg": i_neg, "delta": delta})
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_2d_grid.csv", index=False)
+
+    best = df.loc[df["delta"].idxmax()]
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(11, 7))
+    extent = [t0_values.min(), t0_values.max(), mu_values.min(), mu_values.max()]
+    im = ax.imshow(delta_grid, origin='lower', aspect='auto', extent=extent, cmap='plasma')
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label("delta = I(mu=-|mu|) - I(mu=+|mu|)", color='#888888')
+    ax.scatter([best['t0']], [best['mu']], color='cyan', marker='*', s=300,
+               edgecolor='white', linewidth=1, label=f"max: t0={best['t0']:.2f}, mu={best['mu']:.1f}")
+    ax.set_xlabel("t0 (pre-coupling scrambling time)", color='#888888')
+    ax.set_ylabel("|mu| (L-R coupling strength)", color='#888888')
+    ax.set_title("Joint (t0, mu) optimization surface\n(seed=61, N=8 SYK, t1=0.60 fixed)",
+                 fontsize=11, fontweight='bold', pad=15)
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_2d_grid.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -218,6 +305,12 @@ def run_all():
     df4 = run_t0_scan(seed)
     peak4 = df4.loc[df4["delta"].idxmax()]
     print(f"  peak: t0={peak4['t0']:.2f}  delta={peak4['delta']:+.5f}")
+
+    print("\n=== Experiment 5: 2D (t0, mu) joint grid search ===")
+    df5 = run_2d_grid_search(seed)
+    peak5 = df5.loc[df5["delta"].idxmax()]
+    print(f"  grid: {df5['t0'].nunique()} x {df5['mu'].nunique()} = {len(df5)} points")
+    print(f"  global max: t0={peak5['t0']:.2f}  mu={peak5['mu']:.1f}  delta={peak5['delta']:+.5f}")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
