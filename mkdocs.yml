@@ -56,3 +56,4 @@ plugins:
 nav:
   - Home: index.md
   - Harrison / VHD Tight-Binding: harrison_tight_binding.md
+  - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
