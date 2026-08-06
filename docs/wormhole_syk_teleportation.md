@@ -227,42 +227,27 @@ plausibly shift once `t0`/`mu` are no longer at their original 1D-scan
 defaults -- unverified. This experiment checks it directly: fix
 `t0=0.65, mu=+-15.0` (Experiment 5's grid optimum), sweep `t1`.
 
-A coarse pass across Experiment 1's original grid of `t1` values confirms
-the peak has moved:
+A fine sweep, `t1` in `[0.05, 1.30]` (126 values, step 0.01), reusing
+Experiment 5's precompute-once approach:
 
-| t1 | delta |
-|---|---|
-| 0.10 | +0.00969 |
-| 0.20 | +0.01185 |
-| 0.30 | +0.01403 |
-| 0.40 | +0.01516 |
-| 0.50 | +0.01438 |
-| 0.60 | +0.01167 |
-| 0.70 | +0.00811 |
-| 0.85 | +0.00419 |
-| 1.00 | +0.00323 |
-| 1.20 | +0.00246 |
-
-A finer pass, step 0.02 across `[0.30, 0.50]`, localizes it:
-
-| t1 | delta |
-|---|---|
-| 0.30 | +0.01403 |
-| 0.32 | +0.01437 |
-| 0.34 | +0.01467 |
-| 0.36 | +0.01490 |
-| 0.38 | +0.01507 |
-| 0.40 | +0.01516 |
-| **0.42** | **+0.01518** |
-| 0.44 | +0.01511 |
-| 0.46 | +0.01495 |
-| 0.48 | +0.01470 |
-| 0.50 | +0.01438 |
-
-**New best point: `t0=0.65, mu=15.0, t1=0.42`, `delta=+0.01518`** -- about
+**New best point: `t0=0.65, mu=15.0, t1=0.41`, `delta=+0.01518`** -- about
 30% above Experiment 5's headline value (`+0.01167`, `t1=0.60` held
-fixed), on a smooth, single-peaked curve (no secondary bumps, consistent
-decay on both sides down to the wider coarse-pass range).
+fixed), on a smooth, single-peaked curve (no secondary bumps, monotonic
+decay on both sides across the full swept range).
+
+| t1 | delta |
+|---|---|
+| 0.10 | +0.00976 |
+| 0.20 | +0.01197 |
+| 0.30 | +0.01403 |
+| 0.40 | +0.01518 |
+| **0.41** | **+0.01518** |
+| 0.50 | +0.01439 |
+| 0.60 (Experiment 5's fixed value) | +0.01167 |
+| 0.70 | +0.00811 |
+| 0.90 | +0.00361 |
+| 1.10 | +0.00307 |
+| 1.30 | +0.00158 |
 
 This confirms the caveat was correct, but only takes one
 coordinate-ascent step, not a full 3D search: `t0` and `mu` were held at
@@ -271,18 +256,19 @@ shift again now that `t1` has moved (the same pattern that motivated
 Experiment 5 in the first place) is still open. A converged joint
 optimum would need to iterate this, or a real 3D grid.
 
-Run directly against the installed `dense-evolution>=8.1.49` package's
-wormhole API (`n_majorana=8, k_terms=10, J=sqrt(2), seed=61,
-with_message=True, backend=exact`), not yet folded into
-`scripts/wormhole_syk_teleportation.py`'s precompute-once grid helper --
-so unlike Experiments 1-5, this data isn't reproduced by
-`python scripts/wormhole_syk_teleportation.py`.
+![t1 re-scan at the 2D optimum](assets/wormhole_syk_teleportation/wormhole_t1_rescan_optimum.png)
+
+Uses Experiment 5's precompute-once helpers (same measured ~165x speedup
+rationale), now folded into `scripts/wormhole_syk_teleportation.py`'s
+`run_t1_rescan` -- reproduced by `python scripts/wormhole_syk_teleportation.py`
+like every other experiment on this page. Full data:
+`data/wormhole_t1_rescan_optimum.csv`.
 
 ## What this does NOT show
 
 - **The full 3D (t0, mu, t1) joint optimum has not been found.**
   Experiment 6 confirms `t1`'s optimum does shift once `t0`/`mu` are at
-  Experiment 5's values (`0.60` to `0.42`, +30% signal) -- but that's one
+  Experiment 5's values (`0.60` to `0.41`, +30% signal) -- but that's one
   coordinate-ascent step, not a converged joint optimum: `t0`/`mu` could
   plausibly shift again now that `t1` has moved, the same pattern that
   motivated Experiment 5 in the first place. Unverified; a real 3D grid

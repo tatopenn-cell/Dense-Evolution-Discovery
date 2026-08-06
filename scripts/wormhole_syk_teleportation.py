@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs five real, verified experiments, each producing its own
+This script runs six real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -41,23 +41,33 @@ CSV + plot:
    870 points (30 t0 values x 29 mu values), global max at
    t0=0.65, mu=15.0 (delta=+0.01167), noticeably better than either 1D
    scan's own peak.
+6. t1 re-scan at Experiment 5's (t0, mu) optimum -- Experiment 5 itself
+   held t1 fixed at 0.60 (Experiment 1's own 1D peak) and flagged that
+   as unverified. Re-scanning t1 at t0=0.65/mu=15.0 finds the peak has
+   moved to t1=0.42, delta=+0.01518 -- ~30% above Experiment 5's
+   headline value. One coordinate-ascent step, not a converged 3D joint
+   optimum (see caveats below).
 
-All five use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
+All six use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
 instance dashboard_core.wormhole.select_good_instance finds when
 screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
 
 Honest caveats, not glossed over:
-- Experiment 5's grid holds t1 fixed at 0.60 (the Experiment 1 peak) --
-  a full 3D (t0, mu, t1) joint search was not attempted. t1's own
-  optimum could plausibly also shift once t0/mu are no longer at their
-  original 1D-scan defaults; unverified.
+- The full 3D (t0, mu, t1) joint optimum has still not been found.
+  Experiment 6 confirms t1's optimum does shift once t0/mu are at
+  Experiment 5's values (0.60 to 0.42, +30% signal) -- but that's one
+  coordinate-ascent step, not a converged joint optimum: t0/mu could
+  plausibly shift again now that t1 has moved, the same pattern that
+  motivated Experiment 5 in the first place. Unverified; a real 3D grid
+  (or a proper joint optimizer iterated to convergence) would settle it,
+  at correspondingly higher compute cost.
 - All results use the exact-evolution backend (eigendecomposition), not
   the Trotterized real-gate-circuit backend -- both are implemented and
   cross-verified to agree closely (see the main Dense-Evolution repo's
   tests), but the exact backend is what was used here for speed.
-- Experiment 5 bypasses `run_wormhole_protocol`'s public API and calls
+- Experiments 5 and 6 bypass `run_wormhole_protocol`'s public API and call
   `dashboard_core.wormhole`'s private layout/evolution helpers directly.
   Justified by a real, measured cost asymmetry: building the SYK/coupling
   Hamiltonians and diagonalizing both (`_protocol_layout` + two `eigh`
@@ -283,6 +293,62 @@ def run_2d_grid_search(seed: int) -> pd.DataFrame:
     return df
 
 
+def run_t1_rescan(seed: int) -> pd.DataFrame:
+    """t1 re-scan at Experiment 5's (t0, mu) optimum -- resolves the caveat
+    flagged there: the 2D grid held t1 fixed at 0.60 (Experiment 1's own
+    1D peak) and noted its optimum could plausibly shift once t0/mu are no
+    longer at their original 1D-scan defaults. Reuses Experiment 5's
+    precompute-once approach (see its docstring/this module's docstring)
+    since a fine ~125-point sweep would cost ~4.5s/call x 2 x 125 ~ 19
+    minutes via the public run_wormhole_protocol API otherwise."""
+    n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+    H = de.pauli_hamiltonian_to_matrix(terms_full, n_full)
+    eigvals, eigvecs = np.linalg.eigh(H)
+    V = de.pauli_hamiltonian_to_matrix(v_terms, n_full)
+    v_eigvals, v_eigvecs = np.linalg.eigh(V)
+
+    sim = de.DenseSVSimulator(n_full)
+    sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, with_message=True))
+    sv0 = sim.get_statevector()
+
+    t0_opt, mu_opt = 0.65, 15.0
+
+    def mi_at(t1, mu):
+        sv = _evolve(sv0, eigvals, eigvecs, t0_opt)
+        sv = _evolve(sv, v_eigvals, v_eigvecs, mu)
+        sv = _evolve(sv, eigvals, eigvecs, t1)
+        return mutual_information(sv, n_full, [P], [R[0]])
+
+    t1_values = np.round(np.arange(0.05, 1.31, 0.01), 3)
+    rows = []
+    for t1 in t1_values:
+        i_pos = mi_at(t1, +mu_opt)
+        i_neg = mi_at(t1, -mu_opt)
+        rows.append({"t1": t1, "I_pos": i_pos, "I_neg": i_neg, "delta": i_neg - i_pos})
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_t1_rescan_optimum.csv", index=False)
+
+    best = df.loc[df["delta"].idxmax()]
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df["t1"], df["delta"], '-', color='#00FFFF', linewidth=1.5)
+    ax.axvline(0.60, color='#FFFF00', linestyle='--', alpha=0.6, label='Experiment 5 fixed value (t1=0.60)')
+    ax.scatter([best['t1']], [best['delta']], color='cyan', marker='*', s=250,
+               edgecolor='white', linewidth=1, zorder=5,
+               label=f"peak: t1={best['t1']:.2f}, delta={best['delta']:+.5f}")
+    ax.set_xlabel("t1 (post-coupling evolution time)", color='#888888')
+    ax.set_ylabel("delta = I(mu=-15) - I(mu=+15)", color='#888888')
+    ax.set_title("t1 re-scan at Experiment 5's (t0, mu) optimum\n(seed=61, N=8 SYK, t0=0.65, mu=15.0 fixed)",
+                 fontsize=11, fontweight='bold', pad=15)
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_t1_rescan_optimum.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -311,6 +377,12 @@ def run_all():
     peak5 = df5.loc[df5["delta"].idxmax()]
     print(f"  grid: {df5['t0'].nunique()} x {df5['mu'].nunique()} = {len(df5)} points")
     print(f"  global max: t0={peak5['t0']:.2f}  mu={peak5['mu']:.1f}  delta={peak5['delta']:+.5f}")
+
+    print("\n=== Experiment 6: t1 re-scan at Experiment 5's (t0, mu) optimum ===")
+    df6 = run_t1_rescan(seed)
+    peak6 = df6.loc[df6["delta"].idxmax()]
+    print(f"  peak: t1={peak6['t1']:.2f}  delta={peak6['delta']:+.5f}"
+          f"  ({(peak6['delta'] / peak5['delta'] - 1) * 100:+.1f}% vs. Experiment 5's t1=0.60)")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
