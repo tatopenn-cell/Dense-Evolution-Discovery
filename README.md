@@ -20,7 +20,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
-- **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: sign-dependent teleportation signal peaks at t1=0.60, requires the injected message (control gives I=0 exactly), and peaks near mu~11-12 and t0~0.60 in independent coupling-strength and scrambling-time scans.
+- **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: sign-dependent teleportation signal requires the injected message (control gives I=0 exactly), and a real 870-point 2D grid search over (t0, mu) finds a global maximum at t0=0.65, mu=15.0 — computed in 47.6s instead of an estimated ~2 hours after precomputing the instance's Hamiltonians once instead of per grid point (~165x speedup).
 - **[Harrison / VHD Tight-Binding Validation](#20-harrison--vhd-tight-binding-validation-against-real-experimental-gaps)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
@@ -536,8 +536,9 @@ Instance selection matters: a random draw of which SYK terms to keep does not re
 | message vs. no-message control | — | I(P:R)=0 exactly without the message |
 | mu (coupling strength) | mu≈11 | delta=+0.00473 |
 | t0 (pre-coupling scrambling time) | t0≈0.60 | delta=+0.00972 |
+| **2D joint grid (t0, mu)** | **t0=0.65, mu=15.0** | **delta=+0.01167** |
 
-The signal requires enough pre-coupling scrambling before it appears (consistent with the protocol's theoretical chaos requirement), peaks at a coupling strength close to the paper's own `mu=12` choice, and vanishes exactly — not just approximately — when the message injection is removed, confirming the sign-dependent asymmetry genuinely comes from the teleported message rather than the L-R coupling alone. The 2D joint optimum over (t0, mu) was not found (each scan holds the other axis fixed) — reported honestly, not glossed over. Full write-up: [`docs/wormhole_syk_teleportation.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/wormhole_syk_teleportation/). Produced by `scripts/wormhole_syk_teleportation.py` → `data/wormhole_*.csv`.
+The signal requires enough pre-coupling scrambling before it appears (consistent with the protocol's theoretical chaos requirement) and vanishes exactly — not just approximately — when the message injection is removed, confirming the sign-dependent asymmetry genuinely comes from the teleported message rather than the L-R coupling alone. The 1D mu and t0 scans hold the other axis fixed, so neither alone finds the true optimum — a real 870-point 2D grid search resolves that, finding a broad, smooth peak at `t0=0.65, mu=15.0` that beats both 1D scans. Along the way: `run_wormhole_protocol`'s ~4.5s/call cost turned out to be almost entirely a setup step that doesn't depend on t0/mu/t1 at all for a fixed instance — precomputing it once instead of once per grid point cut the 870-point search from an estimated ~2 hours to **47.6 seconds** (~165x), no multiprocessing needed. Full write-up: [`docs/wormhole_syk_teleportation.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/wormhole_syk_teleportation/). Produced by `scripts/wormhole_syk_teleportation.py` → `data/wormhole_*.csv`.
 
 [![Traversable-wormhole teleportation signal vs. t1](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)
 
@@ -546,6 +547,8 @@ The signal requires enough pre-coupling scrambling before it appears (consistent
 [![Sign-dependent signal vs. coupling strength mu](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)
 
 [![Sign-dependent signal vs. pre-coupling scrambling time t0](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)
+
+[![Joint (t0, mu) optimization surface](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.7.0/wormhole_2d_grid.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.7.0/wormhole_2d_grid.png)
 
 ---
 
