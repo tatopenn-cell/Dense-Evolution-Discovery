@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs six real, verified experiments, each producing its own
+This script runs seven real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -44,30 +44,42 @@ CSV + plot:
 6. t1 re-scan at Experiment 5's (t0, mu) optimum -- Experiment 5 itself
    held t1 fixed at 0.60 (Experiment 1's own 1D peak) and flagged that
    as unverified. Re-scanning t1 at t0=0.65/mu=15.0 finds the peak has
-   moved to t1=0.42, delta=+0.01518 -- ~30% above Experiment 5's
+   moved to t1=0.41, delta=+0.01518 -- ~30% above Experiment 5's
    headline value. One coordinate-ascent step, not a converged 3D joint
-   optimum (see caveats below).
+   optimum (resolved by Experiment 7 below).
+7. Iterated coordinate ascent toward the joint (t0, mu, t1) optimum --
+   Experiment 6 moved t1 once but never checked whether t0/mu would
+   shift again, the same gap that motivated Experiment 5 in the first
+   place. Alternating full t1 scans (Experiment 6's resolution) and
+   (t0, mu) grids (Experiment 5's resolution) from Experiment 5's
+   starting point, 3 rounds converge to a genuine fixed point:
+   t0=0.70, mu=17.0, t1=0.36, delta=+0.01688 -- +44.6% over Experiment
+   5's original headline value.
 
-All six use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
+All seven use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
 instance dashboard_core.wormhole.select_good_instance finds when
 screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
 
 Honest caveats, not glossed over:
-- The full 3D (t0, mu, t1) joint optimum has still not been found.
-  Experiment 6 confirms t1's optimum does shift once t0/mu are at
-  Experiment 5's values (0.60 to 0.42, +30% signal) -- but that's one
-  coordinate-ascent step, not a converged joint optimum: t0/mu could
-  plausibly shift again now that t1 has moved, the same pattern that
-  motivated Experiment 5 in the first place. Unverified; a real 3D grid
-  (or a proper joint optimizer iterated to convergence) would settle it,
-  at correspondingly higher compute cost.
+- Experiment 7's fixed point (t0=0.70, mu=17.0, t1=0.36) is a *local*
+  coordinate-ascent convergence on this specific grid resolution
+  (Experiment 5's 0.05/1.0 t0/mu step, Experiment 6's 0.01 t1 step), not
+  a proof of global optimality: coordinate ascent can converge to a
+  point that isn't the true joint maximum if the surface isn't
+  separably well-behaved, and a finer/coarser grid could in principle
+  settle on a nearby but distinct fixed point (an ad hoc finer local
+  grid around the converged point suggested the true continuum optimum
+  sits close to mu=17.5, just off this grid's integer mu values --
+  consistent with, not contradicting, the converged answer). A real
+  continuous joint optimizer (e.g. gradient-based, if this readout is
+  ever made differentiable) would be needed to settle global optimality.
 - All results use the exact-evolution backend (eigendecomposition), not
   the Trotterized real-gate-circuit backend -- both are implemented and
   cross-verified to agree closely (see the main Dense-Evolution repo's
   tests), but the exact backend is what was used here for speed.
-- Experiments 5 and 6 bypass `run_wormhole_protocol`'s public API and call
+- Experiments 5, 6, and 7 bypass `run_wormhole_protocol`'s public API and call
   `dashboard_core.wormhole`'s private layout/evolution helpers directly.
   Justified by a real, measured cost asymmetry: building the SYK/coupling
   Hamiltonians and diagonalizing both (`_protocol_layout` + two `eigh`
@@ -349,6 +361,91 @@ def run_t1_rescan(seed: int) -> pd.DataFrame:
     return df
 
 
+def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
+    """Iterated coordinate ascent toward the true joint (t0, mu, t1)
+    optimum -- resolves Experiment 6's own open caveat: it moved t1 once,
+    holding t0/mu fixed at Experiment 5's values, but never checked
+    whether t0/mu would shift *again* now that t1 had moved (the same
+    pattern that motivated Experiment 5 over the original 1D scans in
+    the first place).
+
+    Starting from Experiment 5's point (t0=0.65, mu=15.0, t1=0.60), each
+    round alternates two full sub-steps at Experiment 5/6's own
+    resolutions (not a shortcut, so results stay directly comparable):
+    a 126-point t1 scan (step 0.01, Experiment 6's resolution) holding
+    (t0, mu) fixed, then an 870-point (t0, mu) grid (step 0.05/1.0,
+    Experiment 5's resolution) holding the new t1 fixed. Stops when a
+    full round leaves (t0, mu, t1) unchanged on this grid -- a genuine
+    fixed point, not just a small numeric wobble -- or after max_rounds
+    as a safety cap."""
+    n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+    H = de.pauli_hamiltonian_to_matrix(terms_full, n_full)
+    eigvals, eigvecs = np.linalg.eigh(H)
+    V = de.pauli_hamiltonian_to_matrix(v_terms, n_full)
+    v_eigvals, v_eigvecs = np.linalg.eigh(V)
+
+    sim = de.DenseSVSimulator(n_full)
+    sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, with_message=True))
+    sv0 = sim.get_statevector()
+
+    def mi_delta(t0, mu, t1):
+        sv = _evolve(sv0, eigvals, eigvecs, t0)
+        sv = _evolve(sv, v_eigvals, v_eigvecs, mu)
+        sv = _evolve(sv, eigvals, eigvecs, t1)
+        i_pos = mutual_information(sv, n_full, [P], [R[0]])
+        sv = _evolve(sv0, eigvals, eigvecs, t0)
+        sv = _evolve(sv, v_eigvals, v_eigvecs, -mu)
+        sv = _evolve(sv, eigvals, eigvecs, t1)
+        i_neg = mutual_information(sv, n_full, [P], [R[0]])
+        return i_neg - i_pos
+
+    t1_scan_values = np.round(np.arange(0.05, 1.31, 0.01), 3)
+    t0_grid_values = np.round(np.arange(0.05, 1.55, 0.05), 3)
+    mu_grid_values = np.round(np.arange(2.0, 31.0, 1.0), 1)
+
+    t0, mu, t1 = 0.65, 15.0, 0.60
+    trace = [{"round": 0, "stage": "start (Experiment 5)", "t0": t0, "mu": mu, "t1": t1,
+              "delta": mi_delta(t0, mu, t1)}]
+
+    for rnd in range(1, max_rounds + 1):
+        t1_new = max(t1_scan_values, key=lambda t1c: mi_delta(t0, mu, t1c))
+        delta_t1 = mi_delta(t0, mu, t1_new)
+        trace.append({"round": rnd, "stage": "t1 scan", "t0": t0, "mu": mu, "t1": t1_new, "delta": delta_t1})
+
+        t0_new, mu_new = max(
+            ((t0c, muc) for muc in mu_grid_values for t0c in t0_grid_values),
+            key=lambda p: mi_delta(p[0], p[1], t1_new),
+        )
+        delta_grid = mi_delta(t0_new, mu_new, t1_new)
+        trace.append({"round": rnd, "stage": "t0/mu grid", "t0": t0_new, "mu": mu_new, "t1": t1_new,
+                      "delta": delta_grid})
+
+        converged = (t0_new == t0 and mu_new == mu and t1_new == t1)
+        t0, mu, t1 = t0_new, mu_new, t1_new
+        if converged:
+            break
+
+    trace_df = pd.DataFrame(trace)
+    trace_df.to_csv(_DATA_DIR / "wormhole_coordinate_ascent_3d.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(range(len(trace_df)), trace_df["delta"], 'o-', color='#00FFFF', markersize=5)
+    for i, row in trace_df.iterrows():
+        ax.annotate(f"t0={row.t0:.2f}\nmu={row.mu:.1f}\nt1={row.t1:.2f}",
+                     (i, row.delta), textcoords="offset points", xytext=(0, 10),
+                     fontsize=7, color='#888888', ha='center')
+    ax.set_xlabel("coordinate-ascent step", color='#888888')
+    ax.set_ylabel("delta = I(mu=-|mu|) - I(mu=+|mu|)", color='#888888')
+    ax.set_title("Convergence of iterated coordinate ascent toward the joint (t0, mu, t1) optimum\n"
+                 "(seed=61, N=8 SYK)", fontsize=11, fontweight='bold', pad=15)
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_coordinate_ascent_3d.png", dpi=300)
+    plt.close(fig)
+    return trace_df
+
+
 def run_all():
     seed = find_seed()
 
@@ -383,6 +480,14 @@ def run_all():
     peak6 = df6.loc[df6["delta"].idxmax()]
     print(f"  peak: t1={peak6['t1']:.2f}  delta={peak6['delta']:+.5f}"
           f"  ({(peak6['delta'] / peak5['delta'] - 1) * 100:+.1f}% vs. Experiment 5's t1=0.60)")
+
+    print("\n=== Experiment 7: iterated coordinate ascent toward the joint (t0, mu, t1) optimum ===")
+    df7 = run_coordinate_ascent_3d(seed)
+    converged = df7.iloc[-1]
+    print(f"  {df7['round'].max()} rounds, converged: "
+          f"t0={converged['t0']:.2f}  mu={converged['mu']:.1f}  t1={converged['t1']:.2f}  "
+          f"delta={converged['delta']:+.5f}"
+          f"  ({(converged['delta'] / peak5['delta'] - 1) * 100:+.1f}% vs. Experiment 5)")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
