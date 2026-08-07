@@ -672,6 +672,72 @@ redundant degree features aren't counted as separate hypotheses, per
 the note above). Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_qubit_topology_check`. Full data: `data/wormhole_qubit_topology.csv`.
 
+## Experiment 15: N-scaling check, N=8 vs N=12 (run 2026-08-07)
+
+Every experiment above holds the system size fixed at N=8 Majorana
+modes. This is the one structural lever never pulled: does the sign-
+dependent instance variance from Experiments 10/11 persist, worsen, or
+shrink at a larger Majorana count? SYK-type chaotic systems often show
+instance-to-instance fluctuations shrinking toward a thermodynamic
+limit as N grows -- a real, well-motivated candidate mechanism, not
+tried until now because of its cost.
+
+**Backend choice, decided by direct measurement, not convenience.**
+The exact (eigendecomposition) backend used throughout Experiments 1-8,
+10, 11 is infeasible at N=12: diagonalization cost scales as `dim^3`,
+and N=12's joint L+R+P+Q system is `dim=2^14=16384` vs. N=8's
+`dim=2^10=1024` -- a `(16384/1024)^3 = 4096x` slowdown. This module's
+own docstring already records N=8's exact-backend cost at 4.3-6.4s per
+diagonalization; at that scaling factor, N=12 would take hours per
+instance. The Trotterized gate-circuit backend
+(`run_wormhole_protocol_trotter`) doesn't pay that cubic cost -- gate
+application is `O(dim)` per gate, not `O(dim^3)` -- and was measured
+directly before committing to this design: ~19s/call at N=12, close to
+N=8's own already-measured ~14s/call Trotter cost (Experiment 9's noise
+scan). **Both N=8 and N=12 are evaluated here via the same Trotter
+backend**, not the exact-backend N=8 numbers Experiments 10/11 used --
+mixing backends would confound N-scaling with a real, separately-
+quantified backend effect (Experiment 9 already showed noise/backend
+choice can shift the delta and even its sign near a threshold).
+
+**Scope, chosen for real feasibility.** n_instances=6 per N, not
+Experiment 11's n=100 -- at ~19s/call x 2 signs x 6 instances x 2
+values of N, this experiment already costs ~4.3 minutes (measured:
+261s); n=100 at N=12 would cost over 2 hours for this one experiment
+alone. This is explicitly a smaller, first feasibility/existence check,
+not a repeat of Experiment 11's statistical rigor. K_TERMS is kept
+fixed at 10 (not scaled with N) -- the simplest choice, preserving the
+paper's own term-count convention exactly.
+
+**The paper's own 34/11 selection criterion has no exact match at
+N=12.** Screening 3000 candidates found zero instances with exactly 34
+commuting pairs (verified directly, not assumed) -- the achievable
+distribution at N=12/K=10 peaks around 21-23 commuting pairs and tops
+out at 31 in a 500-seed sample, never reaching 34. `_find_closest_
+commuting_seeds` generalizes the existing exact-match screening to find
+the *closest* achievable match instead, the same closest-match
+philosophy `find_seed()` already uses at N=8, just generalized to N.
+
+![N-scaling check: N=8 vs N=12, Trotter backend matched](assets/wormhole_syk_teleportation/wormhole_n_scaling_check.png)
+
+**Result: the wrong-sign rate is identical (2/6 at both N), too small
+a sample to trust as a real rate -- but the delta magnitude drops
+substantially.** Mean `|delta|` falls from `0.00765` (N=8) to `0.00034`
+(N=12), roughly a **22x reduction**, present in every N=12 instance
+individually, not just as an average artifact. This is consistent with
+the sign-dependent signal weakening toward a thermodynamic limit as the
+system grows -- but it is equally consistent with a simpler
+explanation this single experiment cannot rule out: the paper's own
+default parameters (`t0=0.3, mu=12, t1=0.60`) were never re-optimized
+for N=12, and Experiments 5-7 already showed those same defaults are
+noticeably sub-optimal even at N=8 (the converged 3D optimum there
+gave +44.6% over the 1D-scan headline value). Distinguishing "the
+signal is genuinely vanishing" from "the fixed parameters are
+increasingly wrong for this N" would need a real (costly) re-
+optimization at N=12, not attempted here. Produced by
+`scripts/wormhole_syk_teleportation.py`'s `run_n_scaling_check`. Full
+data: `data/wormhole_n_scaling_check.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -711,6 +777,23 @@ the note above). Produced by `scripts/wormhole_syk_teleportation.py`'s
   hypotheses in total, once the redundant Experiment 14 features are
   excluded) -- a real multiple-testing risk that would matter more if
   any candidate had come back significant (none has, cleanly, so far).
+- **Experiment 15's N=8-vs-N=12 comparison uses the Trotter backend for
+  both, at the same step counts (n_steps_evolution=8,
+  n_steps_coupling=16) used throughout this script, not re-tuned for
+  N=12's different term structure** -- some of the observed magnitude
+  drop could in principle be a Trotter discretization-error artifact
+  rather than a purely physical effect; whether doubling the step count
+  at N=12 changes the result is untested. n=6 instances per N is far
+  too small to treat the 2/6-vs-2/6 wrong-sign-rate match as meaningful
+  on its own -- only the delta-magnitude drop, present in every N=12
+  instance individually, is treated as a real finding. K_TERMS was kept
+  fixed at 10 rather than scaled with N; a scaled-K version of this
+  check is untested and could behave differently. Most importantly:
+  this experiment cannot distinguish "the signal genuinely weakens
+  toward a thermodynamic limit" from "the paper's fixed default
+  parameters are increasingly sub-optimal at larger N" -- both predict
+  the same observed magnitude drop, and only a real (costly) parameter
+  re-optimization at N=12 could tell them apart.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
