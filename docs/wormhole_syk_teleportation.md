@@ -402,8 +402,66 @@ real effect. Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_trotter_noise_scan`. Full data:
 `data/wormhole_trotter_noise_scan.csv`.
 
+## Experiment 10: cross-check against the paper's own "Ensemble robustness" claim (run 2026-08-07)
+
+arXiv:2604.10090 has its own ensemble-robustness section: from 100
+disorder realizations at K=10, it reports that "other disorder
+realizations in the same ensemble also exhibit qualitatively similar
+mutual-information dynamics, and in particular retain the sign-dependent
+asymmetry... This indicates that the mutual information behavior is a
+generic feature of the ensemble rather than a peculiarity of the chosen
+Hamiltonian." The paper is explicit that their chosen instance (seed=61
+here) was selected for having an unusually *large* asymmetry, not an
+unusually *signed* one.
+
+Experiment 8's negative-baseline finding (2 of 6 instances) has a real
+confound worth taking seriously: it evaluated all 6 instances at
+Experiment 5's point (`t0=0.65, mu=15.0, t1=0.60`), which was itself
+optimized on seed=61's own 1D scans -- an instance showing the "wrong"
+sign there could simply be a bad evaluation point for it, not a
+genuinely reversed signal. This experiment controls for that directly:
+re-evaluate all 6 instances at the paper's own stated default parameters
+(`t0=0.3, mu=12, t1=0.60`) instead.
+
+| Seed | delta @ Exp. 5's point (0.65, 15, 0.60) | delta @ paper defaults (0.3, 12, 0.60) |
+|---|---|---|
+| 61 | +0.01167 | +0.00468 |
+| 448 | +0.00018 | +0.00042 |
+| 1944 | +0.02075 | +0.03690 |
+| 2166 | -0.00273 | **-0.00125 (still wrong)** |
+| 2835 | -0.00379 | **+0.00200 (fixed)** |
+| 2907 | +0.00069 | **-0.00011 (now wrong)** |
+
+![Sign-dependent asymmetry at the paper's own default parameters](assets/wormhole_syk_teleportation/wormhole_paper_defaults_comparison.png)
+
+**Third honest result, and the most direct comparison to the source
+paper in this whole write-up**: controlling for the evaluation-point
+confound changes *which* instances look wrong-signed (seed 2835's
+Experiment 8 reversal turns out to have been a point-choice artifact --
+correctly signed at the paper's own defaults), but does not make the
+problem go away. **2 of 6 instances (2166, 2907) are still wrong-signed
+at the paper's own stated default parameters.** Seed 2166 is wrong-signed
+at *both* evaluation points tested across this whole write-up -- not an
+artifact of any one specific parameter choice. For this specific
+34/11-selection-matched subset, the "generic feature of the ensemble"
+claim does not hold up. Produced by
+`scripts/wormhole_syk_teleportation.py`'s
+`run_paper_defaults_comparison`. Full data:
+`data/wormhole_paper_defaults_comparison.csv`.
+
 ## What this does NOT show
 
+- **Experiment 10 is not a replication of arXiv:2604.10090's own
+  100-instance ensemble study.** Their ensemble's exact selection
+  criterion for those 100 draws isn't fully specified in the main text
+  available here; our 6 instances are filtered strictly to an *exact*
+  34/11 commuting/anticommuting match (`find_multiple_seeds`), a
+  narrower and possibly differently-distributed subset than whatever
+  their 100 realizations were. "2 of 6 wrong-signed" is a real,
+  verified result for this specific subset, not a like-for-like
+  reproduction of their reported ensemble statistics -- a genuine
+  100-instance sweep at our own exact criterion, matching their sample
+  size, would be needed to compare percentages directly.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
