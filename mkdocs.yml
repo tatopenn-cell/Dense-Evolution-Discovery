@@ -1,8 +1,8 @@
-site_name: Dense-Evolution-Ising-Tests
+site_name: Dense-Evolution-Discovery
 site_description: Cross-validation and physics experiments built on the Dense-Evolution quantum simulator.
-site_url: https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/
-repo_url: https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests
-repo_name: tatopenn-cell/Dense-Evolution-Ising-Tests
+site_url: https://tatopenn-cell.github.io/Dense-Evolution-Discovery/
+repo_url: https://github.com/tatopenn-cell/Dense-Evolution-Discovery
+repo_name: tatopenn-cell/Dense-Evolution-Discovery
 edit_uri: edit/main/docs/
 
 theme:
