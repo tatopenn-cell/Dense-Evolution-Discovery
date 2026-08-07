@@ -254,7 +254,8 @@ coordinate-ascent step, not a full 3D search: `t0` and `mu` were held at
 Experiment 5's values throughout this scan, so whether *they* would
 shift again now that `t1` has moved (the same pattern that motivated
 Experiment 5 in the first place) is still open. A converged joint
-optimum would need to iterate this, or a real 3D grid.
+optimum would need to iterate this, or a real 3D grid -- Experiment 7
+does exactly that.
 
 ![t1 re-scan at the 2D optimum](assets/wormhole_syk_teleportation/wormhole_t1_rescan_optimum.png)
 
@@ -264,16 +265,56 @@ rationale), now folded into `scripts/wormhole_syk_teleportation.py`'s
 like every other experiment on this page. Full data:
 `data/wormhole_t1_rescan_optimum.csv`.
 
+## Experiment 7: iterated coordinate ascent toward the joint optimum (run 2026-08-07)
+
+Experiment 6 moved `t1` once but never checked whether `t0`/`mu` would
+shift *again* -- the same gap that motivated Experiment 5 over the
+original 1D scans. This experiment iterates the fix instead of taking
+one more single step: starting from Experiment 5's point (`t0=0.65,
+mu=15.0, t1=0.60`), each round alternates a full `t1` scan (Experiment
+6's 126-point, step-0.01 resolution, `t0`/`mu` held fixed) and a full
+`(t0, mu)` grid (Experiment 5's 870-point, step-0.05/1.0 resolution,
+`t1` held fixed) -- both at their original resolutions, so every round
+stays directly comparable to Experiments 5 and 6, not a shortcut.
+
+| Round | Stage | t0 | mu | t1 | delta |
+|---|---|---|---|---|---|
+| 0 | start (Experiment 5) | 0.65 | 15.0 | 0.60 | +0.01167 |
+| 1 | t1 scan | 0.65 | 15.0 | 0.41 | +0.01518 |
+| 1 | t0/mu grid | 0.70 | 17.0 | 0.41 | +0.01658 |
+| 2 | t1 scan | 0.70 | 17.0 | 0.36 | +0.01688 |
+| 2 | t0/mu grid | 0.70 | 17.0 | 0.36 | +0.01688 |
+| 3 | t1 scan | 0.70 | 17.0 | 0.36 | +0.01688 |
+| **3** | **t0/mu grid** | **0.70** | **17.0** | **0.36** | **+0.01688** |
+
+**Converged after 3 rounds: `t0=0.70, mu=17.0, t1=0.36`, `delta=+0.01688`**
+-- a genuine fixed point (round 3 reproduces round 2 exactly, both
+sub-steps), not just a small step-to-step wobble. **+44.6% over
+Experiment 5's original headline value** (`+0.01167`), and +11.2% over
+Experiment 6's single-step result (`+0.01518`). Total compute: ~186s for
+all 7 evaluation rounds combined (precompute-once still applies).
+
+![Convergence of iterated coordinate ascent](assets/wormhole_syk_teleportation/wormhole_coordinate_ascent_3d.png)
+
+This resolves the open question from Experiment 6 -- but only up to
+this grid's resolution, not as a proof of global optimality. An ad hoc
+finer local grid explored around the converged point (not part of the
+reproducible script) suggested the true continuum optimum sits close to
+`mu=17.5`, just off this grid's integer `mu` values -- consistent with,
+not contradicting, the converged answer; a real continuous optimizer
+would be needed to settle global optimality rather than a fixed-point
+on this specific grid. Produced by
+`scripts/wormhole_syk_teleportation.py`'s `run_coordinate_ascent_3d`.
+Full data: `data/wormhole_coordinate_ascent_3d.csv`.
+
 ## What this does NOT show
 
-- **The full 3D (t0, mu, t1) joint optimum has not been found.**
-  Experiment 6 confirms `t1`'s optimum does shift once `t0`/`mu` are at
-  Experiment 5's values (`0.60` to `0.41`, +30% signal) -- but that's one
-  coordinate-ascent step, not a converged joint optimum: `t0`/`mu` could
-  plausibly shift again now that `t1` has moved, the same pattern that
-  motivated Experiment 5 in the first place. Unverified; a real 3D grid
-  (or a proper joint optimizer iterated to convergence) would settle it,
-  at correspondingly higher compute cost.
+- **Experiment 7's fixed point is not proven globally optimal.**
+  Coordinate ascent converging to a stable point on a given grid
+  resolution is not the same as proving that point is the true
+  continuous joint maximum -- a different grid resolution, or a real
+  continuous optimizer, could in principle find a nearby but distinct
+  point. See Experiment 7's own caveat above.
 - **All backend=exact (matrix exponentiation), not the Trotterized
   real-gate-circuit backend.** Both are implemented and cross-verified
   in the main repo's test suite to agree closely at the known peak
