@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs thirteen real, verified experiments, each producing its own
+This script runs fourteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -149,6 +149,29 @@ CSV + plot:
     candidate explanation ruled out, on top of Experiment 11's two and
     Experiment 12's structurally-trivial phase diagnostic. Why the sign
     varies remains genuinely open.
+14. Qubit-coupling topology check -- tests whether *which specific
+    modes* each instance's K=10 quads couple together (not just how
+    many terms commute, or how many terms touch a given mode) predicts
+    the sign. Builds a weighted 8-mode co-occurrence graph per instance
+    (edge weight = how many quads contain both modes) and computes four
+    features: max weighted degree, weighted degree std, the number of
+    the 28 possible mode pairs never coupled together at all, and the
+    weighted graph's algebraic connectivity (Fiedler value). An ad hoc
+    check before committing to this design found a *binary* version of
+    the graph (edge iff any co-occurrence) saturates to the complete
+    graph K8 for most instances -- useless as a discriminator -- so the
+    weighted count is used instead. A second honest check, done after
+    computing the real n=100 numbers rather than before: max weighted
+    degree and weighted degree std turn out to be an exact linear
+    rescaling of Experiment 11's mode-usage-count features (weighted
+    degree = 3x usage count, verified numerically to 1 part in 1e15,
+    not assumed) -- they are not new information, just Experiment 11's
+    already-tested, already-non-significant feature recomputed via a
+    graph Laplacian. The two genuinely new features, n_zero_pairs and
+    algebraic_connectivity, also do not correlate (r=+0.159, p=0.114
+    and r=-0.141, p=0.163) -- a 6th and 7th candidate explanation ruled
+    out (counting the two redundant degree features separately would
+    overstate how many independent hypotheses this experiment tested).
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -228,6 +251,17 @@ Honest caveats, not glossed over:
   (t=0.7, 1.2), not a continuous growth-rate fit, and reuses
   Experiment 12's single-sided (L-only) operator-growth computation --
   same scope caveat as Experiment 12 above.
+- Experiment 14's weighted co-occurrence graph counts a mode pair as
+  "coupled" whenever they appear together in a quad, regardless of the
+  quad's random +-J/sqrt(K) sign or of whether the two Majorana factors
+  actually commute or anticommute within that specific term -- a purely
+  combinatorial notion of coupling, not an operator-algebraic one.
+  Whether a *sign-aware* or *commutator-aware* weighting would behave
+  differently is untested. Also the 6th/7th candidate (n_zero_pairs,
+  algebraic_connectivity) tested against Experiment 11's same n=100
+  sample -- same multiple-comparisons caveat as Experiment 13 above,
+  and same conclusion: neither result is close enough to significance
+  (p=0.11, p=0.16) to warrant a holdout re-check.
 """
 import itertools
 import pathlib
@@ -1077,6 +1111,138 @@ def run_mechanistic_check(n_instances: int = 100) -> pd.DataFrame:
     return df
 
 
+def _quad_cooccurrence_graph(seed: int) -> np.ndarray:
+    """Rebuilds seed's K=10 SYK quads (same RNG replay as
+    run_ensemble_sign_check/run_mechanistic_check) and returns the
+    N_MAJORANA x N_MAJORANA *weighted* adjacency matrix: entry (i,j) is
+    how many of the 10 quads contain both modes i and j -- the actual
+    qubit-coupling topology a raw commuting-pair *count* (the paper's
+    own selection criterion) or a per-mode usage *count* (Experiment
+    11/13's features) both throw away: two instances can have identical
+    34/11 commuting-pair counts and identical per-mode usage counts
+    while coupling entirely different (and differently concentrated)
+    pairs of modes together.
+
+    Weighted, not binary: an ad hoc check before committing to this
+    design found a *binary* co-occurrence graph (edge iff a pair
+    co-occurs in >=1 quad) saturates to the complete graph K8 for most
+    instances -- 10 quads out of the 70 possible each contribute 6
+    pairs, C(10,2)... i.e. up to 60 pair-slots spread over only 28
+    possible mode pairs, so nearly every pair ends up connected by
+    chance regardless of the underlying structure, making a binary
+    graph nearly useless as a discriminator (verified directly: 2 of 3
+    spot-checked seeds were already the complete graph). The weighted
+    count does not saturate and showed real spread across seeds in the
+    same spot check (max weighted degree 21-24, degree std 3.3-5.0,
+    0-3 completely uncoupled mode pairs)."""
+    all_quads = list(itertools.combinations(range(1, N_MAJORANA + 1), 4))
+    rng = np.random.default_rng(seed)
+    chosen_idx = rng.choice(len(all_quads), size=K_TERMS, replace=False)
+    quads = [all_quads[idx] for idx in chosen_idx]
+
+    adj = np.zeros((N_MAJORANA + 1, N_MAJORANA + 1), dtype=int)
+    for quad in quads:
+        for i, j in itertools.combinations(quad, 2):
+            adj[i, j] += 1
+            adj[j, i] += 1
+    return adj[1:, 1:]  # drop the unused 0 row/col; modes are 1-indexed
+
+
+def _weighted_algebraic_connectivity(adj: np.ndarray) -> float:
+    """Fiedler value of the weighted graph Laplacian L = D - A (D the
+    weighted-degree diagonal): second-smallest eigenvalue, 0 exactly if
+    the graph (at that edge-weight threshold, here any weight > 0) is
+    disconnected, larger means more evenly/expander-like coupled."""
+    degrees = adj.sum(axis=1)
+    L = np.diag(degrees) - adj
+    eigvals = np.sort(np.linalg.eigvalsh(L))
+    return float(eigvals[1])
+
+
+def run_qubit_topology_check(n_instances: int = 100) -> pd.DataFrame:
+    """Tests whether the actual qubit-coupling *topology* of each
+    instance's K=10 SYK quads -- not just how many terms commute (the
+    paper's own selection criterion, already shown insufficient in
+    Experiment 10/11) or how many terms touch a given mode (Experiment
+    11/13's usage-count features) -- predicts the sign-dependent delta.
+    Builds a weighted 8-mode co-occurrence graph per instance (weight
+    (i,j) = how many quads contain both modes i and j) and computes
+    four structural features: max_weighted_degree (how "hub"-like the
+    most-coupled mode is), weighted_degree_std (spread of coupling
+    strength across modes), n_zero_pairs (how many of the 28 possible
+    mode pairs are never coupled together at all -- directly captures
+    the "does coupling concentrate through a few modes (star-like,
+    leaving many pairs untouched) vs. spread evenly (leaving few pairs
+    untouched)" intuition), and weighted algebraic connectivity (the
+    Fiedler value of the weighted graph Laplacian -- how evenly/
+    expander-like the whole coupling structure is).
+
+    Reuses Experiment 11's own n=100 instance set and delta values
+    (data/wormhole_ensemble_sign_check.csv) rather than re-screening --
+    this is the 6th/7th/8th/9th candidate explanation tested against
+    that same sample (see the multiple-comparisons caveat in this
+    module's docstring).
+    """
+    csv_path = _DATA_DIR / "wormhole_ensemble_sign_check.csv"
+    if csv_path.exists():
+        base = pd.read_csv(csv_path)
+        seeds = base["seed"].tolist()[:n_instances]
+        delta_map = dict(zip(base["seed"], base["delta_at_paper_defaults"]))
+    else:
+        seeds = find_multiple_seeds(n_instances=n_instances)
+        T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+        delta_map = {}
+        for seed in seeds:
+            i_pos = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, +MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+            i_neg = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, -MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+            delta_map[seed] = i_neg - i_pos
+
+    rows = []
+    for seed in seeds:
+        adj = _quad_cooccurrence_graph(seed)
+        wdegrees = adj.sum(axis=1)
+        n_zero_pairs = int((adj[np.triu_indices(N_MAJORANA, 1)] == 0).sum())
+        rows.append({
+            "seed": seed,
+            "max_weighted_degree": int(wdegrees.max()),
+            "weighted_degree_std": float(np.std(wdegrees)),
+            "n_zero_pairs": n_zero_pairs,
+            "algebraic_connectivity": _weighted_algebraic_connectivity(adj),
+            "delta_at_paper_defaults": delta_map[seed],
+        })
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_qubit_topology.csv", index=False)
+
+    features = [
+        ("max_weighted_degree", "max weighted mode degree (hub-ness)"),
+        ("weighted_degree_std", "weighted degree std (coupling spread)"),
+        ("n_zero_pairs", "# of the 28 mode pairs never coupled together"),
+        ("algebraic_connectivity", "weighted algebraic connectivity (Fiedler value)"),
+    ]
+    results = {f: scipy_stats.pearsonr(df[f], df["delta_at_paper_defaults"]) for f, _ in features}
+
+    plt.style.use('dark_background')
+    fig, axes = plt.subplots(2, 2, figsize=(13, 10))
+    for ax, (fcol, flabel) in zip(axes.flat, features):
+        r_result = results[fcol]
+        colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_at_paper_defaults"]]
+        jitter = np.random.default_rng(0).normal(0, 0.15, size=len(df)) if df[fcol].nunique() < 6 else 0.0
+        ax.scatter(df[fcol] + jitter, df["delta_at_paper_defaults"], c=colors, s=25, alpha=0.7)
+        ax.axhline(0, color='#666666', linestyle=':')
+        ax.set_xlabel(flabel, color='#888888')
+        ax.set_ylabel("delta at paper defaults", color='#888888')
+        ax.set_title(f"r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f}", fontsize=10, color='#888888')
+        ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    n_wrong = int((df["delta_at_paper_defaults"] < 0).sum())
+    fig.suptitle(f"Experiment 14: n={len(df)} instances, {n_wrong}/{len(df)} wrong-signed -- "
+                 f"qubit-coupling topology vs. sign\n(cyan = correct sign, magenta = wrong sign)",
+                 fontsize=12, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_qubit_topology.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1176,6 +1342,13 @@ def run_all():
     print(f"  n={len(df13)}: message-mode participation r={r_message13.statistic:+.3f} "
           f"(p={r_message13.pvalue:.4f}), operator growth rate (mean size at t=1.2) "
           f"r={r_growth13.statistic:+.3f} (p={r_growth13.pvalue:.4f}).")
+
+    print("\n=== Experiment 14: qubit-coupling topology check ===")
+    df14 = run_qubit_topology_check(n_instances=100)
+    topology_features = ["max_weighted_degree", "weighted_degree_std", "n_zero_pairs", "algebraic_connectivity"]
+    for feat in topology_features:
+        r14 = scipy_stats.pearsonr(df14[feat], df14["delta_at_paper_defaults"])
+        print(f"  {feat}: r={r14.statistic:+.3f} (p={r14.pvalue:.4f})")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
