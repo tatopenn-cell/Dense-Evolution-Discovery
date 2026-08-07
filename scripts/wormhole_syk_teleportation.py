@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs fifteen real, verified experiments, each producing its own
+This script runs sixteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -197,6 +197,37 @@ CSV + plot:
     becoming less optimal as N grows -- this experiment cannot
     distinguish those two explanations, only establish that the
     magnitude drop is real.
+16. Term-order non-commutativity check -- a different kind of non-
+    commutativity from the one this repo's own scripts/channel_order_
+    noncommutativity.py already settled (noise-CHANNEL order matters
+    iff at least one channel is non-Pauli; the depolarizing channel
+    used in Experiment 9 here is a Pauli-mixture channel, so that rule
+    predicts channel reordering would show nothing new). This instead
+    reorders the K=10+10 SYK Hamiltonian TERMS within the Trotterized
+    circuit's own evolution phases (original order vs. reversed),
+    noiselessly, and measures order_sensitivity = |delta_reversed -
+    delta_original| per instance -- testing whether the *degree* of
+    non-commutativity among a seed's specific terms (not just how many
+    of them pairwise commute, already shown insufficient) tracks the
+    sign. An initial n=6 spot-check found a moderate, borderline-
+    interesting r=+0.474 (p=0.342, not significant but a much larger
+    point estimate than any other candidate tried in this script) --
+    interesting enough, and cheap enough (protocol_layout is built once
+    per seed and reused across all 4 Trotter calls, ~18s/instance) to
+    warrant verification on a larger sample before writing anything up,
+    per this project's established discipline. Eighth honest negative
+    result: at n=30 (the same 34/11-exact-match screening used
+    elsewhere, this time needing 21772 candidates screened to find 30),
+    the correlation regresses to r=+0.282, p=0.131 -- still not
+    significant, and weaker than the n=6 look suggested. An honest
+    correction, the same pattern as Experiment 11's mode-usage-
+    imbalance finding (r=0.87 at n=6, r=0.171 at n=100): a promising
+    small-sample point estimate that does not hold up under a larger,
+    more powered look. order_sensitivity itself is real and non-zero
+    for every instance tested (term order does change the Trotterized
+    circuit's output, confirming genuine non-commutativity among the
+    terms), it just does not predict the sign. 15/30 (50%) wrong-signed
+    at this n=30 subsample, consistent with Experiment 11's ~49/100.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -299,6 +330,17 @@ Honest caveats, not glossed over:
   (not just on average), is treated as a real finding here. K_TERMS
   was kept fixed at 10 rather than scaled with N -- a scaled-K version
   of this same check is untested and could behave differently.
+- Experiment 16 only compares two orderings (original vs. fully
+  reversed) out of K=10+10=20 terms' 20! possible permutations -- a
+  much larger order_sensitivity range might exist among orderings not
+  tried, and reversal specifically might not be representative of
+  "how non-commutative" a term set generally is. It's also noiseless
+  by design (isolating pure Trotter-error order-dependence from
+  physical noise) -- whether term-order sensitivity interacts with
+  noise in a way that *does* track the sign (as opposed to the
+  noiseless order_sensitivity metric tested here) is a distinct,
+  untested question, closer in spirit to channel_order_
+  noncommutativity.py's own noisy, stochastic setting.
 """
 import itertools
 import pathlib
@@ -1399,6 +1441,117 @@ def run_n_scaling_check(n_majorana_large: int = 12, k_terms: int = 10, n_instanc
     return df
 
 
+def _run_trotter_ordered(terms_ordered, v_terms, n_side, n_full, L, R, P, Q, mu_signed, t0, t1,
+                          n_steps_evolution, n_steps_coupling):
+    """One full Trotterized protocol run (noiseless) with terms_ordered
+    used for BOTH the t0 and t1 evolution phases, in whatever order the
+    caller passes -- trotter_evolve_ops applies a step's terms in
+    exactly the order given (see that function's own docstring), so
+    passing a different permutation of the same physical terms changes
+    the Trotterized circuit's actual gate sequence, not just a label.
+    A fresh DenseSVSimulator per call, since this computes one
+    independent full-protocol result, not a continuation of a previous
+    one (unlike run_trotter_noise_scan's single continuous run)."""
+    sim = de.DenseSVSimulator(n_full)
+    sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, True)
+                     + trotter_evolve_ops(terms_ordered, t0, n_steps_evolution))
+    sim.run_circuit(trotter_evolve_ops(v_terms, mu_signed, n_steps_coupling))
+    sim.run_circuit(trotter_evolve_ops(terms_ordered, t1, n_steps_evolution))
+    sv = sim.get_statevector()
+    return mutual_information(sv, n_full, [P], [R[0]])
+
+
+def run_term_order_noncommutativity_check(seeds=None, n_steps_evolution: int = 8,
+                                           n_steps_coupling: int = 16) -> pd.DataFrame:
+    """Tests a genuinely different kind of non-commutativity from the
+    one this repo already settled in scripts/channel_order_
+    noncommutativity.py: that script found NOISE-CHANNEL order matters
+    iff at least one channel is non-Pauli (Pauli channels commute as
+    superoperators) -- the depolarizing channel used throughout this
+    script's own noise experiment (Experiment 9) IS a Pauli-mixture
+    channel, so that specific rule predicts noise-channel reordering
+    here would show nothing new. This experiment tests a different
+    question entirely: does the *order in which the K=10+10=20 SYK
+    Hamiltonian terms are applied within the Trotterized circuit's own
+    t0/t1 evolution phases* matter, and does the size of that effect
+    correlate with the sign? Trotter error is exactly a manifestation
+    of non-commuting terms -- if every term commuted, any order would
+    give the exact same (exact) answer regardless of order -- so this
+    is really asking whether the *degree* of non-commutativity among a
+    seed's specific K=10 terms (not just how many of them commute in
+    the paper's own pairwise sense, already shown insufficient in
+    Experiments 10/11/14) leaves a fingerprint that tracks the sign.
+
+    Method: for each instance, run the noiseless Trotter protocol at
+    the paper's own default parameters twice -- once with the terms in
+    their natural order (as `_protocol_layout` builds them), once with
+    that same list reversed -- for both mu signs, giving delta_original
+    and delta_reversed. `order_sensitivity = abs(delta_reversed -
+    delta_original)` is the candidate feature, correlated against
+    delta_original's own sign across instances. Noiseless by design
+    (unlike channel_order_noncommutativity.py's stochastic, noise-
+    driven setting): the quantity being compared here (mutual
+    information from a single deterministic Trotter circuit output) is
+    not a stochastic sampling distribution, so no Monte Carlo
+    unraveling or permutation test is needed to get a clean, real
+    order-sensitivity number -- reversing the term list is a fixed,
+    reproducible single comparison, not a hypothesis requiring
+    significance testing against a sampling-noise null.
+    """
+    if seeds is None:
+        seeds = find_multiple_seeds(n_instances=6)
+    T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+
+    rows = []
+    for seed in seeds:
+        n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+        terms_reversed = list(reversed(terms_full))
+
+        i_pos_orig = _run_trotter_ordered(terms_full, v_terms, n_side, n_full, L, R, P, Q,
+                                           +MU_PAPER, T0_PAPER, T1_PAPER, n_steps_evolution, n_steps_coupling)
+        i_neg_orig = _run_trotter_ordered(terms_full, v_terms, n_side, n_full, L, R, P, Q,
+                                           -MU_PAPER, T0_PAPER, T1_PAPER, n_steps_evolution, n_steps_coupling)
+        delta_original = i_neg_orig - i_pos_orig
+
+        i_pos_rev = _run_trotter_ordered(terms_reversed, v_terms, n_side, n_full, L, R, P, Q,
+                                          +MU_PAPER, T0_PAPER, T1_PAPER, n_steps_evolution, n_steps_coupling)
+        i_neg_rev = _run_trotter_ordered(terms_reversed, v_terms, n_side, n_full, L, R, P, Q,
+                                          -MU_PAPER, T0_PAPER, T1_PAPER, n_steps_evolution, n_steps_coupling)
+        delta_reversed = i_neg_rev - i_pos_rev
+
+        rows.append({
+            "seed": seed,
+            "delta_original_order": delta_original,
+            "delta_reversed_order": delta_reversed,
+            "order_sensitivity": abs(delta_reversed - delta_original),
+        })
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_term_order_noncommutativity.csv", index=False)
+
+    r_result = scipy_stats.pearsonr(df["order_sensitivity"], df["delta_original_order"])
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(9, 6.5))
+    colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_original_order"]]
+    ax.scatter(df["order_sensitivity"], df["delta_original_order"], c=colors, s=80, zorder=5)
+    for _, row in df.iterrows():
+        ax.annotate(str(int(row["seed"])), (row["order_sensitivity"], row["delta_original_order"]),
+                    textcoords="offset points", xytext=(0, 8), fontsize=8, color='#888888', ha='center')
+    ax.axhline(0, color='#666666', linestyle=':')
+    ax.set_xlabel("order sensitivity |delta_reversed - delta_original|", color='#888888')
+    ax.set_ylabel("delta (original term order)", color='#888888')
+    ax.set_title(f"Experiment 16: term-order non-commutativity vs. sign (n={len(df)})\n"
+                 f"r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f} "
+                 f"(cyan = correct sign, magenta = wrong sign)",
+                 fontsize=11, fontweight='bold')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_term_order_noncommutativity.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1513,6 +1666,11 @@ def run_all():
         n_wrong15 = int((sub["delta_at_paper_defaults_trotter"] < 0).sum())
         print(f"  {label}: {n_wrong15}/{len(sub)} wrong-signed, "
               f"mean|delta|={sub['delta_at_paper_defaults_trotter'].abs().mean():.5f}")
+
+    print("\n=== Experiment 16: term-order non-commutativity check ===")
+    df16 = run_term_order_noncommutativity_check(seeds=find_multiple_seeds(n_instances=30, n_candidates=35000))
+    r16 = scipy_stats.pearsonr(df16["order_sensitivity"], df16["delta_original_order"])
+    print(f"  n={len(df16)}: order_sensitivity vs delta: r={r16.statistic:+.3f} (p={r16.pvalue:.4f})")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")

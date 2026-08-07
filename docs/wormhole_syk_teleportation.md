@@ -738,6 +738,81 @@ optimization at N=12, not attempted here. Produced by
 `scripts/wormhole_syk_teleportation.py`'s `run_n_scaling_check`. Full
 data: `data/wormhole_n_scaling_check.csv`.
 
+## Experiment 16: term-order non-commutativity check (run 2026-08-08)
+
+This repo already has a validated tool for exactly this kind of
+question: `scripts/channel_order_noncommutativity.py` tested whether
+applying two *noise channels* in different orders leaves a measurable
+fingerprint on the output distribution, using Jensen-Shannon divergence
+plus a permutation test for an honest p-value. Its settled finding:
+order matters iff at least one channel is non-Pauli (Pauli channels
+commute with each other as superoperators, so two Pauli channels'
+order never matters; a Pauli channel composed with a non-Pauli one,
+like amplitude damping, is genuinely order-dependent). The depolarizing
+channel used throughout this script's own Experiment 9 *is* a
+Pauli-mixture channel, so that settled rule predicts reordering noise
+channels here would show nothing new -- not tested again for that
+reason.
+
+This experiment asks a different, adjacent question instead: does the
+order in which the K=10+10=20 SYK Hamiltonian *terms* are applied
+within the Trotterized circuit's own t0/t1 evolution phases matter, and
+does the *size* of that effect track the sign? Trotter error is exactly
+a manifestation of non-commuting terms -- if every term commuted, any
+order would give the identical exact answer -- so this tests whether
+the *degree* of non-commutativity among a specific instance's K=10
+terms (not just how many of them pairwise commute in the paper's own
+sense, already shown insufficient in Experiments 10/11/14) leaves a
+fingerprint that predicts the sign.
+
+Method: for each instance, run the noiseless Trotterized protocol at
+the paper's own default parameters twice -- once with `_protocol_
+layout`'s natural term order, once with that list fully reversed --
+for both `mu` signs, giving `delta_original` and `delta_reversed`.
+`order_sensitivity = |delta_reversed - delta_original|` is the
+candidate feature. Unlike the noise-channel script, no Monte Carlo
+unraveling or permutation test is needed here: mutual information from
+a single deterministic Trotter circuit isn't a sampling distribution,
+so comparing two fixed orderings directly gives a clean, reproducible
+number without needing significance machinery for the metric itself
+(only for its correlation against the sign across instances, where
+`scipy.stats.pearsonr` is used as throughout this script).
+
+![Term-order non-commutativity check vs. sign, n=30](assets/wormhole_syk_teleportation/wormhole_term_order_noncommutativity.png)
+
+**An initial n=6 spot-check found the largest point estimate of any
+candidate tried in this entire script: `r=+0.474` (`p=0.342`, not
+significant, but notably larger than every prior candidate's r ~
+0.01-0.2).** Unusually cheap to verify further -- `_protocol_layout`
+is built once per instance and reused across all 4 Trotter calls, so
+each instance costs ~18s rather than the ~4x15-19s a naive
+implementation would need -- so, per this project's established
+discipline (the same instinct behind re-checking Experiment 12 on
+extra seeds before writing it up), it was verified on a larger sample
+before drawing any conclusion. The first attempt at n=30 accidentally
+reused the identical 6 seeds (`find_multiple_seeds`'s default
+`n_candidates=3000` isn't enough to find 30 exact 34/11 matches --
+the same limitation Experiment 11 hit needing ~115,000-120,000
+candidates for n=100); corrected by explicitly screening 35,000
+candidates, which found 30 distinct matches after screening 21,772 of
+them.
+
+**Eighth honest negative result: at the real n=30, the correlation
+regresses to `r=+0.282` (`p=0.131`)** -- still not significant, and
+markedly weaker than the n=6 look suggested. This is the same honest-
+correction pattern as Experiment 11's mode-usage-imbalance finding
+(`r=0.87` at n=6, which did not replicate at `r=0.171` at n=100): a
+promising small-sample point estimate that regresses under a more
+powered look. `order_sensitivity` itself is real and strictly non-zero
+for every one of the 30 instances tested (term order genuinely changes
+the Trotterized circuit's output -- non-commutativity among the terms
+is real, exactly as Trotter theory predicts), it simply does not
+predict the sign. 15/30 (50%) of this n=30 subsample are wrong-signed,
+consistent with Experiment 11's ~49/100. Produced by
+`scripts/wormhole_syk_teleportation.py`'s
+`run_term_order_noncommutativity_check`. Full data:
+`data/wormhole_term_order_noncommutativity.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -794,6 +869,22 @@ data: `data/wormhole_n_scaling_check.csv`.
   parameters are increasingly sub-optimal at larger N" -- both predict
   the same observed magnitude drop, and only a real (costly) parameter
   re-optimization at N=12 could tell them apart.
+- **Experiment 16 only compares two orderings (original vs. fully
+  reversed) out of the 20 terms' 20! possible permutations** -- a much
+  larger order_sensitivity range could exist among orderings never
+  tried, and full reversal specifically might not be representative of
+  "how non-commutative" a term set generally is. It's also noiseless by
+  design, isolating pure Trotter-error order-dependence from physical
+  noise -- whether term-order sensitivity interacts with noise in a way
+  that *does* track the sign (unlike the noiseless metric tested here)
+  is a distinct, untested question, closer in spirit to
+  `channel_order_noncommutativity.py`'s own noisy, stochastic setting.
+  This is the 8th independent candidate explanation ruled out overall
+  (mode-usage imbalance and the r-statistic from Experiment 11; size
+  winding from Experiment 12; message-mode participation and growth
+  rate from Experiment 13; n_zero_pairs and algebraic connectivity from
+  Experiment 14; order_sensitivity here) -- Experiment 14's other two
+  features aren't counted separately, see that experiment's own note.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
