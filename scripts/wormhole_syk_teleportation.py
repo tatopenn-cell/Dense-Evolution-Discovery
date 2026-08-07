@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs seven real, verified experiments, each producing its own
+This script runs eight real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -55,12 +55,25 @@ CSV + plot:
    starting point, 3 rounds converge to a genuine fixed point:
    t0=0.70, mu=17.0, t1=0.36, delta=+0.01688 -- +44.6% over Experiment
    5's original headline value.
+8. Generality check across 6 independent SYK instances -- does
+   Experiment 7's converged point generalize, or is it specific to
+   seed=61? Honest negative result: it does NOT. The converged
+   (t0, mu, t1) scatters across nearly the whole scanned range instead
+   of clustering, 2 of 6 instances converge at the edge of the scanned
+   grid (inconclusive -- their true optimum may lie outside what was
+   scanned), and 2 of 6 have a *negative* delta at Experiment 5's own
+   starting point (the sign-dependent signal isn't even reliably
+   oriented the expected way using those defaults across instances).
+   Percentage-improvement figures are not reported for this experiment
+   since near-zero/negative baselines make them meaningless.
 
-All seven use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
+Experiments 1-7 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
 instance dashboard_core.wormhole.select_good_instance finds when
 screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
+Experiment 8 additionally uses 5 more instances matching that same exact
+criterion, found by find_multiple_seeds.
 
 Honest caveats, not glossed over:
 - Experiment 7's fixed point (t0=0.70, mu=17.0, t1=0.36) is a *local*
@@ -75,6 +88,13 @@ Honest caveats, not glossed over:
   consistent with, not contradicting, the converged answer). A real
   continuous joint optimizer (e.g. gradient-based, if this readout is
   ever made differentiable) would be needed to settle global optimality.
+- Experiment 8's non-generalization finding is itself only a 6-instance
+  sample, and 2 of those 6 hit the edge of the scanned (t0, t1) range
+  rather than settling on a real interior fixed point -- a wider scan
+  range could turn those into genuine (still probably instance-specific)
+  answers rather than boundary artifacts, but wasn't run here (compute
+  cost scales with range x resolution, already ~15 minutes for 6
+  instances at the current range).
 - All results use the exact-evolution backend (eigendecomposition), not
   the Trotterized real-gate-circuit backend -- both are implemented and
   cross-verified to agree closely (see the main Dense-Evolution repo's
@@ -361,23 +381,17 @@ def run_t1_rescan(seed: int) -> pd.DataFrame:
     return df
 
 
-def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
-    """Iterated coordinate ascent toward the true joint (t0, mu, t1)
-    optimum -- resolves Experiment 6's own open caveat: it moved t1 once,
-    holding t0/mu fixed at Experiment 5's values, but never checked
-    whether t0/mu would shift *again* now that t1 had moved (the same
-    pattern that motivated Experiment 5 over the original 1D scans in
-    the first place).
-
-    Starting from Experiment 5's point (t0=0.65, mu=15.0, t1=0.60), each
-    round alternates two full sub-steps at Experiment 5/6's own
-    resolutions (not a shortcut, so results stay directly comparable):
-    a 126-point t1 scan (step 0.01, Experiment 6's resolution) holding
-    (t0, mu) fixed, then an 870-point (t0, mu) grid (step 0.05/1.0,
-    Experiment 5's resolution) holding the new t1 fixed. Stops when a
-    full round leaves (t0, mu, t1) unchanged on this grid -- a genuine
-    fixed point, not just a small numeric wobble -- or after max_rounds
-    as a safety cap."""
+def _coordinate_ascent_trace(seed: int, max_rounds: int = 5) -> pd.DataFrame:
+    """Pure computation behind Experiments 7 and 8 -- iterated coordinate
+    ascent toward the joint (t0, mu, t1) optimum for one SYK instance, no
+    file I/O (callers decide what to save). Starting from Experiment 5's
+    point (t0=0.65, mu=15.0, t1=0.60), each round alternates two full
+    sub-steps at Experiment 5/6's own resolutions (not a shortcut, so
+    results stay directly comparable): a 126-point t1 scan (step 0.01)
+    holding (t0, mu) fixed, then an 870-point (t0, mu) grid (step
+    0.05/1.0) holding the new t1 fixed. Stops when a full round leaves
+    (t0, mu, t1) unchanged -- a genuine fixed point -- or after
+    max_rounds as a safety cap."""
     n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
     H = de.pauli_hamiltonian_to_matrix(terms_full, n_full)
     eigvals, eigvecs = np.linalg.eigh(H)
@@ -404,20 +418,20 @@ def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
     mu_grid_values = np.round(np.arange(2.0, 31.0, 1.0), 1)
 
     t0, mu, t1 = 0.65, 15.0, 0.60
-    trace = [{"round": 0, "stage": "start (Experiment 5)", "t0": t0, "mu": mu, "t1": t1,
+    trace = [{"seed": seed, "round": 0, "stage": "start (Experiment 5)", "t0": t0, "mu": mu, "t1": t1,
               "delta": mi_delta(t0, mu, t1)}]
 
     for rnd in range(1, max_rounds + 1):
         t1_new = max(t1_scan_values, key=lambda t1c: mi_delta(t0, mu, t1c))
         delta_t1 = mi_delta(t0, mu, t1_new)
-        trace.append({"round": rnd, "stage": "t1 scan", "t0": t0, "mu": mu, "t1": t1_new, "delta": delta_t1})
+        trace.append({"seed": seed, "round": rnd, "stage": "t1 scan", "t0": t0, "mu": mu, "t1": t1_new, "delta": delta_t1})
 
         t0_new, mu_new = max(
             ((t0c, muc) for muc in mu_grid_values for t0c in t0_grid_values),
             key=lambda p: mi_delta(p[0], p[1], t1_new),
         )
         delta_grid = mi_delta(t0_new, mu_new, t1_new)
-        trace.append({"round": rnd, "stage": "t0/mu grid", "t0": t0_new, "mu": mu_new, "t1": t1_new,
+        trace.append({"seed": seed, "round": rnd, "stage": "t0/mu grid", "t0": t0_new, "mu": mu_new, "t1": t1_new,
                       "delta": delta_grid})
 
         converged = (t0_new == t0 and mu_new == mu and t1_new == t1)
@@ -425,7 +439,14 @@ def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
         if converged:
             break
 
-    trace_df = pd.DataFrame(trace)
+    return pd.DataFrame(trace)
+
+
+def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
+    """Experiment 7: run _coordinate_ascent_trace for seed=61 and save
+    its own CSV + convergence plot. See _coordinate_ascent_trace's
+    docstring for the algorithm."""
+    trace_df = _coordinate_ascent_trace(seed, max_rounds=max_rounds)
     trace_df.to_csv(_DATA_DIR / "wormhole_coordinate_ascent_3d.csv", index=False)
 
     plt.style.use('dark_background')
@@ -444,6 +465,95 @@ def run_coordinate_ascent_3d(seed: int, max_rounds: int = 5):
     plt.savefig(_IMAGES_DIR / "wormhole_coordinate_ascent_3d.png", dpi=300)
     plt.close(fig)
     return trace_df
+
+
+def find_multiple_seeds(n_instances: int = 6, n_candidates: int = 3000, target_commuting: int = 34) -> list:
+    """Screen up to n_candidates random seeds for EXACT matches to the
+    paper's own selection criterion (34 commuting / 11 anticommuting
+    pairs among the C(10,2)=45 pairs of K=10 terms), returning the first
+    n_instances found. Unlike find_seed() (which returns the single
+    closest match out of a smaller pool), Experiment 8 needs several
+    independent, equally-valid instances to test whether Experiment 7's
+    converged point is a property of the protocol or an idiosyncrasy of
+    seed=61 specifically."""
+    n_qubits = N_MAJORANA // 2
+    found = []
+    for seed in range(n_candidates):
+        terms = build_sparse_syk_terms(N_MAJORANA, K_TERMS, J, seed)[1]
+        c, a = commuting_pair_count(terms, n_qubits)
+        if c == target_commuting:
+            found.append(seed)
+            if len(found) >= n_instances:
+                break
+    print(f"Found {len(found)} instances with exactly {target_commuting} commuting pairs "
+          f"(screened {seed + 1} candidates): {found}")
+    return found
+
+
+def run_generality_check(seeds=None, max_rounds: int = 5) -> pd.DataFrame:
+    """Experiment 8: does Experiment 7's converged point (t0=0.70,
+    mu=17.0, t1=0.36) generalize across SYK instances, or is it specific
+    to seed=61? Runs the identical coordinate-ascent procedure
+    (_coordinate_ascent_trace -- same resolutions, same starting point)
+    independently for each of several instances that all exactly match
+    the paper's own selection criterion, same as seed=61 does.
+
+    Honest negative result, not glossed over: it does NOT generalize.
+    Converged (t0, mu, t1) points scatter across nearly the entire
+    scanned range instead of clustering near seed=61's answer, 2 of 6
+    instances converge AT the edge of the scanned t0/t1 range (their
+    true optimum may lie outside what was scanned -- inconclusive, not
+    a real fixed point), and 2 of 6 instances have a NEGATIVE delta at
+    Experiment 5's own starting point (the sign-dependent signal isn't
+    even reliably oriented the expected way using those "default"
+    parameters across instances). Percentage-improvement figures are not
+    reported here for that reason -- with a near-zero or negative
+    baseline they blow up into meaningless numbers (e.g. one instance's
+    raw improvement is nominally +3865%), not a real effect size."""
+    if seeds is None:
+        seeds = find_multiple_seeds(n_instances=6)
+
+    rows = []
+    for seed in seeds:
+        trace_df = _coordinate_ascent_trace(seed, max_rounds=max_rounds)
+        start = trace_df.iloc[0]
+        converged = trace_df.iloc[-1]
+        t1_values = np.round(np.arange(0.05, 1.31, 0.01), 3)
+        t0_values = np.round(np.arange(0.05, 1.55, 0.05), 3)
+        at_t1_edge = converged["t1"] in (t1_values.min(), t1_values.max())
+        at_t0_edge = converged["t0"] in (t0_values.min(), t0_values.max())
+        rows.append({
+            "seed": seed, "baseline_delta": start["delta"],
+            "converged_t0": converged["t0"], "converged_mu": converged["mu"], "converged_t1": converged["t1"],
+            "converged_delta": converged["delta"], "rounds": int(trace_df["round"].max()),
+            "at_grid_edge": at_t0_edge or at_t1_edge,
+        })
+        print(f"  seed={seed}: converged t0={converged['t0']:.2f} mu={converged['mu']:.1f} "
+              f"t1={converged['t1']:.2f} delta={converged['delta']:+.5f} "
+              f"(baseline={start['delta']:+.5f})"
+              f"{'  [AT GRID EDGE -- inconclusive]' if (at_t0_edge or at_t1_edge) else ''}")
+
+    summary_df = pd.DataFrame(rows)
+    summary_df.to_csv(_DATA_DIR / "wormhole_generality_check.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    for ax, (xcol, xlabel) in zip(axes, [("converged_t0", "t0"), ("converged_mu", "mu"), ("converged_t1", "t1")]):
+        colors = ['#FF007F' if edge else '#00FFFF' for edge in summary_df["at_grid_edge"]]
+        ax.scatter(summary_df[xcol], summary_df["converged_delta"], c=colors, s=80, zorder=5)
+        for _, row in summary_df.iterrows():
+            ax.annotate(str(row["seed"]), (row[xcol], row["converged_delta"]),
+                        textcoords="offset points", xytext=(0, 8), fontsize=8, color='#888888', ha='center')
+        ax.set_xlabel(xlabel, color='#888888')
+        ax.set_ylabel("converged delta", color='#888888')
+        ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    fig.suptitle("Experiment 8: converged (t0, mu, t1) scattered across 6 SYK instances\n"
+                 "(cyan = interior fixed point, magenta = at grid edge, inconclusive)",
+                 fontsize=11, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_generality_check.png", dpi=300)
+    plt.close(fig)
+    return summary_df
 
 
 def run_all():
@@ -488,6 +598,14 @@ def run_all():
           f"t0={converged['t0']:.2f}  mu={converged['mu']:.1f}  t1={converged['t1']:.2f}  "
           f"delta={converged['delta']:+.5f}"
           f"  ({(converged['delta'] / peak5['delta'] - 1) * 100:+.1f}% vs. Experiment 5)")
+
+    print("\n=== Experiment 8: does the converged point generalize across SYK instances? ===")
+    df8 = run_generality_check()
+    n_edge = int(df8["at_grid_edge"].sum())
+    n_negative_baseline = int((df8["baseline_delta"] < 0).sum())
+    print(f"  {len(df8)} instances checked -- converged (t0, mu, t1) does NOT cluster near seed=61's "
+          f"answer, {n_edge} at the grid edge (inconclusive), {n_negative_baseline} with a negative "
+          f"baseline delta at Experiment 5's own starting point.")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")

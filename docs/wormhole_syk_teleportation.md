@@ -307,14 +307,72 @@ on this specific grid. Produced by
 `scripts/wormhole_syk_teleportation.py`'s `run_coordinate_ascent_3d`.
 Full data: `data/wormhole_coordinate_ascent_3d.csv`.
 
+## Experiment 8: does the converged point generalize across SYK instances? (run 2026-08-07)
+
+Every experiment so far used a single instance, seed=61. Before treating
+`t0=0.70, mu=17.0, t1=0.36` as anything more than a fact about that one
+random Hamiltonian, the obvious check: does the *same* coordinate-ascent
+procedure, run independently on other instances that equally match the
+paper's own selection criterion (34 commuting / 11 anticommuting pairs),
+converge to a similar point?
+
+`find_multiple_seeds` screens seeds for an *exact* match (not just the
+closest one, like `find_seed` does) -- 6 found within the first 3000
+seeds tried: `61, 448, 1944, 2166, 2835, 2907`.
+
+| Seed | Converged t0 | Converged mu | Converged t1 | Converged delta | Baseline delta (Exp. 5's start) |
+|---|---|---|---|---|---|
+| 61 | 0.70 | 17.0 | 0.36 | +0.01688 | +0.01167 |
+| 448 | 0.90 | 19.0 | **1.30 (grid edge)** | +0.00714 | +0.00018 |
+| 1944 | 0.40 | 16.0 | 0.29 | +0.06215 | +0.02075 |
+| 2166 | **1.50 (grid edge)** | 20.0 | 0.89 | +0.01930 | **-0.00273** |
+| 2835 | 0.55 | 17.0 | 0.24 | +0.01254 | **-0.00379** |
+| 2907 | 1.05 | 19.0 | 0.42 | +0.00498 | +0.00069 |
+
+![Converged (t0, mu, t1) scattered across 6 SYK instances](assets/wormhole_syk_teleportation/wormhole_generality_check.png)
+
+**Honest negative result: it does not generalize.**
+
+- **No clustering.** Converged `t0` spans `[0.40, 1.50]` and `t1` spans
+  `[0.24, 1.30]` -- close to the *entire* scanned range in both cases,
+  not a tight cluster near seed=61's answer.
+- **2 of 6 instances hit the edge of the scanned grid** (seed 448 at
+  `t1=1.30`, the top of the scanned range; seed 2166 at `t0=1.50`, the
+  top of *its* scanned range) -- for these, the procedure didn't find a
+  real interior fixed point, it ran off the edge of what was searched.
+  Their true optimum, if the range were extended, is unknown.
+- **2 of 6 instances start with the *wrong sign*.** At Experiment 5's
+  own starting point (`t0=0.65, mu=15.0, t1=0.60` -- not derived from
+  these instances at all, just reused as a common starting point), seeds
+  2166 and 2835 give a *negative* delta: the sign-dependent asymmetry
+  the whole protocol is built to show points the wrong way at that point
+  for those instances, before any optimization even starts.
+- Percentage-improvement figures are deliberately not reported here --
+  with a baseline near zero (seed 448: `+0.00018`) or negative (seeds
+  2166, 2835), a percentage explodes into a meaningless number (e.g.
+  seed 448's nominal improvement is `+3865%`) that describes the tiny
+  denominator, not a real effect size.
+
+**Conclusion**: `t0=0.70, mu=17.0, t1=0.36` is a property of seed=61's
+specific random Hamiltonian, not a general finding about the
+traversable-wormhole-inspired teleportation protocol. Produced by
+`scripts/wormhole_syk_teleportation.py`'s `run_generality_check`. Full
+data: `data/wormhole_generality_check.csv`.
+
 ## What this does NOT show
 
-- **Experiment 7's fixed point is not proven globally optimal.**
-  Coordinate ascent converging to a stable point on a given grid
-  resolution is not the same as proving that point is the true
-  continuous joint maximum -- a different grid resolution, or a real
-  continuous optimizer, could in principle find a nearby but distinct
-  point. See Experiment 7's own caveat above.
+- **Experiment 7's fixed point is not proven globally optimal, and does
+  not generalize to other instances (Experiment 8).** Coordinate ascent
+  converging to a stable point on a given grid resolution is not the
+  same as proving that point is the true continuous joint maximum for
+  even a single instance -- and Experiment 8 shows directly that it
+  isn't a property of the protocol at all, just of seed=61.
+- **Experiment 8 is itself only a 6-instance sample**, and 2 of those 6
+  hit the edge of the scanned range rather than a real interior fixed
+  point -- a wider scan could resolve those into genuine (still likely
+  instance-specific) answers, but wasn't run here (cost scales with
+  range x resolution; 6 instances at the current range already took
+  ~15 minutes).
 - **All backend=exact (matrix exponentiation), not the Trotterized
   real-gate-circuit backend.** Both are implemented and cross-verified
   in the main repo's test suite to agree closely at the known peak
