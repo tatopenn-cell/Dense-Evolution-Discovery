@@ -10,7 +10,7 @@
 [![Issues](https://img.shields.io/github/issues/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/issues)
 [![Stars](https://img.shields.io/github/stars/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square&color=yellow)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/stargazers)
 
-📖 **[Dense Evolution ising-test-discoveries-- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/)**
+📖 **[Dense Evolution ising-test-discoveries-- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/)**
 
 This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
