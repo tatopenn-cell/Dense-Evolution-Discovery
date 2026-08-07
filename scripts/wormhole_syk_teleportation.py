@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs ten real, verified experiments, each producing its own
+This script runs eleven real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -95,6 +95,21 @@ CSV + plot:
     evaluation points) genuinely contradicts the "generic feature of
     the ensemble" claim for this specific 34/11-selection-matched
     subset.
+11. Large-sample (n=100) version of Experiment 10's check, matching
+    arXiv:2604.10090's own reported ensemble size. Result: 49/100 (49%)
+    of exact 34/11-selection-matched instances are wrong-signed at the
+    paper's own default parameters -- far stronger than Experiment 10's
+    2/6 (33%), and essentially a coin flip, not a "generic feature of
+    the ensemble". Also tests two candidate structural explanations for
+    the sign variation floated informally alongside Experiment 10
+    (Majorana mode-usage imbalance in the K=10 coupling terms; the
+    spectral level-spacing r-statistic, a standard chaos diagnostic):
+    an early n=6 look had suggested mode-usage imbalance correlated
+    with the signal (r=0.87) -- at n=100 that does NOT hold up
+    (r=0.171, p=0.09, not significant), an honest correction of that
+    earlier small-sample impression. The level-spacing statistic
+    doesn't correlate either (r=0.087, p=0.39). Neither explains why
+    the sign varies; that remains open.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -102,7 +117,8 @@ screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
 Experiments 8 and 10 additionally use 5 more instances matching that same
-exact criterion, found by find_multiple_seeds.
+exact criterion, found by find_multiple_seeds; Experiment 11 uses up to
+100.
 
 Honest caveats, not glossed over:
 - Experiment 7's fixed point (t0=0.70, mu=17.0, t1=0.36) is a *local*
@@ -153,11 +169,13 @@ Honest caveats, not glossed over:
   own helper functions are just a faster way to call the same physics
   repeatedly at one fixed instance.
 """
+import itertools
 import pathlib
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy import stats as scipy_stats
 
 from dashboard_core.wormhole import (
     build_sparse_syk_terms, commuting_pair_count, select_good_instance,
@@ -723,6 +741,79 @@ def run_paper_defaults_comparison(seeds=None) -> pd.DataFrame:
     return df
 
 
+def run_ensemble_sign_check(n_instances: int = 100, n_candidates: int = 120000) -> pd.DataFrame:
+    """Large-sample version of Experiment 10's check. Experiment 10 found
+    2 of 6 instances wrong-signed at arXiv:2604.10090's own stated
+    default parameters (t0=0.3, mu=12, t1=0.60) -- a real but small
+    sample. This repeats the identical check across up to n_instances
+    exact 34/11-selection-matched SYK instances (same criterion as
+    Experiments 8 and 10, via find_multiple_seeds), and additionally
+    tests two candidate explanations floated informally alongside
+    Experiment 10 for *why* the sign varies: Majorana mode-usage
+    imbalance in the K=10 coupling terms (some modes coupled in many
+    terms, others in few) and the spectral level-spacing r-statistic
+    (a standard chaos diagnostic, Poisson~0.386 vs GOE~0.530). Both are
+    tested for real correlation against delta via Pearson r, not just
+    eyeballed."""
+    seeds = find_multiple_seeds(n_instances=n_instances, n_candidates=n_candidates)
+    all_quads = list(itertools.combinations(range(1, N_MAJORANA + 1), 4))
+    n_qubits = N_MAJORANA // 2
+    T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+
+    rows = []
+    for seed in seeds:
+        rng = np.random.default_rng(seed)
+        chosen_idx = rng.choice(len(all_quads), size=K_TERMS, replace=False)
+        quads = [all_quads[idx] for idx in chosen_idx]
+        mode_count = np.zeros(N_MAJORANA + 1)
+        for q in quads:
+            for m in q:
+                mode_count[m] += 1
+        usage_std = float(np.std(mode_count[1:]))
+
+        _, terms = build_sparse_syk_terms(N_MAJORANA, K_TERMS, J, seed)
+        H = de.pauli_hamiltonian_to_matrix(terms, n_qubits)
+        eigvals = np.sort(np.linalg.eigvalsh(H))
+        gaps = np.diff(eigvals)
+        gaps = gaps[gaps > 1e-12]
+        r = np.minimum(gaps[:-1], gaps[1:]) / np.maximum(gaps[:-1], gaps[1:])
+        r_stat = float(np.mean(r))
+
+        i_pos = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, +MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+        i_neg = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, -MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+        delta = i_neg - i_pos
+
+        rows.append({"seed": seed, "mode_usage_std": usage_std, "r_stat": r_stat,
+                     "delta_at_paper_defaults": delta})
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_ensemble_sign_check.csv", index=False)
+
+    r_usage = scipy_stats.pearsonr(df["mode_usage_std"], df["delta_at_paper_defaults"])
+    r_chaos = scipy_stats.pearsonr(df["r_stat"], df["delta_at_paper_defaults"])
+
+    plt.style.use('dark_background')
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
+    for ax, (xcol, xlabel, r_result) in zip(
+        axes, [("mode_usage_std", "Majorana mode-usage std", r_usage), ("r_stat", "level-spacing r-statistic", r_chaos)]
+    ):
+        colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_at_paper_defaults"]]
+        ax.scatter(df[xcol], df["delta_at_paper_defaults"], c=colors, s=25, alpha=0.7)
+        ax.axhline(0, color='#666666', linestyle=':')
+        ax.set_xlabel(xlabel, color='#888888')
+        ax.set_ylabel("delta at paper defaults", color='#888888')
+        ax.set_title(f"r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f}", fontsize=10, color='#888888')
+        ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    n_wrong = int((df["delta_at_paper_defaults"] < 0).sum())
+    fig.suptitle(f"Experiment 11: n={len(df)} instances, {n_wrong}/{len(df)} ({100*n_wrong/len(df):.0f}%) wrong-signed "
+                 f"at arXiv:2604.10090's own defaults\n(cyan = correct sign, magenta = wrong sign)",
+                 fontsize=11, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_ensemble_sign_check.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -790,6 +881,18 @@ def run_all():
           f"parameters (t0=0.3, mu=12, t1=0.60) -- contradicts arXiv:2604.10090's 'Ensemble "
           f"robustness' claim that the sign-dependent asymmetry is a generic ensemble feature, "
           f"at least for this 34/11-selection-matched subset.")
+
+    print("\n=== Experiment 11: large-sample (n=100) ensemble sign check ===")
+    df11 = run_ensemble_sign_check(n_instances=100)
+    n_wrong11 = int((df11["delta_at_paper_defaults"] < 0).sum())
+    r_usage = scipy_stats.pearsonr(df11["mode_usage_std"], df11["delta_at_paper_defaults"])
+    r_chaos = scipy_stats.pearsonr(df11["r_stat"], df11["delta_at_paper_defaults"])
+    print(f"  n={len(df11)}: {n_wrong11}/{len(df11)} ({100*n_wrong11/len(df11):.0f}%) wrong-signed at the "
+          f"paper's own defaults -- a much larger, more statistically robust version of Experiment 10's "
+          f"2/6 finding. Neither candidate structural explanation holds up at this sample size: "
+          f"mode-usage-imbalance r={r_usage.statistic:+.3f} (p={r_usage.pvalue:.3f}), "
+          f"level-spacing r-statistic r={r_chaos.statistic:+.3f} (p={r_chaos.pvalue:.3f}) -- "
+          f"neither is a statistically significant predictor of the sign.")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")

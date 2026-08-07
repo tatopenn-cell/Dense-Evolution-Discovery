@@ -449,19 +449,71 @@ claim does not hold up. Produced by
 `run_paper_defaults_comparison`. Full data:
 `data/wormhole_paper_defaults_comparison.csv`.
 
+## Experiment 11: large-sample (n=100) ensemble sign check (run 2026-08-07)
+
+Experiment 10's finding is real but statistically thin: 2 of 6 is a
+small sample, easy to dismiss as noise. This experiment repeats the
+identical check -- delta at arXiv:2604.10090's own default parameters
+(`t0=0.3, mu=12, t1=0.60`) -- across `n=100` instances that exactly
+match the paper's own selection criterion, the same sample size the
+paper itself reports for its "Ensemble robustness" section.
+`find_multiple_seeds` had to screen 106,097 candidate seeds to find
+100 exact 34/11 matches (roughly 1 in 1,000).
+
+Alongside the sign check, two candidate structural explanations for
+*why* the sign varies -- floated informally while investigating
+Experiment 10, not yet part of any committed experiment before this
+one -- are tested for real correlation, not just eyeballed:
+
+- **Majorana mode-usage imbalance**: for each instance's 10 sparse
+  coupling terms, how unevenly are the 8 Majorana modes used (some
+  modes appearing in many terms, "hubs"; others in few, "isolated"),
+  measured as the standard deviation of per-mode usage counts.
+- **Spectral level-spacing r-statistic**: `r = min(d_n, d_n+1) /
+  max(d_n, d_n+1)` averaged over adjacent eigenvalue gaps of the
+  L-side SYK Hamiltonian -- a standard quantum-chaos diagnostic
+  (Poisson/integrable ~0.386, GOE/chaotic ~0.530).
+
+![n=100 ensemble sign check vs. structural/spectral correlates](assets/wormhole_syk_teleportation/wormhole_ensemble_sign_check.png)
+
+**Fourth honest result, and the strongest of the whole write-up:
+49 of 100 instances (49%) are wrong-signed at the paper's own default
+parameters** -- essentially a coin flip, not "a generic feature of the
+ensemble." This isn't a marginal statistical wobble; at this sample
+size the effect is unambiguous.
+
+Neither candidate structural explanation holds up either. Mode-usage
+imbalance: `r=+0.171, p=0.090` -- not significant at the conventional
+0.05 threshold. Level-spacing r-statistic: `r=+0.087, p=0.388` -- not
+significant, and nowhere close. **This corrects an earlier impression**:
+an ad hoc `n=6` look at mode-usage imbalance (using only Experiment
+10's 6 instances) had suggested a strong correlation (`r=+0.87,
+p=0.022`) -- that does not replicate at `n=100` and should be treated
+as a small-sample artifact, not a real effect. Why the sign varies
+across instances remains genuinely open. Produced by
+`scripts/wormhole_syk_teleportation.py`'s `run_ensemble_sign_check`.
+Full data: `data/wormhole_ensemble_sign_check.csv`.
+
 ## What this does NOT show
 
-- **Experiment 10 is not a replication of arXiv:2604.10090's own
-  100-instance ensemble study.** Their ensemble's exact selection
-  criterion for those 100 draws isn't fully specified in the main text
-  available here; our 6 instances are filtered strictly to an *exact*
+- **Even Experiment 11's n=100 sample isn't a strict replication of
+  arXiv:2604.10090's own ensemble study.** It matches their reported
+  sample size, but their ensemble's exact selection methodology for
+  those 100 draws isn't fully specified in the main text available
+  here -- our 100 instances are filtered strictly to an *exact*
   34/11 commuting/anticommuting match (`find_multiple_seeds`), a
   narrower and possibly differently-distributed subset than whatever
-  their 100 realizations were. "2 of 6 wrong-signed" is a real,
-  verified result for this specific subset, not a like-for-like
-  reproduction of their reported ensemble statistics -- a genuine
-  100-instance sweep at our own exact criterion, matching their sample
-  size, would be needed to compare percentages directly.
+  their 100 realizations were. "49/100 wrong-signed" is a real,
+  verified result for this specific subset, not a claim about their
+  exact reported statistics.
+- **The structural/spectral null results don't rule out every
+  explanation, just the two tested.** Mode-usage imbalance and the
+  level-spacing r-statistic were the two candidates that came up in
+  discussion; neither correlating doesn't mean no structural property
+  does -- e.g. arXiv:2604.10090's own "size winding" diagnostic
+  (operator growth organized by Majorana-string size, Sec. S6 of that
+  paper) is a more theoretically motivated candidate that hasn't been
+  computed here.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the

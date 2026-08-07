@@ -1,16 +1,16 @@
-# 🔬 Quantum Phase Transitions, Variational Gradients, and Error Mitigation 
+# 🔬 Dense Evolution Discovery — Quantum Simulation Experiments and Robustness Studies
 
-[![Cross-Validation CI](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml/badge.svg)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-tatopenn--cell.github.io-00e5ff?style=flat-square)](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/)
+[![Cross-Validation CI](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/actions/workflows/ci.yml/badge.svg)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-tatopenn--cell.github.io-00e5ff?style=flat-square)](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/)
 [![Dense Evolution](https://img.shields.io/pypi/v/dense-evolution?style=flat-square&color=00e5ff&label=dense-evolution)](https://pypi.org/project/dense-evolution/)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![JAX](https://img.shields.io/badge/Backend-JAX_XLA-f9ab00?style=flat-square&logo=google&logoColor=white)](https://github.com/google/jax)
-[![Latest Release](https://img.shields.io/github/v/release/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square&color=blueviolet)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases)
-[![Last Commit](https://img.shields.io/github/last-commit/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/commits/main)
-[![Issues](https://img.shields.io/github/issues/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/issues)
-[![Stars](https://img.shields.io/github/stars/tatopenn-cell/Dense-Evolution-Ising-Tests?style=flat-square&color=yellow)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/stargazers)
+[![Latest Release](https://img.shields.io/github/v/release/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square&color=blueviolet)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/commits/main)
+[![Issues](https://img.shields.io/github/issues/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues)
+[![Stars](https://img.shields.io/github/stars/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square&color=yellow)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/stargazers)
 
-📖 **[Dense Evolution ising-test-discoveries-- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/)**
+📖 **[Dense Evolution ising-test-discoveries-- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/)**
 
 This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
@@ -20,7 +20,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
-- **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: an iterated coordinate-ascent search converges to a joint (t0, mu, t1) fixed point +44.6% above the original 2D-grid headline value — **but two honest negative results follow**: it does NOT generalize across 5 more independent SYK instances (a property of seed=61, not the protocol), and even at seed=61's own best point, a real Trotterized circuit with realistic depolarizing noise shows the sign-dependent signal crossing zero between p=0.01 and p=0.02, well within range of current NISQ hardware error rates.
+- **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: an iterated coordinate-ascent search converges to a joint (t0, mu, t1) fixed point +44.6% above the original 2D-grid headline value, but it does NOT generalize across other SYK instances and doesn't survive realistic depolarizing noise. **Strongest result**: arXiv:2604.10090's own "Ensemble robustness" section claims the sign-dependent asymmetry is "a generic feature of the ensemble" — a large-sample check at n=100 instances (matching the paper's own reported ensemble size) finds **49/100 (49%) wrong-signed at the paper's own default parameters**, essentially a coin flip; two candidate structural explanations (Majorana mode-usage imbalance, spectral level-spacing chaos statistic) were tested and neither holds up at this sample size.
 - **[Harrison / VHD Tight-Binding Validation](#20-harrison--vhd-tight-binding-validation-against-real-experimental-gaps)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
@@ -31,7 +31,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 ## 📁 Repository Layout
 
 ```
-Dense-Evolution-Ising-Tests/
+Dense-Evolution-Discovery/
 ├── scripts/     # 17 production scripts (see below) -- tracked in git
 ├── tests/       # pytest suite, run by CI on every push
 ├── data/        # CSV outputs -- NOT tracked (.gitignore); populated by running scripts/tests
@@ -39,7 +39,7 @@ Dense-Evolution-Ising-Tests/
 └── README.md
 ```
 
-`git clone` gives you exactly the scripts and tests, nothing pre-generated -- run anything and `data/`/`images/` fill up with fresh output, so there's never any ambiguity about whether what you're looking at is old or new. Pre-made results for browsing without running anything live as attachments on the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases) instead (also what every image embedded in this README below links to).
+`git clone` gives you exactly the scripts and tests, nothing pre-generated -- run anything and `data/`/`images/` fill up with fresh output, so there's never any ambiguity about whether what you're looking at is old or new. Pre-made results for browsing without running anything live as attachments on the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases) instead (also what every image embedded in this README below links to).
 
 ## 📊 Repository Architecture & Ecosystem
 
@@ -83,7 +83,7 @@ As the transverse field coupling strength $g$ sweeps from $0.0$ to $2.5$ over 3,
 
 The ansatz deploys alternating CX–RZ–CX entangling blocks across all 11 nearest-neighbor qubit pairs on a 12-qubit chain, followed by parametric RX rotations scaled to the transverse field strength ($\theta = 0.6 \cdot g$). The `<H_zz>` order parameter is computed analytically from the statevector probability distribution via bitwise parity extraction.
 
-[![Quantum Ising Phase Scan and Susceptibility](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_transizione_ising.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_transizione_ising.png)
+[![Quantum Ising Phase Scan and Susceptibility](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)
 
 ---
 
@@ -97,7 +97,7 @@ The protocol operates on Bloch wavevector states $|\psi(k)\rangle = \frac{1}{\sq
 
 The ZNE protocol successfully reconstructed the unperturbed, zero-noise ideal target trajectory, forcing the corrupted noisy minimum at $k=0$ (degraded up to $-3.3155\text{ eV}$) back to its true analytic target value of **$-4.2467\text{ eV}$** without introducing non-linear artifacts.
 
-[![Stochastic Zero-Noise Extrapolation Results](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/confronto_transizione_noisy.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/confronto_transizione_noisy.png)
+[![Stochastic Zero-Noise Extrapolation Results](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)
 
 ---
 
@@ -145,7 +145,7 @@ $$\langle X_q \rangle = \text{Re}\left[\sum_i \psi_i^* \psi_{i \oplus 2^q}\right
 
 With both fixed, the true pattern is much simpler: **11 of the 12 nodes give an identical residual coherence, $43.88\%$**, and only the very last node in the chain differs, at $62.05\%$. We don't have a fully derived analytic explanation for *why* exactly one node is different (an attempted derivation via "the CNOT control's coherence is preserved" turned out to rest on a false premise — that invariance holds for Z-basis populations, not X-basis coherence — so it's reported here as a verified empirical fact, not a proven mechanism).
 
-[![True Quantum Defect Mapping Graph](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/mappa_difetti_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/mappa_difetti_silicio.png)
+[![True Quantum Defect Mapping Graph](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/mappa_difetti_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/mappa_difetti_silicio.png)
 
 ---
 
@@ -157,7 +157,7 @@ $$E(k) = -2t \cos(k)$$
 
 This eliminates artificial scaling factors and rigid offsets, delivering an honest statevector simulation of tight-binding quantum dynamics under strict 1-fermion subspace conservation. The Bloch states are analytically constructed as $|\psi(k)\rangle = \frac{1}{\sqrt{N}} \sum_q e^{iqk} |1_q\rangle$ over 8 qubits, with the kinetic energy expectation evaluated via tensor-product bitwise XY-operator matrix elements.
 
-[![Rigorous Quantum Tight-Binding Dispersion](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/bande_silicio_ibrido.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/bande_silicio_ibrido.png)
+[![Rigorous Quantum Tight-Binding Dispersion](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/bande_silicio_ibrido.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/bande_silicio_ibrido.png)
 
 ---
 
@@ -175,7 +175,7 @@ By packing every shifted configuration concurrently into `run_parametric_batch_j
 
 The exact quantum derivatives successfully map continuous trajectories, verifying the total absence of vanishing gradient dead-zones or artificial plateaus under compact excitation-conserving ansatze.
 
-[![Exact Parameter-Shift Rule Gradients](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/vqe_jax_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/vqe_jax_gradient.png)
+[![Exact Parameter-Shift Rule Gradients](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_jax_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_jax_gradient.png)
 
 ---
 
@@ -187,7 +187,7 @@ $$t(\varepsilon) = \frac{t_0}{(1 + \varepsilon)^2}$$
 
 The high-resolution 3,500-point k-space parameter sweep executed via JAX maps the physical contraction of the modal hopping energy from the standard $\pm 4.2200\text{ eV}$ limits down to the accurate engineered boundary of **$\pm 3.8277\text{ eV}$** across the Brillouin zone. The simulation uses 8-qubit fermionic Bloch states with Jordan-Wigner XY exchange operators evaluated over all 8 bonds under periodic boundary conditions.
 
-[![Strained Silicon Next-Gen Bandstructure](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/confronto_nuovo_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/confronto_nuovo_silicio.png)
+[![Strained Silicon Next-Gen Bandstructure](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_nuovo_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_nuovo_silicio.png)
 
 ---
 
@@ -205,7 +205,7 @@ $$t_{\text{eff}}(T) = t_0 \left(1 - 0.15 \cdot \bar{n}(\omega, T)\right)$$
 
 This captures the physical mechanism by which thermally-activated phonon scattering reduces long-range electronic coherence. A fixed Bloch state $|\psi(k = \pi/4)\rangle$ is used as the probe state on 8 qubits; the coherent kinetic energy $E(k, T)$ is evaluated via XY-operator matrix elements at each temperature step, tracking the monotonic energy suppression from cryogenic to room temperature.
 
-[![Quantum Lattice Thermodynamics: Phonon Decoherence](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/validazione_fabbricazione.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/validazione_fabbricazione.png)
+[![Quantum Lattice Thermodynamics: Phonon Decoherence](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)
 
 ---
 
@@ -225,11 +225,11 @@ The result is a genuine physical insight, not just a better number: $E(R,\theta)
 
 Because $\theta = 0.38$ was not that optimum, using the correct $\theta^\star$ deepens the binding well substantially: the global minimum moves from $-0.302\text{ eV}$ at $R \approx 3.32\text{ Å}$ (fixed $\theta$) to $-0.4615\text{ eV}$ at $R \approx 3.17\text{ Å}$ (optimized), an improvement that grows to over $3\text{ eV}$ at short range where the kinetic term dominates.
 
-[![Adam-Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)
+[![Adam-Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)
 
 The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves the stable binding landscape, isolating the exact molecular equilibrium bond length and asymptotic dissociation limits without numerical instabilities.
 
-[![Silicon Dimer Potential Energy Curve](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio.png)
+[![Silicon Dimer Potential Energy Curve](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio.png)
 
 #### 9c. Per-Bond Optimized PEC — 5 Independent Givens Angles
 
@@ -237,7 +237,7 @@ The 3,500-point variational sweep over $R \in [1.2, 4.5]$ Å cleanly resolves th
 
 It differentiates, and cleanly: the 5 bonds converge to $\theta_0,...,\theta_4 \approx 0.234, 0.439, 0.632, 0.818, 1.024$ rad — an almost perfectly even $\approx 0.2$ rad spacing, not noise. This value set is itself still $R$-independent (same underlying reason as 9b — the argmax of a multi-variable $K(\vec\theta)$ under a positive scalar prefactor doesn't move with $R$ either), but it is **not** the "all bonds equal" point: the shared-$\theta$ ansatz was leaving real variational power on the table by forcing symmetry across bonds that the true optimum doesn't have. The minimum deepens further, from $-0.4615\text{ eV}$ (shared, optimized) to $-0.6685\text{ eV}$ (per-bond, optimized).
 
-[![Per-Bond Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)
+[![Per-Bond Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)
 
 #### 9d. Closed Form: the Optimizer Rediscovers the Tight-Binding Ground State
 
@@ -274,13 +274,13 @@ Across 6 hand-picked scenarios, the result is not "any distortion is worse":
 
 A single shared angle is not simply "worse under any distortion" — it specifically struggles when the geometry forces it to reconcile two strongly-weighted but topologically distant bonds (opposite ends of the chain) at once, something one scalar parameter cannot do but per-bond adaptation can. This is a tight-binding / single-excitation hopping toy model, not ab-initio electronic structure: "rigid angle fails" here means concretely that a single shared $\theta$ cannot simultaneously satisfy 5 different per-bond stationarity conditions once the $R_q$ differ, leaving variational energy on the table that per-bond optimization recovers — nothing here claims to model real electron correlation or nuclear quantum repulsion.
 
-[![Extreme/Irregular Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/vqe_extreme_geometries.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.1.0/vqe_extreme_geometries.png)
+[![Extreme/Irregular Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_extreme_geometries.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_extreme_geometries.png)
 
 #### 9f. Deeper Ansatz (12 Parameters) + a Genuine Minimum-Energy Conformational Search
 
 `vqe_extreme_geometries_deep.py` generalizes Section 9e's benchmark from $N_Q=6$ (5 bonds, 10 parameters) to $N_Q=7$ (6 bonds, 12 parameters) — the same model, one more bond in the chain, everything already parametric in $N_Q$. The qualitative `deficit_fraction` pattern does **not** carry over unchanged: at 12 parameters, `mutazione_localizzata` (0.188) and `distorsione_alternata` (0.264) now sit *above* the uniform baseline (0.163), whereas at 10 parameters both sat *below* it (0.103 / 0.027 vs. 0.169). Only `mutazioni_congiunte_estremi` is a robust standout across both depths (0.464 at 12 parameters vs. 0.500 at 10 — still, by far, the worst case).
 
-[![12-Parameter Extreme-Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)
+[![12-Parameter Extreme-Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)
 
 Beyond the hand-picked geometries, `optimize_geometry_and_theta_jointly()` searches for a genuine minimum-energy conformation by optimizing the bond distances $R_q$ *jointly* with the per-bond angles (classical analytic gradient for $R$ — it only enters through $t_q(R_q)$ and the repulsion term, no PSR needed). This required a **per-bond** repulsion term, not the mean-based one used by the fixed-geometry benchmark above: under free $R$ optimization, mean-based repulsion dilutes the repulsive cost by $1/N_{\text{bonds}}$, letting a single bond collapse almost without limit — caught during development when every tested starting point drove one bond straight to an artificial clip boundary with a suspiciously large negative energy. With per-bond repulsion (every bond gets its own local repulsive wall), three different starting geometries converge to distinct, physically reasonable conformations ($R^\star$ in the 3.4–5.3 Å range, no boundary artifacts), with energies $-0.171$ / $-0.153$ / $-0.052$ eV — suggesting genuinely different local minima depending on the starting geometry, not full global convergence at the epoch budget used (reported honestly, not oversold).
 
@@ -354,7 +354,7 @@ The honest finding is **not** what a naive "ZNE = more stable" intuition predict
 
 Away from a gradient zero-crossing ($\theta=0.20, 0.38, 1.00$), ZNE-pre-PSR cuts bias roughly in half to a third and — despite *increasing* the trial-to-trial standard deviation by roughly 2x (the textbook Richardson bias/variance tradeoff: $2E_1-E_2$ amplifies statistical noise in exchange for cancelling the leading systematic error) — nets a clearly lower RMSE, roughly 2–2.2x better. But at $\theta=0.62$, where the exact gradient is itself near zero, ZNE-pre-PSR is worse on **every** axis: there is very little systematic bias left to correct, so Richardson's variance amplification just adds noise. "ZNE stabilizes the gradient" is therefore a regime-dependent claim, not a universal property of ZNE-pre-PSR.
 
-[![ZNE-Before-PSR Gradient Stabilization Study](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)
+[![ZNE-Before-PSR Gradient Stabilization Study](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)
 
 ---
 
@@ -375,7 +375,7 @@ Section 12's static correction actively *hurts* near a gradient zero-crossing ($
 
 This negative result is reported in full because, done rigorously, it carries the same scientific value as a positive one: it saves the next person from re-walking this exact path.
 
-[![Adaptive ZNE-Before-PSR: Negative Result](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)
+[![Adaptive ZNE-Before-PSR: Negative Result](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)
 
 ---
 
@@ -398,7 +398,7 @@ At $\theta=0.38$ the correction beats the static one outright — something Sect
 
 > **Correction (reproducibility bug found during this study):** Python's built-in `hash()` is not stable across process invocations for tuples containing strings (hash randomization on by default) — the `hash((tag, theta, trial)) % 2**32` seeding pattern used for trial data in this study and in Sections 12–13 silently drew different noise realizations on every run despite looking deterministic. A test asserting a specific RMSE comparison passed once and failed on an immediate re-run as a direct result. Fixed with `zlib.crc32`-based stable seeding across all three ZNE-PSR studies; verified identical results across two separate process invocations after the fix. None of the reported findings above changed as a result — only the seeding mechanism did.
 
-[![SNR-Adaptive ZNE-Before-PSR: Hypothesis Rejected](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)
+[![SNR-Adaptive ZNE-Before-PSR: Hypothesis Rejected](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)
 
 ---
 
@@ -448,7 +448,7 @@ $$U_{\text{step}} = \left(\prod_{i} \text{CX}_{i,i+1}\right)\left(\prod_i RX_i(\
 | ZNE-corrected return fidelity | **0.9965** |
 | Net fidelity gain | **+0.2195** |
 
-[![Loschmidt echo: raw vs. ZNE-corrected return fidelity](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/loschmidt_echo_zne.png)
+[![Loschmidt echo: raw vs. ZNE-corrected return fidelity](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/loschmidt_echo_zne.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/loschmidt_echo_zne.png)
 
 ---
 
@@ -473,7 +473,7 @@ $$H(U) = \frac{U}{2}\sum_{s\in\{A,B\}} n_s(n_s-1)\; -\; t_1\!\!\sum_{\langle i,j
 
 The optimizer respects the bound at every single point in the full 12-point sweep (no violations) and reaches the exact ground state at $U=0$. The gap grows with $U$ — an honest ansatz-expressivity limit in the strongly-correlated regime: multi-start restarts converge to the same plateau there rather than scattering, which is what a genuine expressivity ceiling looks like, not under-training.
 
-[![Topological Mott Isolator: optimization vs. exact diagonalization](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design.png)
+[![Topological Mott Isolator: optimization vs. exact diagonalization](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design.png)
 
 ---
 
@@ -504,7 +504,7 @@ $U/t = 0.376$ sits deep in the weakly-correlated regime, consistent with GaAs be
 
 `scripts/vqe_tmi_material_design.py`'s `run_real_gaas_point()` runs the same VQE-vs-diagonalization pipeline from Section 18 at this point (right panel of the plot below). The variational bound holds (gap `+0.1028`).
 
-[![GaAs: exact vs. VQE-optimized ground-state energy](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)
+[![GaAs: exact vs. VQE-optimized ground-state energy](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)
 
 ---
 
@@ -518,9 +518,9 @@ The main Dense-Evolution library's `harrison_tb.py` (Harrison's *universal* sp3 
 | Si | indirect, $\Gamma \to X$ | 3.66 eV (**227%** error, CBM misplaced at $\Gamma$) | 1.171 eV (**4.6%** error) | 1.12 eV |
 | Ge | indirect, $\Gamma \to L$ | 1.831 eV (**177.5%** error, CBM misplaced at $\Gamma$) | 0.765 eV (**15.9%** error, correctly finds L below X) | 0.66 eV |
 
-Harrison's universal parameters are qualitatively sane (Hermitian, correct bonding/antibonding structure) but consistently 2-3x off quantitatively, and structurally cannot place the conduction-band minimum correctly for indirect-gap materials — it always lands at $\Gamma$. Vogl-Hjalmarson-Dow's material-specific parameters get within 5-16% of experiment and correctly identify which off-$\Gamma$ valley is the true minimum. Neither replaces this repo's own DFT-derived GaAs parameters (Section 19) when first-principles accuracy is needed — their value is as fast, dependency-free (no PySCF/OpenFermion) estimates. Full write-up: [`docs/harrison_tight_binding.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/harrison_tight_binding/). Produced by `scripts/harrison_vhd_validation.py` → `data/harrison_vhd_gap_comparison.csv`.
+Harrison's universal parameters are qualitatively sane (Hermitian, correct bonding/antibonding structure) but consistently 2-3x off quantitatively, and structurally cannot place the conduction-band minimum correctly for indirect-gap materials — it always lands at $\Gamma$. Vogl-Hjalmarson-Dow's material-specific parameters get within 5-16% of experiment and correctly identify which off-$\Gamma$ valley is the true minimum. Neither replaces this repo's own DFT-derived GaAs parameters (Section 19) when first-principles accuracy is needed — their value is as fast, dependency-free (no PySCF/OpenFermion) estimates. Full write-up: [`docs/harrison_tight_binding.md`](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/harrison_tight_binding/). Produced by `scripts/harrison_vhd_validation.py` → `data/harrison_vhd_gap_comparison.csv`.
 
-[![Harrison universal vs. VHD material-specific tight-binding gaps, GaAs/Si/Ge vs. experiment](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)
+[![Harrison universal vs. VHD material-specific tight-binding gaps, GaAs/Si/Ge vs. experiment](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)
 
 ---
 
@@ -541,27 +541,32 @@ Instance selection matters: a random draw of which SYK terms to keep does not re
 | iterated coordinate ascent (3 rounds, converged) | t0=0.70, mu=17.0, t1=0.36 | delta=+0.01688 |
 | generality check (6 SYK instances) | — | does NOT generalize |
 | realistic noise robustness (Trotter, depolarizing) | p where signal crosses zero | between p=0.01 and p=0.02 |
-| **cross-check vs. arXiv:2604.10090's own ensemble claim** | seeds 2166, 2907 at paper defaults | **2/6 still wrong-signed** |
+| cross-check vs. arXiv:2604.10090's own ensemble claim (n=6) | seeds 2166, 2907 at paper defaults | 2/6 still wrong-signed |
+| **large-sample ensemble sign check (n=100, matching the paper's own ensemble size)** | — | **49/100 (49%) wrong-signed** |
 
-The signal requires enough pre-coupling scrambling before it appears (consistent with the protocol's theoretical chaos requirement) and vanishes exactly — not just approximately — when the message injection is removed, confirming the sign-dependent asymmetry genuinely comes from the teleported message rather than the L-R coupling alone. The 1D mu and t0 scans hold the other axis fixed, so neither alone finds the true joint optimum — a real 870-point 2D grid search resolves that, finding a broad, smooth peak at `t0=0.65, mu=15.0` that beats both 1D scans. That 2D grid itself held `t1` fixed at `0.60` (Experiment 1's own 1D peak) and flagged this as an open question — a follow-up re-scan of `t1` at the 2D optimum (126 points, step 0.01) confirms the peak does shift, to `t1=0.41`, delta=+0.01518, ~30% above the value reported with `t1` held fixed. That single re-scan was itself only one coordinate-ascent step — iterating it (alternating full t1 scans and (t0, mu) grids from Experiment 5's starting point) converges after 3 rounds to a genuine fixed point: `t0=0.70, mu=17.0, t1=0.36`, delta=+0.01688, **+44.6% over Experiment 5's original headline value**. **Three honest negative results follow.** First: repeating that exact same procedure on 5 more SYK instances that independently match the paper's own selection criterion shows this converged point does **not** generalize — the (t0, mu, t1) answers scatter across nearly the whole scanned range instead of clustering, 2 of 6 instances land on the edge of the scanned grid (inconclusive), and 2 of 6 have a *negative* delta at Experiment 5's own starting point. `t0=0.70, mu=17.0, t1=0.36` is a property of seed=61, not the protocol. Second: even at seed=61's own best point, a real Trotterized gate circuit with a stochastic depolarizing channel injected after each protocol phase shows the sign-dependent signal decaying with noise and **crossing zero between p=0.01 and p=0.02** — already at p=0.01 the mean signal is smaller than its own trial-to-trial standard deviation, statistically indistinguishable from zero at a noise level well within range of current real NISQ hardware. Third: arXiv:2604.10090's own "Ensemble robustness" section claims (from 100 disorder realizations) that the sign-dependent asymmetry is "a generic feature of the ensemble" — their chosen instance was selected for unusually *large* asymmetry, not unusually *signed*. Re-evaluating all 6 of our 34/11-matched instances at the paper's own stated default parameters (`t0=0.3, mu=12, t1=0.60`, controlling for the confound that Experiment 8's baseline point was itself tuned on seed=61) still leaves **2 of 6 instances wrong-signed** — directly contradicting the "generic feature" claim for this specific selection-matched subset. Along the way: `run_wormhole_protocol`'s ~4.5s/call cost turned out to be almost entirely a setup step that doesn't depend on t0/mu/t1 at all for a fixed instance — precomputing it once instead of once per grid point cut the 870-point search from an estimated ~2 hours to **47.6 seconds** (~165x), no multiprocessing needed. Full write-up: [`docs/wormhole_syk_teleportation.md`](https://tatopenn-cell.github.io/Dense-Evolution-Ising-Tests/wormhole_syk_teleportation/). Produced by `scripts/wormhole_syk_teleportation.py` → `data/wormhole_*.csv`.
+The signal requires enough pre-coupling scrambling before it appears (consistent with the protocol's theoretical chaos requirement) and vanishes exactly — not just approximately — when the message injection is removed, confirming the sign-dependent asymmetry genuinely comes from the teleported message rather than the L-R coupling alone. The 1D mu and t0 scans hold the other axis fixed, so neither alone finds the true joint optimum — a real 870-point 2D grid search resolves that, finding a broad, smooth peak at `t0=0.65, mu=15.0` that beats both 1D scans. That 2D grid itself held `t1` fixed at `0.60` (Experiment 1's own 1D peak) and flagged this as an open question — a follow-up re-scan of `t1` at the 2D optimum (126 points, step 0.01) confirms the peak does shift, to `t1=0.41`, delta=+0.01518, ~30% above the value reported with `t1` held fixed. That single re-scan was itself only one coordinate-ascent step — iterating it (alternating full t1 scans and (t0, mu) grids from Experiment 5's starting point) converges after 3 rounds to a genuine fixed point: `t0=0.70, mu=17.0, t1=0.36`, delta=+0.01688, **+44.6% over Experiment 5's original headline value**. **Four honest negative results follow.** First: repeating that exact same procedure on 5 more SYK instances that independently match the paper's own selection criterion shows this converged point does **not** generalize — the (t0, mu, t1) answers scatter across nearly the whole scanned range instead of clustering. Second: even at seed=61's own best point, a real Trotterized gate circuit with a stochastic depolarizing channel injected after each protocol phase shows the sign-dependent signal decaying with noise and **crossing zero between p=0.01 and p=0.02** — well within range of current real NISQ hardware. Third: arXiv:2604.10090's own "Ensemble robustness" section claims (from 100 disorder realizations) that the sign-dependent asymmetry is "a generic feature of the ensemble". Re-evaluating 6 of our 34/11-matched instances at the paper's own stated default parameters (`t0=0.3, mu=12, t1=0.60`) leaves 2 of 6 wrong-signed. Fourth, and strongest: **scaling that same check to n=100 instances (matching the paper's own reported ensemble size) finds 49/100 (49%) wrong-signed — essentially a coin flip, not a "generic feature of the ensemble".** Two candidate structural explanations for the sign variation (Majorana mode-usage imbalance in the coupling terms; the spectral level-spacing r-statistic, a standard chaos diagnostic) were tested for real correlation at n=100 — neither holds up (mode-usage: r=0.171, p=0.09; level-spacing: r=0.087, p=0.39; an earlier n=6 look had suggested mode-usage imbalance correlated strongly, r=0.87, which does *not* replicate at n=100 -- an honest correction of that small-sample impression). Why the sign varies remains open. Along the way: `run_wormhole_protocol`'s ~4.5s/call cost turned out to be almost entirely a setup step that doesn't depend on t0/mu/t1 at all for a fixed instance — precomputing it once instead of once per grid point cut the 870-point search from an estimated ~2 hours to **47.6 seconds** (~165x), no multiprocessing needed. Full write-up: [`docs/wormhole_syk_teleportation.md`](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/wormhole_syk_teleportation/). Produced by `scripts/wormhole_syk_teleportation.py` → `data/wormhole_*.csv`.
 
-[![Traversable-wormhole teleportation signal vs. t1](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t1_sweep.png)
+[![Traversable-wormhole teleportation signal vs. t1](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t1_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t1_sweep.png)
 
-[![Control: signal requires the injected message](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_message_control.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_message_control.png)
+[![Control: signal requires the injected message](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_message_control.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_message_control.png)
 
-[![Sign-dependent signal vs. coupling strength mu](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_mu_scan.png)
+[![Sign-dependent signal vs. coupling strength mu](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_mu_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_mu_scan.png)
 
-[![Sign-dependent signal vs. pre-coupling scrambling time t0](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.6.0/wormhole_t0_scan.png)
+[![Sign-dependent signal vs. pre-coupling scrambling time t0](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t0_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t0_scan.png)
 
-[![Joint (t0, mu) optimization surface](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.7.0/wormhole_2d_grid.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.7.0/wormhole_2d_grid.png)
+[![Joint (t0, mu) optimization surface](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.7.0/wormhole_2d_grid.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.7.0/wormhole_2d_grid.png)
 
-[![t1 re-scan at the 2D optimum](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.8.0/wormhole_t1_rescan_optimum.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.8.0/wormhole_t1_rescan_optimum.png)
+[![t1 re-scan at the 2D optimum](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.8.0/wormhole_t1_rescan_optimum.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.8.0/wormhole_t1_rescan_optimum.png)
 
-[![Convergence of iterated coordinate ascent toward the joint (t0, mu, t1) optimum](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.9.0/wormhole_coordinate_ascent_3d.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.9.0/wormhole_coordinate_ascent_3d.png)
+[![Convergence of iterated coordinate ascent toward the joint (t0, mu, t1) optimum](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.9.0/wormhole_coordinate_ascent_3d.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.9.0/wormhole_coordinate_ascent_3d.png)
 
-[![Converged (t0, mu, t1) scattered across 6 SYK instances](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.10.0/wormhole_generality_check.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.10.0/wormhole_generality_check.png)
+[![Converged (t0, mu, t1) scattered across 6 SYK instances](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.10.0/wormhole_generality_check.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.10.0/wormhole_generality_check.png)
 
-[![Sign-dependent signal vs. realistic depolarizing noise](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.11.0/wormhole_trotter_noise_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases/download/v2.11.0/wormhole_trotter_noise_scan.png)
+[![Sign-dependent signal vs. realistic depolarizing noise](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.11.0/wormhole_trotter_noise_scan.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.11.0/wormhole_trotter_noise_scan.png)
+
+[![Sign-dependent asymmetry at the paper's own default parameters](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.12.0/wormhole_paper_defaults_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.12.0/wormhole_paper_defaults_comparison.png)
+
+[![n=100 ensemble sign check vs. structural/spectral correlates](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.13.0/wormhole_ensemble_sign_check.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.13.0/wormhole_ensemble_sign_check.png)
 
 ---
 
@@ -569,8 +574,8 @@ The signal requires enough pre-coupling scrambling before it appears (consistent
 
 ```bash
 # Clone and install
-git clone https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests.git
-cd Dense-Evolution-Ising-Tests
+git clone https://github.com/tatopenn-cell/Dense-Evolution-Discovery.git
+cd Dense-Evolution-Discovery
 pip install -r requirements-ci.txt
 
 # Run the test suite (fast, ~2 minutes, no CSV/PNG needed)
@@ -600,7 +605,7 @@ python scripts/loschmidt_echo_zne.py
 python scripts/vqe_tmi_material_design.py
 ```
 
-`data/` and `images/` are gitignored -- they exist only after you run something, so it's always unambiguous whether what you're looking at is fresh. Pre-made results are on the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases) instead.
+`data/` and `images/` are gitignored -- they exist only after you run something, so it's always unambiguous whether what you're looking at is fresh. Pre-made results are on the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases) instead.
 
 > **Hardware note:** All benchmarks were executed on CPU. The JAX XLA engine will automatically utilize GPU acceleration if available via `use_gpu=True` in the simulator constructor.
 
@@ -608,7 +613,7 @@ python scripts/vqe_tmi_material_design.py
 
 ## 📁 Output Datasets
 
-All produced under `data/` when you run the corresponding script (see [Repository Layout](#-repository-layout)); also downloadable from the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Ising-Tests/releases) without running anything.
+All produced under `data/` when you run the corresponding script (see [Repository Layout](#-repository-layout)); also downloadable from the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases) without running anything.
 
 | CSV File | Description | Rows |
 |---|---|---|
