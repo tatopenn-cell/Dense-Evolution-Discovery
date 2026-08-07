@@ -359,6 +359,49 @@ traversable-wormhole-inspired teleportation protocol. Produced by
 `scripts/wormhole_syk_teleportation.py`'s `run_generality_check`. Full
 data: `data/wormhole_generality_check.csv`.
 
+## Experiment 9: does the signal survive realistic hardware noise? (run 2026-08-07)
+
+Every experiment so far used the exact-evolution backend -- ideal, no
+noise. Even setting aside Experiment 8's generalization problem: does
+the sign-dependent signal survive at seed=61's own best point
+(`t0=0.70, mu=17.0, t1=0.36`) under noise like a real NISQ device would
+actually have?
+
+This needs the Trotterized gate-circuit backend, since noise has to be
+injected *mid-circuit* -- `run_wormhole_protocol_trotter` runs its whole
+circuit in one call with no seam to interrupt, so `run_trotter_noise_scan`
+reimplements the same three-phase construction (t0 evolution -> mu
+coupling -> t1 evolution, each a real `trotter_evolve_ops` circuit) and
+applies a real stochastic depolarizing Kraus channel
+(`dense_evolution.registry.NoiseModel`) after each phase, not just once
+at the end. Compared against the *noiseless* Trotter result specifically
+(`+0.01728`, ~2% above the exact backend's `+0.01688` -- consistent with
+the known Trotter-vs-exact discretization gap), not the exact backend,
+so the effect of physical noise isn't conflated with Trotterization
+error. Each noise level averaged over 6 independent stochastic trials
+(`NoiseModel.apply_to_sv` is a single-shot Kraus draw, not an ensemble
+average).
+
+| Depolarizing p | Mean delta | Std dev |
+|---|---|---|
+| 0.000 | +0.01728 | 0.00000 |
+| 0.005 | +0.00924 | 0.00704 |
+| 0.010 | +0.00051 | 0.01203 |
+| 0.020 | -0.00330 | 0.01448 |
+| 0.050 | -0.00979 | 0.00624 |
+
+![Sign-dependent signal vs. realistic depolarizing noise](assets/wormhole_syk_teleportation/wormhole_trotter_noise_scan.png)
+
+**Second honest negative result: the signal does not survive realistic
+noise.** It decays monotonically and crosses zero between `p=0.01` and
+`p=0.02`. Already at `p=0.01` -- a depolarizing rate well within range
+of current real superconducting-qubit hardware -- the mean signal
+(`+0.00051`) is smaller than its own trial-to-trial standard deviation
+(`0.01203`): statistically indistinguishable from zero, not a small but
+real effect. Produced by `scripts/wormhole_syk_teleportation.py`'s
+`run_trotter_noise_scan`. Full data:
+`data/wormhole_trotter_noise_scan.csv`.
+
 ## What this does NOT show
 
 - **Experiment 7's fixed point is not proven globally optimal, and does
@@ -373,12 +416,20 @@ data: `data/wormhole_generality_check.csv`.
   instance-specific) answers, but wasn't run here (cost scales with
   range x resolution; 6 instances at the current range already took
   ~15 minutes).
-- **All backend=exact (matrix exponentiation), not the Trotterized
-  real-gate-circuit backend.** Both are implemented and cross-verified
-  in the main repo's test suite to agree closely at the known peak
-  (`I(mu=+12)=0.01301` Trotter vs `0.01326` exact, `I(mu=-12)=0.01821`
-  vs `0.01793`) -- exact was used here purely for scan speed (~78 protocol
-  calls at ~4-5s each).
+- **Experiment 9 was only run for seed=61, not the other 5 instances
+  from Experiment 8.** Given Experiment 8's own finding, there's no
+  reason to expect this noise-robustness result generalizes either --
+  it's one more seed=61-specific data point, not evidence about noise
+  robustness for the protocol broadly. Its 6-trial-per-point average is
+  also a small sample; the standard deviations shown are real but not
+  tight error bars.
+- **Experiments 1-8 use backend=exact (matrix exponentiation), not the
+  Trotterized real-gate-circuit backend** -- both are implemented and
+  cross-verified in the main repo's test suite to agree closely at the
+  known peak (`I(mu=+12)=0.01301` Trotter vs `0.01326` exact,
+  `I(mu=-12)=0.01821` vs `0.01793`) -- exact was used for those
+  experiments purely for scan speed (~78 protocol calls at ~4-5s each).
+  Experiment 9 is the one exception, by necessity.
 - **No claim that `t0=0.65`, `mu=15`, or any other exact decimal value
   is a "special" number** in any deeper sense -- even Experiment 5's
   finer grid (step 0.05 for t0, step 1 for mu) is still a grid, not a

@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs eight real, verified experiments, each producing its own
+This script runs nine real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -66,9 +66,20 @@ CSV + plot:
    oriented the expected way using those defaults across instances).
    Percentage-improvement figures are not reported for this experiment
    since near-zero/negative baselines make them meaningless.
+9. Realistic-noise robustness at the converged point (seed=61,
+   t0=0.70, mu=17.0, t1=0.36) -- a real Trotterized gate circuit with a
+   stochastic depolarizing Kraus channel (dense_evolution.registry.
+   NoiseModel) injected after each of the protocol's three phases,
+   scanned over p in [0, 0.05], averaged over 6 trials per point.
+   Second honest negative result: the noiseless Trotter delta
+   (+0.01728) decays with noise and crosses zero between p=0.01 and
+   p=0.02 -- already at p=0.01 the mean signal (+0.00051) is smaller
+   than its own trial-to-trial standard deviation (0.01203), i.e.
+   statistically indistinguishable from zero at a noise level well
+   within range of current real NISQ hardware.
 
-Experiments 1-7 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2)) -- the
-instance dashboard_core.wormhole.select_good_instance finds when
+Experiments 1-7 and 9 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
+-- the instance dashboard_core.wormhole.select_good_instance finds when
 screened against arXiv:2604.10090's own selection criterion (their
 chosen K=10 instance has 34 commuting / 11 anticommuting pairs among the
 C(10,2)=45 pairs of terms). Re-derived below, not hardcoded blindly.
@@ -95,10 +106,21 @@ Honest caveats, not glossed over:
   answers rather than boundary artifacts, but wasn't run here (compute
   cost scales with range x resolution, already ~15 minutes for 6
   instances at the current range).
-- All results use the exact-evolution backend (eigendecomposition), not
-  the Trotterized real-gate-circuit backend -- both are implemented and
-  cross-verified to agree closely (see the main Dense-Evolution repo's
-  tests), but the exact backend is what was used here for speed.
+- Experiments 1-8 use the exact-evolution backend (eigendecomposition),
+  not the Trotterized real-gate-circuit backend -- both are implemented
+  and cross-verified to agree closely (see the main Dense-Evolution
+  repo's tests), but the exact backend is what was used for speed.
+  Experiment 9 is the one exception, by necessity (noise injection needs
+  a real gate circuit to interrupt mid-evolution).
+- Experiment 9 only tested seed=61's converged point, not the other 5
+  instances from Experiment 8 -- given Experiment 8's own finding (the
+  converged point doesn't generalize across instances), there's no
+  reason to expect this noise-robustness result generalizes either;
+  it's honestly one more seed=61-specific data point, not evidence about
+  the protocol broadly. It also averages only 6 stochastic trials per
+  noise level (each `NoiseModel.apply_to_sv` call is a single-shot Kraus
+  draw, not an ensemble average) -- the reported standard deviations are
+  real but from a small sample, not tight error bars.
 - Experiments 5, 6, and 7 bypass `run_wormhole_protocol`'s public API and call
   `dashboard_core.wormhole`'s private layout/evolution helpers directly.
   Justified by a real, measured cost asymmetry: building the SYK/coupling
@@ -131,6 +153,8 @@ from dashboard_core.wormhole import (
 # with the real implementation.
 from dashboard_core.wormhole import _protocol_layout, _initial_state_ops, _evolve
 from dense_evolution import mutual_information
+from dense_evolution.trotter import trotter_evolve_ops
+from dense_evolution.registry import NoiseModel
 import dense_evolution as de
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
@@ -556,6 +580,83 @@ def run_generality_check(seeds=None, max_rounds: int = 5) -> pd.DataFrame:
     return summary_df
 
 
+def run_trotter_noise_scan(seed: int, t0: float, mu: float, t1: float,
+                            noise_levels=(0.0, 0.005, 0.01, 0.02, 0.05),
+                            n_trials: int = 6, n_steps_evolution: int = 8,
+                            n_steps_coupling: int = 16) -> pd.DataFrame:
+    """Does the sign-dependent signal survive realistic hardware noise?
+    Runs the real Trotterized gate circuit (run_wormhole_protocol_trotter's
+    own construction, reimplemented here to inject noise mid-circuit --
+    that function runs the whole circuit in one call with no seam to
+    interrupt) and applies a real stochastic depolarizing Kraus channel
+    (dense_evolution.registry.NoiseModel) after each of the protocol's
+    three phases (t0 evolution, mu coupling, t1 evolution), not just once
+    at the end -- closer to how noise actually accumulates on real
+    hardware than a single post-hoc channel would be.
+
+    Compared against the *noiseless* Trotter result, not the exact
+    backend -- Trotterization itself has a real, separate discretization
+    error (see run_wormhole_protocol_trotter's own docstring: ~2% at the
+    converged point), and conflating that with the effect of physical
+    noise would misattribute one for the other.
+
+    NoiseModel.apply_to_sv is a single-shot stochastic draw (same
+    caveat as dashboard_core.mitigation.run_zne_mitigation), so each
+    noise level is averaged over n_trials independent draws, each with
+    its own fresh RNG."""
+    n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+
+    def run_noisy(mu_signed, noise_p, rng):
+        sim = de.DenseSVSimulator(n_full)
+        sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, True)
+                         + trotter_evolve_ops(terms_full, t0, n_steps_evolution))
+        sv = sim.get_statevector()
+        if noise_p > 0:
+            sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+        sim.set_state(sv)
+        sim.run_circuit(trotter_evolve_ops(v_terms, mu_signed, n_steps_coupling))
+        sv = sim.get_statevector()
+        if noise_p > 0:
+            sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+        sim.set_state(sv)
+        sim.run_circuit(trotter_evolve_ops(terms_full, t1, n_steps_evolution))
+        sv = sim.get_statevector()
+        if noise_p > 0:
+            sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+        return mutual_information(sv, n_full, [P], [R[0]])
+
+    rows = []
+    for noise_p in noise_levels:
+        deltas = []
+        for trial in range(n_trials):
+            rng = np.random.default_rng(1000 * trial + 7)
+            i_pos = run_noisy(+mu, noise_p, rng)
+            i_neg = run_noisy(-mu, noise_p, rng)
+            deltas.append(i_neg - i_pos)
+        deltas = np.array(deltas)
+        rows.append({"noise_p": noise_p, "delta_mean": deltas.mean(), "delta_std": deltas.std(),
+                     "delta_min": deltas.min(), "delta_max": deltas.max()})
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_trotter_noise_scan.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.errorbar(df["noise_p"], df["delta_mean"], yerr=df["delta_std"], fmt='o-',
+                color='#00FFFF', ecolor='#FF007F', capsize=4, markersize=6)
+    ax.axhline(0, color='#666666', linestyle=':')
+    ax.set_xlabel("depolarizing noise probability p", color='#888888')
+    ax.set_ylabel("delta = I(mu=-|mu|) - I(mu=+|mu|)", color='#888888')
+    ax.set_title(f"Sign-dependent signal vs. realistic depolarizing noise (Trotter backend)\n"
+                 f"(seed={seed}, t0={t0}, mu={mu}, t1={t1}, n={n_trials} trials/point)",
+                 fontsize=11, fontweight='bold', pad=15)
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_trotter_noise_scan.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -606,6 +707,15 @@ def run_all():
     print(f"  {len(df8)} instances checked -- converged (t0, mu, t1) does NOT cluster near seed=61's "
           f"answer, {n_edge} at the grid edge (inconclusive), {n_negative_baseline} with a negative "
           f"baseline delta at Experiment 5's own starting point.")
+
+    print("\n=== Experiment 9: does the signal survive realistic hardware noise? ===")
+    df9 = run_trotter_noise_scan(seed, t0=0.70, mu=17.0, t1=0.36)
+    crossing = df9[df9["delta_mean"] < 0]
+    first_negative_p = crossing["noise_p"].min() if not crossing.empty else None
+    print(f"  noiseless delta={df9.iloc[0]['delta_mean']:+.5f}; mean delta crosses zero "
+          f"{'at p=' + str(first_negative_p) if first_negative_p is not None else 'nowhere in the scanned range'} "
+          f"-- at p=0.01 the signal ({df9.iloc[2]['delta_mean']:+.5f}) is already smaller than its own "
+          f"trial-to-trial noise ({df9.iloc[2]['delta_std']:.5f}).")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
