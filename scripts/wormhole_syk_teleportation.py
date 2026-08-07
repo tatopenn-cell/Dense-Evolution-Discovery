@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs twelve real, verified experiments, each producing its own
+This script runs thirteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -129,6 +129,26 @@ CSV + plot:
     finite-size recurrence, confirming the underlying operator-growth
     dynamics are real even though this particular phase diagnostic
     isn't the explanation being sought.
+13. Mechanistic check -- two protocol-grounded (not just post-hoc
+    statistical) candidate explanations, reusing Experiment 11's own
+    n=100 instance set and delta values directly from
+    data/wormhole_ensemble_sign_check.csv (no re-screening). Feature A,
+    "message-mode participation": dense_evolution.fermions.
+    majorana_pauli_terms's Jordan-Wigner mapping shows Majorana modes 1
+    and 2 map onto qubit index 0 -- exactly the qubit the message is
+    swapped into and read out from -- so this counts how many of each
+    instance's K=10 SYK quads touch those two modes specifically,
+    sharper than Experiment 11's all-modes-interchangeable usage-std.
+    Feature B, "operator growth rate": reuses Experiment 12's own
+    Gamma_P/Heisenberg-evolution machinery (run_size_winding_check) to
+    get mean operator size <l> at t=0.7 and t=1.2 -- real,
+    non-trivial, instance-varying data Experiment 12 already computed
+    but never correlated against the sign. Fourth honest negative
+    result: neither correlates (message-mode participation r=-0.012,
+    p=0.90; growth rate at t=1.2 r=+0.126, p=0.21) -- a 4th and 5th
+    candidate explanation ruled out, on top of Experiment 11's two and
+    Experiment 12's structurally-trivial phase diagnostic. Why the sign
+    varies remains genuinely open.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -195,6 +215,19 @@ Honest caveats, not glossed over:
   construction; it only tests whether the paper's own diagnostic
   distinguishes instances at all. It also only checks majorana_index=1
   and 4 post-quench times per instance, not a full time/index sweep.
+- Experiment 13 is the 4th and 5th candidate explanation tested against
+  the *same* n=100 instance sample used for Experiment 11's 2 candidates
+  -- a real multiple-comparisons risk. Neither reached significance
+  here (p=0.90, p=0.21, both far from even an uncorrected 0.05
+  threshold), so this isn't a marginal case that Bonferroni-style
+  correction would flip, but a genuinely significant hit among several
+  candidates tested on one fixed sample should be treated with
+  suspicion and re-checked on a fresh holdout set before being reported
+  as a real finding -- not done here since neither candidate needed it.
+  Its "operator growth rate" feature also only probes 2 discrete times
+  (t=0.7, 1.2), not a continuous growth-rate fit, and reuses
+  Experiment 12's single-sided (L-only) operator-growth computation --
+  same scope caveat as Experiment 12 above.
 """
 import itertools
 import pathlib
@@ -950,6 +983,100 @@ def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -
     return df
 
 
+def run_mechanistic_check(n_instances: int = 100) -> pd.DataFrame:
+    """Tests two protocol-grounded (not just post-hoc-statistical)
+    candidate explanations for Experiment 11's unexplained sign
+    variance, reusing that experiment's own n=100 instance set and
+    delta values (data/wormhole_ensemble_sign_check.csv) rather than
+    re-screening candidates from scratch:
+
+    - Feature A, "message-mode participation": dense_evolution.fermions.
+      majorana_pauli_terms's Jordan-Wigner mapping (j=(mode_index-1)//2)
+      shows Majorana modes 1 and 2 map onto qubit index 0 -- exactly the
+      qubit the message is swapped into (L[0]) and read out from (R[0])
+      in dashboard_core.wormhole's protocol. Experiment 11's mode-usage
+      imbalance treated all 8 modes as interchangeable (just the std of
+      usage counts); this feature instead asks whether the K=10 SYK
+      quads specifically over/under-represent the message qubit's own
+      two modes -- a sharper, mechanistically-motivated version of the
+      same underlying idea, cheap (purely combinatorial, no simulation).
+    - Feature B, "operator growth rate": Experiment 12 already computes
+      real, non-trivial, instance-varying mean operator size <l>(t) as
+      a side effect of its (trivial) phase-winding computation, but
+      never checked whether growth rate/peak correlates with the sign
+      -- this reuses that exact machinery (run_size_winding_check) at
+      two probe times in the growth region it found (t=0.7, t=1.2).
+
+    Both are the 4th and 5th candidates tested against this same n=100
+    sample (after Experiment 11's two and Experiment 12's phase/R,
+    which had no per-instance variation to test) -- a real
+    multiple-comparisons risk flagged in this module's caveats.
+    """
+    csv_path = _DATA_DIR / "wormhole_ensemble_sign_check.csv"
+    if csv_path.exists():
+        base = pd.read_csv(csv_path)
+        seeds = base["seed"].tolist()[:n_instances]
+        delta_map = dict(zip(base["seed"], base["delta_at_paper_defaults"]))
+    else:
+        seeds = find_multiple_seeds(n_instances=n_instances)
+        T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+        delta_map = {}
+        for seed in seeds:
+            i_pos = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, +MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+            i_neg = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, -MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True)
+            delta_map[seed] = i_neg - i_pos
+
+    all_quads = list(itertools.combinations(range(1, N_MAJORANA + 1), 4))
+    message_modes = {1, 2}
+    message_count = {}
+    for seed in seeds:
+        rng = np.random.default_rng(seed)
+        chosen_idx = rng.choice(len(all_quads), size=K_TERMS, replace=False)
+        quads = [all_quads[idx] for idx in chosen_idx]
+        message_count[seed] = sum(1 for q in quads if message_modes & set(q))
+
+    growth_df = run_size_winding_check(seeds=seeds, t_values=[0.7, 1.2])
+    growth_pivot = growth_df.pivot(index="seed", columns="t", values="mean_size")
+
+    rows = []
+    for seed in seeds:
+        rows.append({
+            "seed": seed,
+            "message_mode_count": message_count[seed],
+            "mean_size_t0.7": growth_pivot.loc[seed, 0.7],
+            "mean_size_t1.2": growth_pivot.loc[seed, 1.2],
+            "delta_at_paper_defaults": delta_map[seed],
+        })
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_mechanistic_check.csv", index=False)
+
+    r_message = scipy_stats.pearsonr(df["message_mode_count"], df["delta_at_paper_defaults"])
+    r_growth = scipy_stats.pearsonr(df["mean_size_t1.2"], df["delta_at_paper_defaults"])
+
+    plt.style.use('dark_background')
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
+    for ax, (xcol, xlabel, r_result) in zip(
+        axes, [("message_mode_count", "K=10 quads touching the message qubit's modes (1,2)", r_message),
+               ("mean_size_t1.2", "mean operator size <l> at t=1.2", r_growth)]
+    ):
+        colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_at_paper_defaults"]]
+        ax.scatter(df[xcol], df["delta_at_paper_defaults"], c=colors, s=25, alpha=0.7)
+        ax.axhline(0, color='#666666', linestyle=':')
+        ax.set_xlabel(xlabel, color='#888888')
+        ax.set_ylabel("delta at paper defaults", color='#888888')
+        ax.set_title(f"r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f}", fontsize=10, color='#888888')
+        ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    n_wrong = int((df["delta_at_paper_defaults"] < 0).sum())
+    fig.suptitle(f"Experiment 13: n={len(df)} instances, {n_wrong}/{len(df)} wrong-signed -- "
+                 f"message-mode participation and operator growth rate vs. sign\n"
+                 f"(cyan = correct sign, magenta = wrong sign)",
+                 fontsize=11, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_mechanistic_check.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1041,6 +1168,14 @@ def run_all():
           f"level-spacing r-statistic in Experiment 11 -- does not explain the sign-dependent "
           f"instance variance. Mean operator size <l>(t) does show genuine chaos-consistent "
           f"growth-then-recurrence, confirming the underlying scrambling dynamics are real.")
+
+    print("\n=== Experiment 13: mechanistic check -- message-mode participation & operator growth rate ===")
+    df13 = run_mechanistic_check(n_instances=100)
+    r_message13 = scipy_stats.pearsonr(df13["message_mode_count"], df13["delta_at_paper_defaults"])
+    r_growth13 = scipy_stats.pearsonr(df13["mean_size_t1.2"], df13["delta_at_paper_defaults"])
+    print(f"  n={len(df13)}: message-mode participation r={r_message13.statistic:+.3f} "
+          f"(p={r_message13.pvalue:.4f}), operator growth rate (mean size at t=1.2) "
+          f"r={r_growth13.statistic:+.3f} (p={r_growth13.pvalue:.4f}).")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")

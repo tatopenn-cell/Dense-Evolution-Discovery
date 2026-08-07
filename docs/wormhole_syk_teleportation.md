@@ -558,6 +558,61 @@ particular phase diagnostic isn't what explains the sign variance.
 Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_size_winding_check`. Full data: `data/wormhole_size_winding.csv`.
 
+## Experiment 13: mechanistic check -- message-mode participation & operator growth rate (run 2026-08-07)
+
+Experiments 11 and 12 ruled out three candidate explanations for the
+sign variance, but all three were either informal aggregate statistics
+(mode-usage imbalance, level-spacing r-statistic) or a diagnostic that
+turned out to carry no per-instance information at all (size winding's
+phase/R, exactly flat everywhere). This experiment tries two more
+candidates that are each grounded directly in the actual protocol
+implementation rather than a generic aggregate statistic, and reuses
+Experiment 11's own n=100 instance set and `delta_at_paper_defaults`
+values (`data/wormhole_ensemble_sign_check.csv`) rather than
+re-screening from scratch -- both features are cheap enough (under 6
+seconds total for the full n=100 sweep) that a fresh screen wasn't
+needed.
+
+**Feature A -- message-mode participation.**
+`dense_evolution.fermions.majorana_pauli_terms`'s Jordan-Wigner mapping
+(`j = (mode_index - 1) // 2`) shows Majorana modes 1 and 2 map onto
+qubit index 0 -- exactly the qubit the message is swapped into
+(`L[0]`) and read out from (`R[0]`) in
+`dashboard_core.wormhole._initial_state_ops`/`run_wormhole_protocol`.
+Experiment 11's mode-usage-std treated all 8 modes as interchangeable;
+this instead asks a sharper, protocol-specific question: do the K=10
+SYK quads that happen to touch the *message qubit's own* modes,
+specifically, predict the sign? For each seed, the exact same
+quad-selection RNG sequence used internally by `build_sparse_syk_terms`
+is replayed to recover which quads were chosen, and the count touching
+mode 1 or 2 is recorded (purely combinatorial, no simulation).
+
+**Feature B -- operator growth rate.** Experiment 12 already computes
+real, non-trivial, instance-varying mean operator size `<l>(t)` as a
+side effect of its (trivial) phase-winding computation, but that
+experiment's only goal at the time was checking the phase diagnostic,
+which came back flat -- growth rate itself was never correlated
+against the sign. This reuses `run_size_winding_check` unmodified,
+called on the same 100 seeds at two probe times in the growth region
+Experiment 12 identified (`t=0.7`, `t=1.2`).
+
+![Mechanistic check: message-mode participation and operator growth rate vs. sign, n=100](assets/wormhole_syk_teleportation/wormhole_mechanistic_check.png)
+
+**Fourth honest negative result: neither correlates.** Message-mode
+participation: `r=-0.012, p=0.90`. Operator growth rate at `t=1.2`:
+`r=+0.126, p=0.21`. Both are far from the conventional 0.05 threshold
+-- not a marginal case, a clean null on both counts. This rules out a
+4th and 5th candidate explanation, on top of Experiment 11's two and
+Experiment 12's structurally-uninformative phase diagnostic. Both
+features were tested against the *same* n=100 sample Experiment 11
+already used, a real multiple-comparisons concern for any candidate
+that *did* come back significant -- since neither did here (and not
+marginally), no holdout re-verification was needed this time, but the
+concern is flagged for any future candidate that does show a hit.
+Produced by `scripts/wormhole_syk_teleportation.py`'s
+`run_mechanistic_check`. Full data:
+`data/wormhole_mechanistic_check.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -571,15 +626,24 @@ Produced by `scripts/wormhole_syk_teleportation.py`'s
   verified result for this specific subset, not a claim about their
   exact reported statistics.
 - **The structural/spectral/theoretical null results don't rule out
-  every possible explanation, just the three tested.** Mode-usage
-  imbalance, the level-spacing r-statistic, and now the paper's own
-  size winding diagnostic (Experiment 12) all fail to correlate with
-  the sign; none of the three correlating doesn't mean no structural
-  or theoretical property does. Experiment 12 also only checked
+  every possible explanation, just the five tested.** Mode-usage
+  imbalance, the level-spacing r-statistic, the paper's own size
+  winding diagnostic (Experiment 12), message-mode participation, and
+  operator growth rate (both Experiment 13) all fail to correlate with
+  the sign; none of the five correlating doesn't mean no structural or
+  theoretical property does. Experiment 12 also only checked
   `majorana_index=1` (one of the 8 possible starting operators) and 4
   discrete times, on the single-sided L-Hamiltonian only -- not a
   full time/index sweep, and not the combined L+R+P+Q system that the
-  mutual-information readout actually uses.
+  mutual-information readout actually uses; Experiment 13's growth-rate
+  feature inherits that same scope limit, and its message-mode feature
+  only checks modes 1/2 (the message qubit), not whether *any* single
+  mode's participation predicts the sign for that mode's own readout
+  qubit if the message were injected elsewhere. Also worth flagging
+  explicitly: Experiment 13 is the 4th/5th candidate tested on the
+  *same* n=100 sample as Experiment 11's 2 -- a real multiple-testing
+  risk that would matter more if any candidate had come back
+  significant (none has, cleanly, so far).
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
