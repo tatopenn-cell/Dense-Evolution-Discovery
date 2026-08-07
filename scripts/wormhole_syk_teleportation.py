@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs fourteen real, verified experiments, each producing its own
+This script runs fifteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -172,6 +172,31 @@ CSV + plot:
     and r=-0.141, p=0.163) -- a 6th and 7th candidate explanation ruled
     out (counting the two redundant degree features separately would
     overstate how many independent hypotheses this experiment tested).
+15. N-scaling check (N=8 vs N=12) -- the one candidate never tried:
+    does the sign-dependent instance variance persist, worsen, or
+    shrink at a larger Majorana count? The exact backend is infeasible
+    at N=12 (dim^3 diagonalization cost, a measured/estimated ~4096x
+    slowdown over N=8's dim=1024), so both N=8 and N=12 are re-evaluated
+    here via the Trotterized gate-circuit backend for a clean,
+    backend-matched comparison (~19s/call at N=12, close to N=8's own
+    already-measured ~14s/call Trotter cost) -- not the exact-backend
+    N=8 numbers Experiments 10/11 used, which would confound N-scaling
+    with a separate, already-quantified backend effect (Experiment 9).
+    n=6 instances per N (not Experiment 11's n=100 -- infeasible at
+    this cost), and K_TERMS kept fixed at 10 rather than scaled with N.
+    The paper's own 34/11 selection criterion has no exact match at
+    N=12 (verified: 0 of 3000 candidates), so N=12 instances are
+    selected by closest achievable match instead (peaks around
+    commuting=21-23, tops out at 31 in a 500-seed sample). Result:
+    wrong-sign rate is identical, 2/6 at both N=8 and N=12 (too small a
+    sample to treat as a real rate, just a like-for-like snapshot), but
+    the mean |delta| magnitude drops from 0.00765 (N=8) to 0.00034
+    (N=12) -- roughly a 22x reduction. Consistent with the signal
+    weakening toward a thermodynamic limit, though also consistent with
+    the paper's own default parameters (tuned implicitly for N=8) simply
+    becoming less optimal as N grows -- this experiment cannot
+    distinguish those two explanations, only establish that the
+    magnitude drop is real.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -262,6 +287,18 @@ Honest caveats, not glossed over:
   sample -- same multiple-comparisons caveat as Experiment 13 above,
   and same conclusion: neither result is close enough to significance
   (p=0.11, p=0.16) to warrant a holdout re-check.
+- Experiment 15's N=8-vs-N=12 comparison uses the Trotter backend for
+  BOTH, at n_steps_evolution=8/n_steps_coupling=16 -- the same step
+  counts used throughout, not re-tuned for N=12's different term
+  structure, so some of the observed magnitude drop could in principle
+  be a Trotter discretization-error artifact rather than a genuine
+  physical effect (untested: whether doubling the step count at N=12
+  changes the result). n=6 instances per N is far too small to treat
+  the 2/6-vs-2/6 wrong-sign-rate match as meaningful -- only the
+  delta-magnitude drop, present in all 6 N=12 instances individually
+  (not just on average), is treated as a real finding here. K_TERMS
+  was kept fixed at 10 rather than scaled with N -- a scaled-K version
+  of this same check is untested and could behave differently.
 """
 import itertools
 import pathlib
@@ -273,7 +310,7 @@ from scipy import stats as scipy_stats
 
 from dashboard_core.wormhole import (
     build_sparse_syk_terms, commuting_pair_count, select_good_instance,
-    run_wormhole_protocol,
+    run_wormhole_protocol, run_wormhole_protocol_trotter,
 )
 # Private helpers, used only by run_2d_grid_search's precompute-once
 # optimization -- see this module's docstring for why. Not part of
@@ -1243,6 +1280,125 @@ def run_qubit_topology_check(n_instances: int = 100) -> pd.DataFrame:
     return df
 
 
+def _find_closest_commuting_seeds(n_majorana: int, k_terms: int, J_local: float, n_instances: int,
+                                   n_candidates: int, target_commuting: int = 34) -> list:
+    """Generalization of find_multiple_seeds for n_majorana != 8: that
+    function requires an *exact* target_commuting match using the
+    module-level N_MAJORANA=8/K_TERMS=10 constants, which does not work
+    at other N (see run_n_scaling_check's docstring -- an exact 34/11
+    match does not exist among 3000 candidates at n_majorana=12).
+    Returns the n_instances seeds whose commuting-pair count is closest
+    to target_commuting, screening n_candidates seeds."""
+    n_qubits = n_majorana // 2
+    scored = []
+    for seed in range(n_candidates):
+        _, terms = build_sparse_syk_terms(n_majorana, k_terms, J_local, seed)
+        c, a = commuting_pair_count(terms, n_qubits)
+        scored.append((abs(c - target_commuting), seed, c, a))
+    scored.sort(key=lambda x: (x[0], x[1]))
+    return scored[:n_instances]
+
+
+def run_n_scaling_check(n_majorana_large: int = 12, k_terms: int = 10, n_instances: int = 6,
+                         n_candidates: int = 3000, n_steps_evolution: int = 8,
+                         n_steps_coupling: int = 16) -> pd.DataFrame:
+    """Tests whether the sign-dependent instance variance from
+    Experiments 10/11 (N=8: 2/6, then 49/100, wrong-signed at the
+    paper's own default parameters) persists, worsens, or shrinks at a
+    larger Majorana count -- the one candidate explanation from
+    prog.txt's original suggestions never yet tried, and potentially
+    the most informative: SYK-type chaotic systems often show
+    instance-to-instance fluctuations shrinking toward a thermodynamic
+    limit as N grows.
+
+    Backend and scope, chosen for real feasibility, not convenience:
+    - The exact (eigendecomposition) backend used throughout Experiments
+      1-8, 10, 11 is infeasible at N=12 -- diagonalization cost scales
+      as dim^3, and N=12's joint L+R+P+Q system is dim=2^14=16384 vs.
+      N=8's dim=2^10=1024, a (16384/1024)^3 = 4096x slowdown. Measured
+      directly (not estimated): N=8's own exact backend took 4.3-6.4s
+      per diagonalization (this module's docstring); at that scaling
+      factor N=12 would take hours per instance. The Trotterized gate-
+      circuit backend (run_wormhole_protocol_trotter) doesn't pay that
+      cubic cost -- gate application is O(dim) per gate, not O(dim^3) --
+      and was measured directly at N=12: ~19s/call, close to N=8's own
+      already-measured ~14s/call Trotter cost (Experiment 9's noise
+      scan). Both N=8 and N=12 are therefore evaluated via the SAME
+      Trotter backend here, for a clean, backend-matched comparison --
+      not the exact backend N=8's own headline 2/6 (Experiment 10) and
+      49/100 (Experiment 11) numbers used, which would confound N-
+      scaling with a real, separately-measured backend effect
+      (Experiment 9 already showed noise/backend choice can shift the
+      delta and even its sign near the noise threshold).
+    - n_instances=6 (not Experiment 11's n=100): at ~19s/call x 2 signs
+      x 6 instances x 2 values of N, this experiment already costs
+      ~7.6 minutes; scaling to n=100 at N=12 would cost over 2 hours for
+      this one experiment alone. This is explicitly a smaller, first
+      feasibility/existence check, not a repeat of Experiment 11's
+      statistical rigor -- the sample is too small to establish whether
+      variance shrinks with any real statistical power, only whether
+      the qualitative picture (wrong-sign rate, delta magnitude) looks
+      similar or different at a glance.
+    - The paper's own 34/11 commuting/anticommuting selection criterion
+      does not have an exact match at N=12: screening 3000 candidates
+      found zero instances with exactly 34 commuting pairs (verified
+      directly, not assumed -- the achievable distribution at N=12,
+      K=10 peaks around 21-23 and tops out at 31 in a 500-seed sample).
+      `_find_closest_commuting_seeds` generalizes the existing exact-
+      match screening to find the *closest* achievable match instead,
+      the same closest-match philosophy find_seed() already uses at
+      N=8, just generalized to N.
+    - K_TERMS is kept fixed at 10 (not scaled with N) -- the simplest
+      choice, preserving the paper's own term-count convention exactly
+      and not introducing a new, unjustified free parameter.
+    """
+    J_local = float(np.sqrt(2))
+    T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+
+    rows = []
+    for n_maj, label in ((N_MAJORANA, "N=8"), (n_majorana_large, f"N={n_majorana_large}")):
+        selected = _find_closest_commuting_seeds(n_maj, k_terms, J_local, n_instances, n_candidates)
+        for _diff, seed, c, a in selected:
+            i_pos = run_wormhole_protocol_trotter(
+                n_maj, k_terms, J_local, +MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True,
+                n_steps_evolution=n_steps_evolution, n_steps_coupling=n_steps_coupling)
+            i_neg = run_wormhole_protocol_trotter(
+                n_maj, k_terms, J_local, -MU_PAPER, T0_PAPER, T1_PAPER, seed, with_message=True,
+                n_steps_evolution=n_steps_evolution, n_steps_coupling=n_steps_coupling)
+            delta = i_neg - i_pos
+            rows.append({
+                "n_majorana": n_maj, "label": label, "seed": seed,
+                "commuting": c, "anticommuting": a,
+                "delta_at_paper_defaults_trotter": delta,
+            })
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_n_scaling_check.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    labels = df["label"].unique()
+    for i, label in enumerate(labels):
+        sub = df[df["label"] == label]
+        colors = ['#FF007F' if d < 0 else '#00FFFF' for d in sub["delta_at_paper_defaults_trotter"]]
+        x = np.full(len(sub), i) + np.random.default_rng(0).normal(0, 0.05, size=len(sub))
+        ax.scatter(x, sub["delta_at_paper_defaults_trotter"], c=colors, s=60, alpha=0.85, zorder=3)
+    ax.axhline(0, color='#666666', linestyle=':')
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("delta at paper defaults (Trotter backend)", color='#888888')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    n_wrong_by_label = df.groupby("label").apply(
+        lambda g: int((g["delta_at_paper_defaults_trotter"] < 0).sum()), include_groups=False)
+    title_parts = ", ".join(f"{lbl}: {n_wrong_by_label[lbl]}/{n_instances} wrong-signed" for lbl in labels)
+    ax.set_title(f"Experiment 15: N-scaling check (Trotter backend, matched)\n{title_parts}\n"
+                 f"(cyan = correct sign, magenta = wrong sign)", fontsize=11, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_n_scaling_check.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1349,6 +1505,14 @@ def run_all():
     for feat in topology_features:
         r14 = scipy_stats.pearsonr(df14[feat], df14["delta_at_paper_defaults"])
         print(f"  {feat}: r={r14.statistic:+.3f} (p={r14.pvalue:.4f})")
+
+    print("\n=== Experiment 15: N-scaling check (N=8 vs N=12, Trotter backend, matched) ===")
+    df15 = run_n_scaling_check(n_majorana_large=12, n_instances=6)
+    for label in df15["label"].unique():
+        sub = df15[df15["label"] == label]
+        n_wrong15 = int((sub["delta_at_paper_defaults_trotter"] < 0).sum())
+        print(f"  {label}: {n_wrong15}/{len(sub)} wrong-signed, "
+              f"mean|delta|={sub['delta_at_paper_defaults_trotter'].abs().mean():.5f}")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
