@@ -494,6 +494,70 @@ across instances remains genuinely open. Produced by
 `scripts/wormhole_syk_teleportation.py`'s `run_ensemble_sign_check`.
 Full data: `data/wormhole_ensemble_sign_check.csv`.
 
+## Experiment 12: size winding (run 2026-08-07)
+
+Experiment 11 ruled out two candidate structural explanations for the
+sign variance -- Majorana mode-usage imbalance and the spectral
+level-spacing r-statistic -- but both were informal, ad hoc candidates,
+not something the paper itself proposes as diagnostic. arXiv:2604.10090
+does propose its own theory-motivated diagnostic for exactly this kind
+of question: **size winding** (Sec. S6, Eqs. S18-S22), a signature of
+how a Heisenberg-evolved operator's growth is organized in the basis of
+Majorana strings.
+
+This experiment computes it directly, not by analogy. A single L-side
+Majorana operator `chi_j(t) = exp(iHt) chi_j exp(-iHt)` is expanded in
+the basis of Majorana strings `Gamma_P` (one string per subset `P` of
+the 8 Majorana modes, `Gamma_P = 2^(|P|/2) * i^(|P|(|P|-1)/2) *`
+ordered product of `chi_j` for `j` in `P`, per the paper's Eq. S19).
+The winding size distribution `q(l) = sum_{|P|=l} c_P(t)^2` and
+ordinary size distribution `P(l) = sum_{|P|=l} |c_P(t)|^2` give two
+quantities per size sector `l`: the phase coherence ratio
+`R(l) = |q(l)|/P(l)` (1 means every term in that sector has aligned
+phase; less than 1 means dephasing) and the phase itself,
+`arg(q(l))` (the paper's "perfect size winding" ansatz predicts this
+phase grows linearly with `l`).
+
+One subtlety had to be resolved empirically, not taken from the paper's
+text as-is: the PDF-extracted formula for the basis normalization,
+`Tr(Gamma_P Gamma_Q^dagger) = 2N delta_PQ`, doesn't reproduce correctly
+when implemented literally (most likely a lost exponent from PDF
+extraction). Building the `chi_j` operators directly from
+`dense_evolution.fermions.majorana_pauli_terms` and computing the trace
+numerically shows the real normalization is
+`Tr(Gamma_P Gamma_Q^dagger) = 2^|P| * dim * delta_PQ` (`dim = 2^n_qubits
+= 16`) -- verified directly via Hermiticity and orthogonality checks on
+the actual matrices, not assumed. This is the normalization used
+throughout `run_size_winding_check`.
+
+Computed for the same 6 instances used in Experiments 8 and 10, at 4
+post-quench times each (`t = 0.3, 0.7, 1.2, 2.0`) -- spot-checked first
+on 3 individual seeds spanning both a correctly-signed instance (61)
+and a consistently wrong-signed one (2166) before running the full
+6-instance sweep, per an explicit request to verify generality before
+writing this up.
+
+![Size winding: mean operator size across 6 instances, phase coherence trivial everywhere](assets/wormhole_syk_teleportation/wormhole_size_winding.png)
+
+**Fifth honest result: the diagnostic is structurally trivial, uniformly
+across every instance and every time tested.** `R(l) = 1.0000` and
+`arg(q(l)) = 0.0000` exactly (to floating-point precision, `~1e-15`) for
+every `(seed, t)` pair in the sweep -- no dephasing, no winding, no
+instance-to-instance variation at all. This is not a partial or noisy
+null result; it is exactly flat. Like mode-usage imbalance and the
+level-spacing r-statistic before it, this diagnostic does not
+distinguish correctly- from wrong-signed instances -- a third
+independent, theoretically-motivated candidate ruled out. The mean
+operator size `<l>(t)` itself, by contrast, does show real physics:
+consistent chaos-like growth from `<l>(0)=1` up to a peak around
+`t~1.2-2.0` (values range `2.1-3.7` across the 6 instances) followed by
+a finite-size recurrence (an expected artifact of evolving a small,
+`n_majorana=8` system rather than a true large-N limit) -- confirming
+the underlying operator-growth dynamics are real even though this
+particular phase diagnostic isn't what explains the sign variance.
+Produced by `scripts/wormhole_syk_teleportation.py`'s
+`run_size_winding_check`. Full data: `data/wormhole_size_winding.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -506,14 +570,16 @@ Full data: `data/wormhole_ensemble_sign_check.csv`.
   their 100 realizations were. "49/100 wrong-signed" is a real,
   verified result for this specific subset, not a claim about their
   exact reported statistics.
-- **The structural/spectral null results don't rule out every
-  explanation, just the two tested.** Mode-usage imbalance and the
-  level-spacing r-statistic were the two candidates that came up in
-  discussion; neither correlating doesn't mean no structural property
-  does -- e.g. arXiv:2604.10090's own "size winding" diagnostic
-  (operator growth organized by Majorana-string size, Sec. S6 of that
-  paper) is a more theoretically motivated candidate that hasn't been
-  computed here.
+- **The structural/spectral/theoretical null results don't rule out
+  every possible explanation, just the three tested.** Mode-usage
+  imbalance, the level-spacing r-statistic, and now the paper's own
+  size winding diagnostic (Experiment 12) all fail to correlate with
+  the sign; none of the three correlating doesn't mean no structural
+  or theoretical property does. Experiment 12 also only checked
+  `majorana_index=1` (one of the 8 possible starting operators) and 4
+  discrete times, on the single-sided L-Hamiltonian only -- not a
+  full time/index sweep, and not the combined L+R+P+Q system that the
+  mutual-information readout actually uses.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the

@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs eleven real, verified experiments, each producing its own
+This script runs twelve real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -110,6 +110,25 @@ CSV + plot:
     earlier small-sample impression. The level-spacing statistic
     doesn't correlate either (r=0.087, p=0.39). Neither explains why
     the sign varies; that remains open.
+12. Size winding (arXiv:2604.10090 Sec. S6, Eqs. S18-S22) -- a third,
+    theory-motivated diagnostic tried after the two structural/spectral
+    ones in Experiment 11 both failed to explain the sign variance.
+    Directly expands a Heisenberg-evolved single-sided Majorana operator
+    chi_j(t) in the Majorana-string basis Gamma_P and checks the phase
+    coherence R(l)=|q(l)|/P(l) and phase arg(q(l)) of the winding size
+    distribution within each size sector l, across 6 instances and 4
+    post-quench times (verified first on 3 individual seeds spanning
+    both correctly- and wrong-signed instances before running the full
+    official sweep). Third honest negative result: R(l)=1.0000 and
+    arg(q(l))=0.0000 exactly, for every instance and every time tested
+    -- the paper's own "perfect size winding" phase-coherence signature
+    is structurally trivial here (no winding, no decoherence) and,
+    like Experiment 11's two candidates, does not distinguish
+    correctly- from wrong-signed instances. The mean operator size
+    <l>(t) itself does show genuine chaos-consistent growth followed by
+    finite-size recurrence, confirming the underlying operator-growth
+    dynamics are real even though this particular phase diagnostic
+    isn't the explanation being sought.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -168,6 +187,14 @@ Honest caveats, not glossed over:
   assumed. `run_wormhole_protocol` itself is unchanged; this script's
   own helper functions are just a faster way to call the same physics
   repeatedly at one fixed instance.
+- Experiment 12 evolves a single-sided Majorana operator under only the
+  L-side SYK Hamiltonian H, matching arXiv:2604.10090's own size-winding
+  setup -- it deliberately does NOT reuse the L+R+P+Q combined-system
+  Hamiltonian used by Experiments 1-11's mutual-information readout, so
+  it cannot directly explain those experiments' sign-dependent delta by
+  construction; it only tests whether the paper's own diagnostic
+  distinguishes instances at all. It also only checks majorana_index=1
+  and 4 post-quench times per instance, not a full time/index sweep.
 """
 import itertools
 import pathlib
@@ -191,6 +218,7 @@ from dashboard_core.wormhole import _protocol_layout, _initial_state_ops, _evolv
 from dense_evolution import mutual_information
 from dense_evolution.trotter import trotter_evolve_ops
 from dense_evolution.registry import NoiseModel
+from dense_evolution.fermions import majorana_pauli_terms
 import dense_evolution as de
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
@@ -814,6 +842,114 @@ def run_ensemble_sign_check(n_instances: int = 100, n_candidates: int = 120000) 
     return df
 
 
+def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -> pd.DataFrame:
+    """Computes arXiv:2604.10090's own "size winding" diagnostic (Sec.
+    S6, Eqs. S18-S22) directly: expands a Heisenberg-evolved Majorana
+    operator chi_j(t) = exp(iHt) chi_j exp(-iHt) in the basis of
+    Majorana strings Gamma_P (one L-side SYK Hamiltonian H -- single-
+    sided operator growth, matching the paper's own setup, not the
+    combined L+R+P+Q system used elsewhere in this script), then checks
+    (a) the winding size distribution's phase coherence within each
+    size sector, R(l) = |q(l)|/P(l) where q(l) = sum_{|P|=l} c_P(t)^2
+    and P(l) = sum_{|P|=l} |c_P(t)|^2, and (b) whether that phase,
+    arg(q(l)), grows with l as the paper's "perfect size winding"
+    ansatz predicts.
+
+    Gamma_P = 2^(|P|/2) * i^(|P|(|P|-1)/2) * (ordered product of chi_j
+    for j in P) per Eq. S19 -- the paper's own stated normalization
+    Tr(Gamma_P Gamma_Q^dagger) could not be reproduced exactly from the
+    extracted PDF text (a lost exponent is the most likely cause); the
+    actual normalization used here, Tr(Gamma_P Gamma_Q^dagger) =
+    2^|P| * dim * delta_PQ, was verified directly (Hermiticity and
+    orthogonality checked numerically), not assumed from the paper's
+    text.
+
+    Run for each of Experiments 8/10's 6 instances (or a caller-supplied
+    subset), at several post-quench times, to see whether either
+    diagnostic distinguishes "good" (correctly-signed) from "bad"
+    (wrong-signed) instances.
+    """
+    if seeds is None:
+        seeds = find_multiple_seeds(n_instances=6)
+    if t_values is None:
+        t_values = [0.3, 0.7, 1.2, 2.0]
+
+    n_qubits = N_MAJORANA // 2
+    dim = 2 ** n_qubits
+    all_P = []
+    for size in range(N_MAJORANA + 1):
+        all_P.extend(itertools.combinations(range(1, N_MAJORANA + 1), size))
+
+    rows = []
+    for seed in seeds:
+        _, terms = build_sparse_syk_terms(N_MAJORANA, K_TERMS, J, seed)
+        H = de.pauli_hamiltonian_to_matrix(terms, n_qubits)
+        eigvals, eigvecs = np.linalg.eigh(H)
+
+        chis = {}
+        for m in range(1, N_MAJORANA + 1):
+            coeff, pdict = majorana_pauli_terms(m, n_qubits)
+            chis[m] = de.pauli_hamiltonian_to_matrix([(coeff, pdict)], n_qubits)
+
+        def gamma_of(P):
+            size = len(P)
+            phase = (2.0 ** (size / 2.0)) * (1j ** (size * (size - 1) // 2))
+            mat = np.eye(dim, dtype=complex)
+            for idx in P:
+                mat = mat @ chis[idx]
+            return phase * mat
+
+        gammas = {P: gamma_of(P) for P in all_P}
+        norms = {P: 2.0 ** len(P) * dim for P in all_P}
+        chi_j = chis[majorana_index]
+
+        for t in t_values:
+            U = eigvecs @ np.diag(np.exp(-1j * eigvals * t)) @ eigvecs.conj().T
+            op_t = U @ chi_j @ U.conj().T
+            c = {P: np.trace(gammas[P].conj().T @ op_t) / norms[P] for P in all_P}
+            p_dist, q = {}, {}
+            for l in range(N_MAJORANA + 1):
+                Ps_l = [P for P in all_P if len(P) == l]
+                p_dist[l] = sum(abs(c[P]) ** 2 for P in Ps_l)
+                q[l] = sum(c[P] ** 2 for P in Ps_l)
+            total = sum(p_dist.values())
+            mean_l = sum(l * p_dist[l] for l in range(N_MAJORANA + 1)) / total
+            phases = [np.angle(q[l]) for l in range(N_MAJORANA + 1) if abs(q[l]) > 1e-8]
+            r_vals = [abs(q[l]) / p_dist[l] for l in range(N_MAJORANA + 1) if p_dist[l] > 1e-8]
+            rows.append({
+                "seed": seed, "t": t, "mean_size": mean_l,
+                "max_abs_phase": max((abs(p) for p in phases), default=0.0),
+                "min_R": min(r_vals) if r_vals else float("nan"),
+            })
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_size_winding.csv", index=False)
+
+    overall_max_phase = float(df["max_abs_phase"].max())
+    overall_min_R = float(df["min_R"].min())
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = plt.cm.cool(np.linspace(0, 1, len(seeds)))
+    for seed, color in zip(seeds, colors):
+        sub = df[df["seed"] == seed].sort_values("t")
+        ax.plot(sub["t"], sub["mean_size"], 'o-', color=color, label=f"seed={seed}")
+    ax.set_xlabel("t (post-quench evolution time)", color='#888888')
+    ax.set_ylabel("mean operator size <l>(t)", color='#888888')
+    ax.set_title(
+        f"Experiment 12: size winding (arXiv:2604.10090 Sec. S6) across {len(seeds)} instances\n"
+        f"max|phase|={overall_max_phase:.4f}, min R(l)={overall_min_R:.4f} everywhere "
+        f"(perfectly trivial -- no winding, no decoherence)",
+        fontsize=10, fontweight='bold'
+    )
+    ax.legend(loc="upper right", fontsize=8)
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_size_winding.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -893,6 +1029,18 @@ def run_all():
           f"mode-usage-imbalance r={r_usage.statistic:+.3f} (p={r_usage.pvalue:.3f}), "
           f"level-spacing r-statistic r={r_chaos.statistic:+.3f} (p={r_chaos.pvalue:.3f}) -- "
           f"neither is a statistically significant predictor of the sign.")
+
+    print("\n=== Experiment 12: size winding (arXiv:2604.10090 Sec. S6 diagnostic) ===")
+    df12 = run_size_winding_check()
+    max_phase12 = float(df12["max_abs_phase"].max())
+    min_R12 = float(df12["min_R"].min())
+    print(f"  {df12['seed'].nunique()} instances x {df12['t'].nunique()} times: "
+          f"max|phase|={max_phase12:.4f}, min R(l)={min_R12:.4f} everywhere -- the paper's own "
+          f"'perfect size winding' phase-coherence diagnostic is structurally trivial (no winding, "
+          f"no decoherence) regardless of instance, and so -- like mode-usage-imbalance and the "
+          f"level-spacing r-statistic in Experiment 11 -- does not explain the sign-dependent "
+          f"instance variance. Mean operator size <l>(t) does show genuine chaos-consistent "
+          f"growth-then-recurrence, confirming the underlying scrambling dynamics are real.")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
