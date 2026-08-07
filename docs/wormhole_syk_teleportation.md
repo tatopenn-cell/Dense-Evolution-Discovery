@@ -613,6 +613,65 @@ Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_mechanistic_check`. Full data:
 `data/wormhole_mechanistic_check.csv`.
 
+## Experiment 14: qubit-coupling topology check (run 2026-08-07)
+
+Every candidate tested so far treats "how much a mode is used" as the
+relevant quantity -- Experiment 11's mode-usage std, Experiment 13's
+message-mode participation count. None of them ask *which specific
+pairs* of modes end up coupled together, i.e. the actual topology of
+the K=10 quads' coupling graph -- exactly the kind of structural
+question raised early in this investigation ("does Seed 61 have a
+chain- or star-like coupling topology the failing seeds don't?").
+
+A weighted 8-mode co-occurrence graph is built per instance: edge
+weight `(i, j)` is how many of the 10 quads contain both modes `i` and
+`j`. **An ad hoc check before committing to this design caught a real
+methodology problem early:** a *binary* version of this graph (an edge
+whenever a pair co-occurs at all, ignoring how many times) saturates to
+the complete graph `K8` for most instances -- 10 quads contribute up to
+60 pair-slots spread over only 28 possible mode pairs, so nearly every
+pair ends up connected by chance regardless of the underlying
+structure. Two of three spot-checked seeds were already exactly the
+complete graph. Caught by spot-checking a handful of seeds before
+running the full n=100 sweep, per this project's usual discipline --
+the weighted count was used instead, which showed real spread in the
+same spot check (max weighted degree 21-24, degree std 3.3-5.0, 0-3
+completely uncoupled mode pairs across just 6 seeds).
+
+Four features are computed per instance from the weighted graph:
+`max_weighted_degree` (how "hub"-like the most-coupled mode is),
+`weighted_degree_std` (spread of coupling strength across modes),
+`n_zero_pairs` (how many of the 28 possible mode pairs are never
+coupled together at all -- directly captures whether coupling
+concentrates through a few modes, leaving many pairs untouched, versus
+spreading evenly), and the weighted graph's algebraic connectivity (the
+Fiedler value of its Laplacian -- how evenly/expander-like the whole
+coupling structure is).
+
+![Qubit-coupling topology check vs. sign, n=100](assets/wormhole_syk_teleportation/wormhole_qubit_topology.png)
+
+**A second honest check, done only after computing the real n=100
+numbers, not before:** `max_weighted_degree` and `weighted_degree_std`
+turn out to be an *exact* linear rescaling of Experiment 11's
+mode-usage-count features -- `weighted_degree = 3 x usage_count` for
+every single instance (verified numerically, ratio `3.000000` to 1
+part in `10^15` across all 100 seeds, not assumed from the combinatorics).
+This makes sense in hindsight (each quad a mode participates in
+contributes exactly 3 edges from that mode, to the other 3 modes in
+that quad) but means these two features are not new information at
+all -- just Experiment 11's already-tested, already-non-significant
+mode-usage-std recomputed via a graph Laplacian. Reporting their
+correlation as if it were a fresh test would double-count a hypothesis
+already ruled out.
+
+**Fifth honest negative result: the two genuinely new features also
+fail to correlate.** `n_zero_pairs`: `r=+0.159, p=0.114`.
+`algebraic_connectivity`: `r=-0.141, p=0.163`. Neither reaches
+significance, ruling out a 6th and 7th candidate explanation (the two
+redundant degree features aren't counted as separate hypotheses, per
+the note above). Produced by `scripts/wormhole_syk_teleportation.py`'s
+`run_qubit_topology_check`. Full data: `data/wormhole_qubit_topology.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -626,12 +685,15 @@ Produced by `scripts/wormhole_syk_teleportation.py`'s
   verified result for this specific subset, not a claim about their
   exact reported statistics.
 - **The structural/spectral/theoretical null results don't rule out
-  every possible explanation, just the five tested.** Mode-usage
-  imbalance, the level-spacing r-statistic, the paper's own size
-  winding diagnostic (Experiment 12), message-mode participation, and
-  operator growth rate (both Experiment 13) all fail to correlate with
-  the sign; none of the five correlating doesn't mean no structural or
-  theoretical property does. Experiment 12 also only checked
+  every possible explanation, just the seven independently tested**
+  (mode-usage imbalance, the level-spacing r-statistic, the paper's own
+  size winding diagnostic, message-mode participation, operator growth
+  rate, mode-pair coupling absence, and graph algebraic connectivity --
+  Experiment 14's other two features, max weighted degree and weighted
+  degree std, turned out to be an exact rescaling of mode-usage
+  imbalance and are not independent tests, see Experiment 14's own
+  write-up). None of the seven correlating doesn't mean no structural
+  or theoretical property does. Experiment 12 also only checked
   `majorana_index=1` (one of the 8 possible starting operators) and 4
   discrete times, on the single-sided L-Hamiltonian only -- not a
   full time/index sweep, and not the combined L+R+P+Q system that the
@@ -639,11 +701,16 @@ Produced by `scripts/wormhole_syk_teleportation.py`'s
   feature inherits that same scope limit, and its message-mode feature
   only checks modes 1/2 (the message qubit), not whether *any* single
   mode's participation predicts the sign for that mode's own readout
-  qubit if the message were injected elsewhere. Also worth flagging
-  explicitly: Experiment 13 is the 4th/5th candidate tested on the
-  *same* n=100 sample as Experiment 11's 2 -- a real multiple-testing
-  risk that would matter more if any candidate had come back
-  significant (none has, cleanly, so far).
+  qubit if the message were injected elsewhere. Experiment 14's
+  coupling graph is purely combinatorial (co-occurrence in a quad),
+  blind to the quad's random sign or to whether the Majorana factors
+  actually commute/anticommute within the term -- a sign-aware or
+  commutator-aware version is untested. Also worth flagging explicitly:
+  Experiments 13 and 14 are the 4th through 9th candidates tested on
+  the *same* n=100 sample as Experiment 11's 2 (7 independent
+  hypotheses in total, once the redundant Experiment 14 features are
+  excluded) -- a real multiple-testing risk that would matter more if
+  any candidate had come back significant (none has, cleanly, so far).
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
