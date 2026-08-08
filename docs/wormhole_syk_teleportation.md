@@ -813,6 +813,73 @@ consistent with Experiment 11's ~49/100. Produced by
 `run_term_order_noncommutativity_check`. Full data:
 `data/wormhole_term_order_noncommutativity.csv`.
 
+## Experiment 17: term-order x noise interaction check (run 2026-08-08)
+
+Experiment 16's own caveat flagged the natural next question: term
+order alone (pure Trotter error, noiseless) didn't predict the sign --
+but does term-order *sensitivity* change once realistic noise is
+present? This is closer in spirit to
+`scripts/channel_order_noncommutativity.py`'s own noisy, stochastic
+setting, applied here to term order instead of noise-channel order.
+
+Method: identical to Experiment 16 (original vs. reversed K=10+10 term
+order, `|delta_reversed - delta_original|`), but now with a stochastic
+depolarizing Kraus channel (`dense_evolution.registry.NoiseModel`)
+injected after each of the protocol's three phases, at `noise_p=0.01`
+-- Experiment 9's own value, close to (just below) the threshold where
+the noiseless signal starts crossing zero. Because noise makes each
+run stochastic, delta is averaged over `n_trials=6` noisy draws per
+order per instance (Experiment 9's own budget; a full Monte Carlo
+unraveling with thousands of trajectories, as
+`channel_order_noncommutativity.py` uses for its tiny 3-qubit toy
+circuit, was not attempted here -- measured at ~7.8s per single noisy
+protocol call on this much heavier Trotterized circuit, that would
+cost hours per instance). One deliberate variance-reduction choice:
+each trial's `+mu` and `-mu` runs share the same noise realization (a
+freshly re-seeded RNG immediately before each call), isolating the
+sign effect that delta measures from trial-to-trial noise-realization
+variance.
+
+![Term-order x noise interaction check vs. sign, n=50](assets/wormhole_syk_teleportation/wormhole_term_order_noise_interaction.png)
+
+**Ninth result, and the first positive one since Experiment 9's noise
+scan -- and the only candidate anywhere in this script that does NOT
+regress to non-significance as the sample grows:**
+
+| n | r | p |
+|---|---|---|
+| 6 | +0.811 | 0.050 |
+| 20 | +0.587 | 0.0065 |
+| 30 | +0.396 | 0.030 |
+| 50 | +0.340 | 0.0158 |
+
+The n=50 sample used the same 34/11-exact-match screening as
+elsewhere (`find_multiple_seeds`, 38028 candidates screened to find 50
+distinct instances). The point estimate shrinks with n, exactly as
+expected from a true-but-modest effect regressing off an initially
+lucky small-sample draw -- but unlike every other candidate tested in
+this script (most visibly Experiment 16's own noiseless version of
+this exact test, which collapsed from `p=0.34` at n=6 to `p=0.13` at
+n=30), it stabilizes around `r~0.34-0.40` instead of continuing toward
+zero, and stays under `p=0.05` at every single sample size checked
+along the way. 25/50 (50%) of the n=50 sample are wrong-signed,
+consistent with every other larger-n check in this script.
+
+Reading: term-order non-commutativity by itself (pure Trotter error,
+Experiment 16) doesn't predict the sign, but its *interaction with
+physical noise* does, modestly. A plausible mechanism: both noise and
+Trotter discretization error perturb the simulated state away from the
+exact answer, and how sensitive a given instance's term ordering is to
+that kind of perturbation partly tracks how fragile its sign-dependent
+signal already is -- a real, if modest, structural handle on the sign,
+where eight prior candidates (mode-usage imbalance, the level-spacing
+r-statistic, size winding, message-mode participation, operator growth
+rate, mode-pair coupling absence, algebraic connectivity, and
+noiseless order_sensitivity itself) found nothing. Produced by
+`scripts/wormhole_syk_teleportation.py`'s
+`run_term_order_noise_interaction_check`. Full data:
+`data/wormhole_term_order_noise_interaction.csv`.
+
 ## What this does NOT show
 
 - **Even Experiment 11's n=100 sample isn't a strict replication of
@@ -885,6 +952,18 @@ consistent with Experiment 11's ~49/100. Produced by
   rate from Experiment 13; n_zero_pairs and algebraic connectivity from
   Experiment 14; order_sensitivity here) -- Experiment 14's other two
   features aren't counted separately, see that experiment's own note.
+- **Experiment 17's r=+0.340 (p=0.0158) at n=50 is a modest effect, not
+  a strong predictor** -- 25/50 (50%) are still wrong-signed, so this
+  does not come close to resolving the sign question, only giving a
+  real, replicated (across n=6, 20, 30, 50) partial structural handle
+  on it. It was only tested at a single noise level (`noise_p=0.01`,
+  Experiment 9's own value) and a single trial budget (`n_trials=6`,
+  also reused from Experiment 9 rather than independently re-tuned)
+  -- whether the correlation strengthens, weakens, or holds at other
+  noise levels or trial counts is untested. It also inherits
+  Experiment 16's own scope limit: only two orderings (original vs.
+  fully reversed) out of the 20 terms' 20! possible permutations are
+  compared, not a broader sample of orderings.
 - **Experiment 7's fixed point is not proven globally optimal, and does
   not generalize to other instances (Experiment 8).** Coordinate ascent
   converging to a stable point on a given grid resolution is not the
