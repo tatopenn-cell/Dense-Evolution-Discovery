@@ -2,6 +2,8 @@
 
 This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
+Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/blob/main/CITATION.cff) in the repository root, or cite directly via the concept DOI [10.5281/zenodo.21855620](https://doi.org/10.5281/zenodo.21855620).
+
 **New here?** Jump straight to the [Scientific Discoveries](#scientific-discoveries-empirical-evidence) section below and explore any result that catches your eye — every claim links to the exact script that produced it, so you can run it yourself. Or start with the three newest, most rigorously validated additions:
 
 ---
