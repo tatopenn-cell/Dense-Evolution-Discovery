@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs sixteen real, verified experiments, each producing its own
+This script runs seventeen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -228,6 +228,39 @@ CSV + plot:
     circuit's output, confirming genuine non-commutativity among the
     terms), it just does not predict the sign. 15/30 (50%) wrong-signed
     at this n=30 subsample, consistent with Experiment 11's ~49/100.
+17. Term-order x noise interaction check -- Experiment 16's own caveat
+    flagged this as the natural next question: term order alone
+    (Trotter error, noiseless) didn't predict the sign, but does
+    term-order sensitivity change once realistic noise is present,
+    closer in spirit to scripts/channel_order_noncommutativity.py's own
+    noisy, stochastic setting? Same method as Experiment 16 (original
+    vs. reversed term order, |delta_reversed - delta_original|), but
+    now with a depolarizing Kraus channel injected after each protocol
+    phase (noise_p=0.01, Experiment 9's own near-threshold value) and
+    delta averaged over 6 noisy trials per order per instance (common
+    random numbers between mu signs, isolating the sign effect from
+    trial-to-trial noise-realization variance). Ninth result, and the
+    first positive one since Experiment 9: an initial n=6 spot-check
+    found r=+0.811 (p=0.050), and unlike every other candidate in this
+    script, it did NOT regress to non-significance as the sample grew
+    -- n=20: r=+0.587 (p=0.0065); n=30: r=+0.396 (p=0.030); n=50
+    (34/11-exact-match screening, 38028 candidates screened): r=+0.340
+    (p=0.0158). The point estimate shrinks with n, as expected from a
+    true but modest effect regressing off an initially lucky
+    small-sample draw, but it stabilizes in the r~0.34-0.40 range
+    instead of continuing toward zero, and stays below p=0.05 at every
+    single sample size checked -- qualitatively different from
+    Experiment 16's own noiseless version of the same test, which
+    collapsed from p=0.34 (n=6) to p=0.13 (n=30) over a comparable n
+    range. 25/50 (50%) of the n=50 sample are wrong-signed, consistent
+    with every other larger-n check in this script. Interpretation:
+    term-order non-commutativity by itself (Trotter error alone,
+    Experiment 16) doesn't predict the sign, but its *interaction with
+    physical noise* does, modestly -- plausibly because noise and
+    Trotter error both perturb the state away from the exact answer,
+    and how sensitive a given instance's term ordering is to that
+    perturbation partly tracks how fragile its sign-dependent signal is
+    to begin with.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -341,6 +374,17 @@ Honest caveats, not glossed over:
   noiseless order_sensitivity metric tested here) is a distinct,
   untested question, closer in spirit to channel_order_
   noncommutativity.py's own noisy, stochastic setting.
+- Experiment 17's r=+0.340 (p=0.0158) at n=50 is the first candidate in
+  this script to stay significant across every sample size tested
+  (n=6, 20, 30, 50) instead of regressing to non-significance -- still
+  a modest effect (r~0.34), not a strong predictor, and only tested at
+  a single noise_p=0.01 and n_trials=6 stochastic trials per point
+  (Experiment 9's own budget, reused rather than independently
+  re-tuned here); whether the correlation strengthens, weakens, or
+  holds at other noise levels is untested. It also only compares the
+  same two orderings as Experiment 16 (original vs. fully reversed)
+  out of far more possible permutations -- the same scope caveat as
+  Experiment 16 above.
 """
 import itertools
 import pathlib
@@ -1552,6 +1596,136 @@ def run_term_order_noncommutativity_check(seeds=None, n_steps_evolution: int = 8
     return df
 
 
+def _run_trotter_ordered_noisy(terms_ordered, v_terms, n_side, n_full, L, R, P, Q, mu_signed, t0, t1,
+                                noise_p, rng, n_steps_evolution, n_steps_coupling):
+    """Same construction as _run_trotter_ordered, plus a real stochastic
+    depolarizing Kraus draw (dense_evolution.registry.NoiseModel,
+    single-shot per call, same as run_trotter_noise_scan/Experiment 9)
+    injected after each of the three phases."""
+    sim = de.DenseSVSimulator(n_full)
+    sim.run_circuit(_initial_state_ops(n_side, L, R, P, Q, True)
+                     + trotter_evolve_ops(terms_ordered, t0, n_steps_evolution))
+    sv = sim.get_statevector()
+    if noise_p > 0:
+        sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+    sim.set_state(sv)
+    sim.run_circuit(trotter_evolve_ops(v_terms, mu_signed, n_steps_coupling))
+    sv = sim.get_statevector()
+    if noise_p > 0:
+        sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+    sim.set_state(sv)
+    sim.run_circuit(trotter_evolve_ops(terms_ordered, t1, n_steps_evolution))
+    sv = sim.get_statevector()
+    if noise_p > 0:
+        sv = NoiseModel.apply_to_sv(sv, n_full, 'depolarizing', noise_p, rng=rng)
+    return mutual_information(sv, n_full, [P], [R[0]])
+
+
+def run_term_order_noise_interaction_check(seeds=None, noise_p: float = 0.01, n_trials: int = 6,
+                                            n_steps_evolution: int = 8,
+                                            n_steps_coupling: int = 16) -> pd.DataFrame:
+    """Experiment 16 asked whether term order matters noiselessly; this
+    asks the question Experiment 16's own caveats flagged as untested:
+    does term-order sensitivity change under realistic noise -- closer
+    in spirit to scripts/channel_order_noncommutativity.py's own noisy,
+    stochastic setting, applied here to term order instead of noise-
+    channel order.
+
+    Scope decided by a real, measured cost constraint, not convenience:
+    channel_order_noncommutativity.py's exact methodology (Monte Carlo
+    unraveling with k_trajectories=8192, Jensen-Shannon divergence, a
+    permutation test) is built for a tiny, cheap 3-qubit toy circuit --
+    each trajectory there is one small gate sequence. This script's
+    Trotterized wormhole circuit is far more gate-heavy (K=10+10 terms,
+    n_steps_evolution=8/n_steps_coupling=16), measured directly at
+    ~7.8s per single noisy protocol call -- running thousands of
+    trajectories per (seed, order, mu-sign) to resolve a full output
+    distribution and its JS divergence, as the noise-channel script
+    does, would cost hours per instance and was not attempted. Instead
+    this reuses Experiment 9's own established, more modest budget
+    (n_trials=6 single-shot stochastic draws averaged per point) and
+    Experiment 16's own original-vs-reversed term order comparison,
+    combined: for each instance, delta is averaged over n_trials noisy
+    runs at noise_p, separately for the original and reversed term
+    order, giving noisy_order_sensitivity = |delta_mean_reversed -
+    delta_mean_original| -- the noisy analogue of Experiment 16's
+    order_sensitivity, at the same noise_p=0.01 Experiment 9 already
+    identified as close to (just below) the noise threshold where the
+    noiseless signal starts crossing zero.
+
+    One deliberate deviation from Experiment 9's own noise-injection
+    pattern: each trial's i_pos and i_neg share the same noise
+    realization (a fresh rng re-seeded with the same value immediately
+    before each of the two calls), not independent draws carried
+    forward from one rng -- a common-random-numbers variance-reduction
+    choice, isolating the mu-sign effect (what delta actually measures)
+    from trial-to-trial noise-realization variance, since delta itself
+    is already a small quantity easily swamped by independent noise on
+    each side.
+    """
+    if seeds is None:
+        seeds = find_multiple_seeds(n_instances=6)
+    T0_PAPER, MU_PAPER, T1_PAPER = 0.3, 12.0, 0.60
+
+    def mean_delta(terms_ordered, v_terms, n_side, n_full, L, R, P, Q):
+        deltas = []
+        for trial in range(n_trials):
+            rng = np.random.default_rng(1000 * trial + 7)
+            i_pos = _run_trotter_ordered_noisy(terms_ordered, v_terms, n_side, n_full, L, R, P, Q,
+                                                +MU_PAPER, T0_PAPER, T1_PAPER, noise_p, rng,
+                                                n_steps_evolution, n_steps_coupling)
+            rng = np.random.default_rng(1000 * trial + 7)
+            i_neg = _run_trotter_ordered_noisy(terms_ordered, v_terms, n_side, n_full, L, R, P, Q,
+                                                -MU_PAPER, T0_PAPER, T1_PAPER, noise_p, rng,
+                                                n_steps_evolution, n_steps_coupling)
+            deltas.append(i_neg - i_pos)
+        return float(np.mean(deltas)), float(np.std(deltas))
+
+    rows = []
+    for seed in seeds:
+        n_side, n_full, L, R, P, Q, terms_full, v_terms = _protocol_layout(N_MAJORANA, K_TERMS, J, seed)
+        terms_reversed = list(reversed(terms_full))
+
+        delta_mean_orig, delta_std_orig = mean_delta(terms_full, v_terms, n_side, n_full, L, R, P, Q)
+        delta_mean_rev, delta_std_rev = mean_delta(terms_reversed, v_terms, n_side, n_full, L, R, P, Q)
+
+        rows.append({
+            "seed": seed,
+            "delta_mean_original_noisy": delta_mean_orig,
+            "delta_std_original_noisy": delta_std_orig,
+            "delta_mean_reversed_noisy": delta_mean_rev,
+            "delta_std_reversed_noisy": delta_std_rev,
+            "noisy_order_sensitivity": abs(delta_mean_rev - delta_mean_orig),
+        })
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_term_order_noise_interaction.csv", index=False)
+
+    r_result = scipy_stats.pearsonr(df["noisy_order_sensitivity"], df["delta_mean_original_noisy"])
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(9, 6.5))
+    colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_mean_original_noisy"]]
+    ax.errorbar(df["noisy_order_sensitivity"], df["delta_mean_original_noisy"],
+                yerr=df["delta_std_original_noisy"], fmt='none', ecolor='#444444', zorder=1)
+    ax.scatter(df["noisy_order_sensitivity"], df["delta_mean_original_noisy"], c=colors, s=80, zorder=5)
+    for _, row in df.iterrows():
+        ax.annotate(str(int(row["seed"])), (row["noisy_order_sensitivity"], row["delta_mean_original_noisy"]),
+                    textcoords="offset points", xytext=(0, 8), fontsize=8, color='#888888', ha='center')
+    ax.axhline(0, color='#666666', linestyle=':')
+    ax.set_xlabel(f"noisy order sensitivity |delta_reversed - delta_original| (p={noise_p})", color='#888888')
+    ax.set_ylabel("delta, original term order (noisy, mean of trials)", color='#888888')
+    ax.set_title(f"Experiment 17: term-order x noise interaction vs. sign (n={len(df)})\n"
+                 f"r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f} "
+                 f"(cyan = correct sign, magenta = wrong sign)",
+                 fontsize=11, fontweight='bold')
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_term_order_noise_interaction.png", dpi=300)
+    plt.close(fig)
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1671,6 +1845,11 @@ def run_all():
     df16 = run_term_order_noncommutativity_check(seeds=find_multiple_seeds(n_instances=30, n_candidates=35000))
     r16 = scipy_stats.pearsonr(df16["order_sensitivity"], df16["delta_original_order"])
     print(f"  n={len(df16)}: order_sensitivity vs delta: r={r16.statistic:+.3f} (p={r16.pvalue:.4f})")
+
+    print("\n=== Experiment 17: term-order x noise interaction check ===")
+    df17 = run_term_order_noise_interaction_check(seeds=find_multiple_seeds(n_instances=50, n_candidates=50000))
+    r17 = scipy_stats.pearsonr(df17["noisy_order_sensitivity"], df17["delta_mean_original_noisy"])
+    print(f"  n={len(df17)}: noisy_order_sensitivity vs delta: r={r17.statistic:+.3f} (p={r17.pvalue:.4f})")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
