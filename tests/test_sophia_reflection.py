@@ -11,6 +11,8 @@ import importlib.util
 import pathlib
 import sys
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 _REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -53,3 +55,25 @@ def test_correction_improves_fidelity_on_average():
     )
     deltas = np.array([row['delta'] for row in rows])
     assert deltas.mean() > 0
+
+
+def test_uhlmann_fidelity_core_gradient_is_finite_at_degenerate_eigenvalues():
+    # Regression test for the dense-evolution 8.1.55 upgrade: this
+    # script's own local eigh_degenerate_safe/uhlmann_fidelity_
+    # degenerate_safe duplicate was removed once the same fix (JAX
+    # issues #2311/#8732; Kasim, arXiv:2011.04366) shipped upstream in
+    # dense_evolution.mitigation._uhlmann_fidelity_core. Confirms the
+    # installed package actually has the fix (not silently still on an
+    # older, NaN-at-degeneracy version) using this script's own import
+    # path, sharpest case: the fully mixed state, all eigenvalues tied.
+    from dense_evolution.mitigation import _uhlmann_fidelity_core
+
+    d = 4
+    rho_mixed = jnp.eye(d, dtype=jnp.complex128) / d
+    rng = np.random.default_rng(42)
+    m = rng.normal(size=(d, d)) + 1j * rng.normal(size=(d, d))
+    rho_other = m @ m.conj().T
+    rho_other = jnp.asarray(rho_other / np.trace(rho_other), dtype=jnp.complex128)
+
+    grad = jax.grad(lambda a: jnp.real(_uhlmann_fidelity_core(a, rho_other)))(rho_mixed)
+    assert not bool(jnp.any(jnp.isnan(grad)))

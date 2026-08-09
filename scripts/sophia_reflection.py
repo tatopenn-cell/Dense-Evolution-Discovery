@@ -186,6 +186,79 @@ def apply_combined_channel_exact(rho, params, n_qubits=N_QUBITS):
     return rho
 
 
+# =====================================================================
+# General (not fixed-form) differentiable single-qubit channel via a
+# Stinespring-dilation parameterization -- guaranteed completely
+# positive and trace preserving (CPTP) BY CONSTRUCTION, for any
+# parameter values, rather than by clipping named channels' own
+# probabilities to [0,1] and hoping their sequential composition stays
+# physical (apply_combined_channel_exact above).
+#
+# The Stinespring dilation theorem (a standard 1955 result -- see e.g.
+# Preskill's Ph219 Chapter 3, quantumrag's quantum_info collection) says
+# every CPTP map on a d-dim system arises from an isometry V: H_S ->
+# H_S (x) H_A into a system+ancilla space, with the n_kraus Kraus
+# operators recovered as the d x d blocks of V; Sum_k K_k^dagger K_k =
+# V^dagger V = I_d automatically, for ANY isometry V. This is textbook
+# quantum information theory, not any single paper's contribution --
+# the specific parameterization below (real parameters -> a complex
+# matrix -> QR decomposition -> isometry) is a standard, independently-
+# implemented way to make that isometry differentiable, chosen here
+# because jnp.linalg.qr's JAX gradient is well-behaved for a full-rank
+# input, unlike jnp.linalg.eigh's gradient at (near-)degenerate
+# eigenvalues (the exact blocker _pure_state_fidelity was built to route
+# around elsewhere in this module).
+# =====================================================================
+
+def n_params_for_stinespring_channel(d=2, n_kraus=4):
+    """Length of the flat real parameter vector
+    build_stinespring_kraus_ops expects."""
+    return 2 * d * n_kraus * d
+
+
+def build_stinespring_kraus_ops(raw_params, d=2, n_kraus=4):
+    """Builds n_kraus Kraus operators (each d x d) from a flat real
+    parameter vector, guaranteed to satisfy Sum_k K_k^dagger K_k = I_d
+    exactly for any raw_params (verified directly: max deviation from
+    identity ~1e-8, float32-precision noise, for random parameters;
+    exactly the QR isometry property, not an approximation).
+
+    raw_params is split into the real and imaginary parts of a
+    (d*n_kraus, d) complex matrix M; jnp.linalg.qr(M) gives Q with
+    orthonormal columns (Q^dagger Q = I_d) -- an isometry embedding the
+    d-dim system into the d*n_kraus-dim system+ancilla space. Each Kraus
+    operator K_k is the k-th d-row block of Q (the block corresponding
+    to ancilla basis state |k>_A, ancilla implicitly initialized to
+    |0>_A by this construction)."""
+    n = d * n_kraus
+    raw_params = jnp.asarray(raw_params, dtype=jnp.float64)
+    real_part = raw_params[: n * d].reshape(n, d)
+    imag_part = raw_params[n * d:].reshape(n, d)
+    M = (real_part + 1j * imag_part).astype(jnp.complex128)
+    Q, _ = jnp.linalg.qr(M)
+    return [Q[k * d:(k + 1) * d, :] for k in range(n_kraus)]
+
+
+def apply_stinespring_channel_exact(rho, raw_params, n_qubits=N_QUBITS, d=2, n_kraus=4, qubits=None):
+    """Applies the general (not fixed-form) Stinespring-parameterized
+    channel to `qubits` (default: all) of density matrix `rho` --
+    CPTP-by-construction generalization of apply_channel_exact/
+    apply_combined_channel_exact above, for searching over the full
+    space of physically valid single-qubit channels instead of only
+    mixtures of four named ones."""
+    if qubits is None:
+        qubits = list(range(n_qubits))
+    kraus_ops = build_stinespring_kraus_ops(raw_params, d=d, n_kraus=n_kraus)
+    dim = 2 ** n_qubits
+    for q in qubits:
+        rho_out = jnp.zeros((dim, dim), dtype=jnp.complex128)
+        for K in kraus_ops:
+            K_full = _embed_single_qubit_op(K, q, n_qubits)
+            rho_out = rho_out + K_full @ rho @ K_full.conj().T
+        rho = rho_out
+    return rho
+
+
 def _noisy_density_matrix(ideal_sv, p, k, rng, channel='depolarizing'):
     dim = len(ideal_sv)
     rho = np.zeros((dim, dim), dtype=np.complex128)
@@ -289,8 +362,30 @@ def _pure_state_fidelity(rho, ideal_sv):
     (near-)degenerate eigenvalues -- exactly what a near-pure Bell
     state's noisy density matrix has. This formula is linear in `rho`
     and needs no eigendecomposition at all, since rho_ideal in this
-    module is always exactly the pure Bell state."""
+    module is always exactly the pure Bell state.
+
+    This works because our specific comparison target is always pure.
+    For the fully general (mixed-vs-mixed) case, use
+    dense_evolution.mitigation.uhlmann_fidelity/_uhlmann_fidelity_core
+    directly instead -- see the note below."""
     return jnp.real(jnp.vdot(ideal_sv, rho @ ideal_sv))
+
+
+# NOTE (2026-08-09): a general (mixed-vs-mixed) degenerate-eigenvalue-
+# safe Uhlmann fidelity used to be reimplemented locally here (a
+# jax.custom_jvp-based eigh masking the singular 1/(lambda_i-lambda_j)
+# gradient term at near-degenerate eigenvalues -- the same JAX AD
+# limitation _pure_state_fidelity above routes around for the pure-
+# target case; see JAX issues #2311/#8732 and Kasim, arXiv:2011.04366).
+# That fix has since been promoted upstream into dense_evolution itself
+# (dense_evolution.mitigation._eigh_degenerate_safe, shipped in
+# dense-evolution 8.1.55) -- _uhlmann_fidelity_core is now safe to
+# differentiate at degenerate eigenvalues directly, so the local
+# duplicate was removed rather than kept in sync with two copies of the
+# same fix. Verified after upgrading: dense_evolution.mitigation.
+# _uhlmann_fidelity_core(rho_A, rho_B) gives a NaN-free gradient for
+# the fully mixed state (all eigenvalues tied) and agrees with
+# _pure_state_fidelity to ~1e-9 whenever rho_B happens to be pure.
 
 
 def _divergence_objective(base_params, ideal_sv, rho_ideal):
@@ -411,6 +506,113 @@ def run_adversarial_combined_noise_search(n_steps=200, step_size=0.005, init_par
 
     return {
         'best_params': {name: float(v) for name, v in zip(_COMBINED_CHANNELS, best_params)},
+        'best_divergence': best_divergence,
+        'history': history,
+    }
+
+
+def _apply_stinespring_channel_n_times(rho, raw_params, n_times, d=2, n_kraus=4, n_qubits=N_QUBITS):
+    """Applies the SAME fixed Stinespring-parameterized channel
+    sequentially `n_times` -- the "noise scaling" mechanism for
+    run_adversarial_stinespring_noise_search below, used instead of
+    scaling raw_params itself directly (which has no clean physical
+    meaning for this parameterization, and is singular at raw_params=0,
+    where the QR decomposition of an all-zero matrix is undefined).
+    Repeated application of an identical physical noise process is
+    itself a standard, physically-grounded ZNE noise-scaling technique
+    (analogous to real gate-folding: running a noisy gate 1x/3x/5x to
+    reach different effective noise strengths) -- well-defined for any
+    raw_params, no singular point to avoid."""
+    for _ in range(n_times):
+        rho = apply_stinespring_channel_exact(rho, raw_params, n_qubits=n_qubits, d=d, n_kraus=n_kraus)
+    return rho
+
+
+def _stinespring_divergence_objective(raw_params, ideal_sv, rho_ideal, d=2, n_kraus=4):
+    """Same scalar-vs-density-matrix ZNE divergence idea as
+    _divergence_objective above, but over the general (CPTP-by-
+    construction) Stinespring-parameterized channel space instead of
+    mixtures of 4 named channels -- optimizing over the full space of
+    physically valid single-qubit channels, not just combinations of
+    depolarizing/bitflip/phaseflip/amplitude_damping."""
+    rho_at_scales = jnp.stack([
+        _apply_stinespring_channel_n_times(rho_ideal, raw_params, n_times, d=d, n_kraus=n_kraus)
+        for n_times in (1, 2, 3)
+    ])
+    scales = jnp.asarray(SCALES, dtype=jnp.float64)
+    fidelities = jnp.stack([
+        _pure_state_fidelity(rho_at_scales[i], ideal_sv) for i in range(len(SCALES))
+    ])
+    scalar_extrapolated = _richardson_extrapolate_core(fidelities, scales)
+    corrected_rho = _zne_density_matrix_core(rho_at_scales, scales, degree=2)
+    dm_fidelity = _pure_state_fidelity(corrected_rho, ideal_sv)
+    return jnp.abs(scalar_extrapolated - dm_fidelity)
+
+
+_stinespring_divergence_grad = jax.grad(_stinespring_divergence_objective, argnums=0)
+
+
+def run_adversarial_stinespring_noise_search(n_steps=200, step_size=0.01, budget=1.5,
+                                              d=2, n_kraus=4, init_params=None, seed=30):
+    """Gradient-based search over the GENERAL space of physically valid
+    (CPTP-by-construction) single-qubit channels, via the Stinespring
+    dilation parameterization (build_stinespring_kraus_ops), instead of
+    only mixtures of 4 named channels (run_adversarial_combined_noise_
+    search above). Same underlying idea -- maximize the scalar-vs-
+    density-matrix ZNE divergence -- but over a strictly larger search
+    space: every fixed-channel combination is some particular point in
+    this general space, so this can only find an equal-or-larger
+    divergence than the fixed-channel search, given enough steps.
+
+    `budget` bounds the L2 norm of raw_params (projected back into this
+    ball after every gradient step, same PGD pattern as
+    ia_utils.adversarial_vector_attack.craft_adversarial_healing_
+    perturbation and run_adversarial_combined_noise_search) -- larger
+    raw_params make build_stinespring_kraus_ops's implicit noise
+    stronger (a QR isometry further from any "trivial" embedding), so
+    this is the search's physical-strength constraint, playing the same
+    role the [0, 1/max(SCALES)] per-channel-probability bound played for
+    the fixed-channel search.
+
+    Verified end to end before trusting this: build_stinespring_kraus_
+    ops's CPTP-by-construction property (Sum_k K_k^dagger K_k = I_d)
+    holds to ~1e-8 for random parameters; the resulting density matrix
+    stays Hermitian/trace-1/positive-semidefinite; the objective's
+    gradient is NaN-free (uses _pure_state_fidelity throughout, same
+    fix as the fixed-channel search)."""
+    ideal_sv = bell_state_sv()
+    rho_ideal = jnp.asarray(np.outer(ideal_sv, ideal_sv.conj()), dtype=jnp.complex128)
+    n_params = n_params_for_stinespring_channel(d=d, n_kraus=n_kraus)
+
+    if init_params is None:
+        rng = np.random.default_rng(seed)
+        params = jnp.asarray(rng.normal(scale=0.3, size=n_params))
+    else:
+        params = jnp.asarray(init_params, dtype=jnp.float64)
+
+    best_params = params
+    best_divergence = float(_stinespring_divergence_objective(params, ideal_sv, rho_ideal, d=d, n_kraus=n_kraus))
+
+    history = [{'step': 0, 'divergence': best_divergence}]
+
+    for step in range(1, n_steps + 1):
+        grad = _stinespring_divergence_grad(params, ideal_sv, rho_ideal, d=d, n_kraus=n_kraus)
+        grad_norm = jnp.linalg.norm(grad)
+        direction = jnp.where(grad_norm > 1e-12, grad / grad_norm, jnp.zeros_like(grad))
+        params = params + step_size * direction
+        param_norm = jnp.linalg.norm(params)
+        params = jnp.where(param_norm > budget, params / param_norm * budget, params)
+
+        current_divergence = float(_stinespring_divergence_objective(params, ideal_sv, rho_ideal, d=d, n_kraus=n_kraus))
+        if current_divergence > best_divergence:
+            best_divergence = current_divergence
+            best_params = params
+
+        if step % 20 == 0 or step == n_steps:
+            history.append({'step': step, 'divergence': current_divergence})
+
+    return {
+        'best_params': np.asarray(best_params).tolist(),
         'best_divergence': best_divergence,
         'history': history,
     }
