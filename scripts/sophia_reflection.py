@@ -94,7 +94,21 @@ def bell_state_sv():
 def _kraus_ops(channel, p):
     """Closed-form single-qubit Kraus operators for `channel` at
     parameter `p` (error probability, or damping rate gamma for
-    amplitude_damping)."""
+    amplitude_damping).
+
+    Cross-checked against the local quantumrag quantum_info collection
+    (2026-08-09): John Preskill, "Lecture Notes for Ph219/CS219: Quantum
+    Information", Chapter 3 (Caltech, updated Oct. 2018),
+    https://www.preskill.caltech.edu/ph219/chap3_15.pdf -- Sec. 3.4.3
+    derives the amplitude-damping channel from a system-environment
+    isometry followed by a partial trace, giving exactly M0 =
+    diag(1, sqrt(1-p)), M1 = [[0, sqrt(p)], [0, 0]], matching the
+    'amplitude_damping' branch below. Independent confirmation (not just
+    this module's own derivation) that this is the textbook-correct
+    channel -- and further evidence that NoiseModel.apply_to_sv's
+    amplitude_damping branch (see apply_channel_exact's own docstring)
+    has a real, separately-verified bug, not just a difference in
+    convention."""
     I = jnp.eye(2, dtype=jnp.complex128)
     X = jnp.array([[0, 1], [1, 0]], dtype=jnp.complex128)
     Y = jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex128)
