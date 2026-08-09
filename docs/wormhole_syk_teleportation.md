@@ -537,24 +537,41 @@ and a consistently wrong-signed one (2166) before running the full
 6-instance sweep, per an explicit request to verify generality before
 writing this up.
 
-![Size winding: mean operator size across 6 instances, phase coherence trivial everywhere](assets/wormhole_syk_teleportation/wormhole_size_winding.png)
+![Size winding: mean operator size and phase coherence across 6 instances](assets/wormhole_syk_teleportation/wormhole_size_winding.png)
 
-**Fifth honest result: the diagnostic is structurally trivial, uniformly
-across every instance and every time tested.** `R(l) = 1.0000` and
-`arg(q(l)) = 0.0000` exactly (to floating-point precision, `~1e-15`) for
-every `(seed, t)` pair in the sweep -- no dephasing, no winding, no
-instance-to-instance variation at all. This is not a partial or noisy
-null result; it is exactly flat. Like mode-usage imbalance and the
-level-spacing r-statistic before it, this diagnostic does not
-distinguish correctly- from wrong-signed instances -- a third
-independent, theoretically-motivated candidate ruled out. The mean
-operator size `<l>(t)` itself, by contrast, does show real physics:
-consistent chaos-like growth from `<l>(0)=1` up to a peak around
-`t~1.2-2.0` (values range `2.1-3.7` across the 6 instances) followed by
-a finite-size recurrence (an expected artifact of evolving a small,
-`n_majorana=8` system rather than a true large-N limit) -- confirming
-the underlying operator-growth dynamics are real even though this
-particular phase diagnostic isn't what explains the sign variance.
+**Correction (2026-08-09): the original run of this diagnostic had a
+real implementation bug, not a physics finding.** It expanded the bare
+Heisenberg-evolved operator `chi_j(t)` instead of the thermally-weighted
+operator `rho_beta^(1/2) chi_j(t)` that Eq. S18 actually specifies
+(`rho_beta = exp(-beta H)/Tr(exp(-beta H))`, `H` the one-sided
+Hamiltonian, `beta=3` as used throughout this protocol). Since
+`chi_j(t)` is Hermitian (a unitary conjugation of a Hermitian Majorana
+operator) and every `Gamma_P` is Hermitian too, `Tr(Gamma_P^dagger
+chi_j(t))` is a trace of two Hermitian operators -- **always real**, for
+any Hamiltonian, any seed, any time. That mathematically forces
+`q(l) = sum c_P(t)^2` to be real and non-negative, so `arg(q(l))=0` and
+`R(l)=1.0` exactly, *by construction*, regardless of the underlying
+physics. That is exactly what the original run found: the "structurally
+trivial" result reported below was never a physics finding, it was this
+missing factor.
+
+With `rho_beta^(1/2)` correctly included, the diagnostic is genuinely
+non-trivial: across the same 6 instances and 4 post-quench times,
+`max|phase|` ranges up to `2.94` rad and `min R(l)` drops as low as
+`0.049` -- real dephasing, real phase structure, varying by instance and
+time as expected. Whether this corrected diagnostic actually
+distinguishes correctly- from wrong-signed instances has not yet been
+tested at scale (an open follow-up, mirroring Experiment 13's
+n=100 correlation tests for the other candidates) -- this correction
+only re-establishes that the diagnostic itself is a real, working
+probe, not that it explains the sign variance. The mean operator size
+`<l>(t)` is unaffected by this fix (it never depended on the missing
+factor) and continues to show real physics: consistent chaos-like
+growth from `<l>(0)=1` up to a peak around `t~1.2-2.0` (values range
+`2.1-3.7` across the 6 instances) followed by a finite-size recurrence
+(an expected artifact of evolving a small, `n_majorana=8` system rather
+than a true large-N limit).
+
 Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_size_winding_check`. Full data: `data/wormhole_size_winding.csv`.
 
@@ -589,10 +606,13 @@ mode 1 or 2 is recorded (purely combinatorial, no simulation).
 
 **Feature B -- operator growth rate.** Experiment 12 already computes
 real, non-trivial, instance-varying mean operator size `<l>(t)` as a
-side effect of its (trivial) phase-winding computation, but that
-experiment's only goal at the time was checking the phase diagnostic,
-which came back flat -- growth rate itself was never correlated
-against the sign. This reuses `run_size_winding_check` unmodified,
+side effect of its phase-winding computation (at the time of this
+Experiment 13, that phase computation itself still had the
+`rho_beta^(1/2)`-omission bug later found and fixed -- see Experiment
+12's own corrected write-up above -- but `<l>(t)` was never affected by
+that bug), but that experiment's only goal at the time was checking the
+phase diagnostic, which came back flat -- growth rate itself was never
+correlated against the sign. This reuses `run_size_winding_check` unmodified,
 called on the same 100 seeds at two probe times in the growth region
 Experiment 12 identified (`t=0.7`, `t=1.2`).
 
@@ -602,8 +622,11 @@ Experiment 12 identified (`t=0.7`, `t=1.2`).
 participation: `r=-0.012, p=0.90`. Operator growth rate at `t=1.2`:
 `r=+0.126, p=0.21`. Both are far from the conventional 0.05 threshold
 -- not a marginal case, a clean null on both counts. This rules out a
-4th and 5th candidate explanation, on top of Experiment 11's two and
-Experiment 12's structurally-uninformative phase diagnostic. Both
+4th and 5th candidate explanation, on top of Experiment 11's two.
+(Experiment 12's phase/R diagnostic itself was corrected 2026-08-09,
+after this Experiment 13 was run -- whether the corrected diagnostic
+correlates with the sign is a separate, not-yet-tested open question,
+not a ruled-out candidate.) Both
 features were tested against the *same* n=100 sample Experiment 11
 already used, a real multiple-comparisons concern for any candidate
 that *did* come back significant -- since neither did here (and not
@@ -879,6 +902,76 @@ noiseless order_sensitivity itself) found nothing. Produced by
 `scripts/wormhole_syk_teleportation.py`'s
 `run_term_order_noise_interaction_check`. Full data:
 `data/wormhole_term_order_noise_interaction.csv`.
+
+## Experiment 18: ensemble sign check at the paper's REAL t0=1.8 (run 2026-08-09)
+
+A significant correction, not just another candidate check. Rereading
+arXiv:2604.10090 directly (v2, full text including Sec. S1-S6, not the
+excerpts this script's earlier docstrings were written against) found
+that every experiment above evaluated at `t0=0.3, mu=12, t1=0.60`
+mislabeled that as "the paper's own default parameters." It is not.
+The paper explicitly and repeatedly states `t0=1.8` as its actual
+hardware working point: "we choose `t0=1.8` as the hardware working
+point" (Sec. S4), chosen specifically to balance signal strength
+against first-order Lie-Trotter error -- a real tradeoff analyzed in
+detail across Sec. S3-S5. Searching the extracted paper text for "0.3"
+finds exactly one match, and it is a y-axis tick label on Fig. 5's
+mutual-information plot (`0.0, 0.1, 0.2, 0.3, 0.4`), not a parameter
+value anywhere. Where `t0=0.3` actually came from is unclear; it does
+not correspond to anything defensible in the paper's own text.
+
+Unlike `t0`, the paper does not give one single default `t1` -- Fig. 5
+scans `t1` in `[0.5, 6.0]` (step 0.5) at fixed `t0=1.8`, for both signs
+of `mu`, and shows the mutual-information difference peaking somewhere
+in that range without stating one canonical value. To pick a
+comparable single point, a real 23-point scan (`t1` in `[0.5, 6.0]`,
+step 0.25, `data/wormhole_t1_finescan_t0_1.8.csv`) was run first on
+seed=61 (the closest 34/11-matched analog to the paper's own chosen
+instance). The result is itself notable: the sign flips repeatedly
+across the range rather than showing one clean peak -- delta is
+negative at `t1=0.5, 0.75`, positive at `1.0-1.5`, negative again at
+`1.75-2.5`, and so on, with two local maxima: `t1=1.25`
+(delta=+0.01064) and a larger one at `t1=4.75` (delta=+0.01219). The
+first, closer to the injection time and the more natural reading of
+"near the teleportation time," was used as the default; the later,
+larger peak looks more like a finite-size revival than the primary
+signal.
+
+![Ensemble sign check at t0=1.8, n=100](assets/wormhole_syk_teleportation/wormhole_ensemble_sign_check_t0_1.8.png)
+
+**Re-running the exact same n=100 ensemble check as Experiment 11 (same
+34/11-selection-matched instance criterion, same `find_multiple_seeds`
+screening) at the corrected `t0=1.8, mu=12, t1=1.25`: 41/100 (41%)
+wrong-signed.** This is a distinct number from Experiment 11's 49/100,
+not a coincidental match and not a dramatic change either -- both are
+far from the paper's own "generic feature of the ensemble" claim, and
+both are close enough to a coin flip that the qualitative conclusion
+(the sign-dependent asymmetry is real per-instance but not reliably
+ensemble-generic) is unchanged. What changes is which number is the
+honest answer to "what fraction of instances are wrong-signed at the
+paper's actual default parameters" -- it is 41/100, not 49/100, and
+every downstream mention of "the paper's own default parameters" in
+this document refers to the historical (mislabeled) `t0=0.3` runs
+unless stated otherwise.
+
+A parallelization attempt for this n=100 loop (each seed is fully
+independent, so it looked embarrassingly parallel) was tried and
+abandoned -- see `run_t0_correction_check`'s own docstring in
+`scripts/wormhole_syk_teleportation.py` for the full account.
+ThreadPoolExecutor hung for tens of minutes from BLAS/OpenBLAS thread
+oversubscription; ProcessPoolExecutor (with each worker's BLAS threads
+pinned to 1) was correct but gave only ~1.1-1.2x wall-clock on an
+8-core machine, far short of the expected ~4-8x, and the real
+bottleneck was traced to something other than BLAS diagonalization
+(limiting OMP/OPENBLAS/MKL/XLA thread counts made no difference to a
+single sequential process's own per-call time either). Left as a
+genuinely open question rather than silently dropped; the sequential
+version (kept) produces a correct result in a one-time ~18 minutes.
+
+Produced by `scripts/wormhole_syk_teleportation.py`'s
+`run_t0_correction_check`. Full data:
+`data/wormhole_ensemble_sign_check_t0_1.8.csv`,
+`data/wormhole_t1_finescan_t0_1.8.csv`.
 
 ## What this does NOT show
 

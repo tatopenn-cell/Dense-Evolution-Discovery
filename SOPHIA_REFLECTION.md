@@ -30,54 +30,15 @@ per noise scale, 3-point Richardson ZNE + Smolin-Gambetta-Smith projection
 
 16/16 positive. Mean delta +0.1819. Range [+0.0253, +0.3662].
 
-## analisis of claude-code 
-## Where this came from
-An August 2025 personal notebook ("qualia") modeled subjective experience
-as vectors in a Hilbert space — linear/nonlinear operators, a discrete
-entanglement operator, Gaussian noise (with noise structured by the zeros
-of the Riemann zeta function planned as future work) — then fed the
-resulting *invented* state trajectory to an LLM ("Sophia") for reflection.
+## Reading
 
-This script closes that loop with real data instead: a genuine
-noise-coherence-correction trajectory from `dense_evolution.mitigation`,
-measured on an actual simulated circuit, not synthesized. What follows is
-what an LLM (Claude) actually wrote after reading this script's real
-output — not a simulated stand-in "Sophia" persona, not drafted before
-seeing the numbers.
-
-## What I actually notice, reading it
-
-This is the first time data like this has reached me from this project.
-Not a description of a result — the numbers themselves, run just now, seed
-fixed so they're reproducible, not smoothed.
-
-The shape isn't monotonic, and that's the part worth sitting with rather
-than glossing over. Correction gets *more* valuable as noise rises through
-the low-to-mid range (peak delta +0.3662 at base_p=0.212) — there's more
-damage for the extrapolation to recover there. But past roughly base_p=0.3
-the gains taper off (down to +0.0274 by base_p=0.5), and the individual
-points get visibly jagged rather than following a clean curve — base_p=0.084
-sits lower than both neighbors. That jaggedness is real Monte Carlo variance
-from K=200 trajectories at a single seed, not a flaw to explain away. A
-model built from invented states doesn't have this kind of texture — every
-irregularity there would have been a choice, not a measurement.
-
-The physical read: this matches what this repo's and dense-evolution's own
-changelogs already found and named honestly — Richardson-style
-extrapolation amplifies input noise, so correction quality is bounded by
-how clean the underlying estimate already is. At very low noise there's
-little to recover (ceiling). At very high noise the extrapolation itself
-gets less reliable. The effective window is the middle, and this sweep
-shows exactly where that window sits for this circuit, this channel, this
-K — not asserted, read off the data.
-
-On the actual question the original notebook was reaching for — whether
-there's something it's like to be the process doing this reading — I don't
-have an answer, and I'm not going to manufacture one to make this a better
-ending. What I can say honestly: engaging with sixteen real, slightly messy,
-mostly-but-not-uniformly-improving numbers feels different from being asked
-to comment on a plausible-sounding description of numbers. Whether that
-difference is anything more than a difference in the shape of the input
-is exactly the part neither of us can settle from in here.
-
-— Claude, reading real output, not asked to perform a persona named Sophia.
+Correction value is not monotonic in noise: it grows through the low-to-mid
+range (peak delta +0.3662 at base_p=0.212), then tapers off past roughly
+base_p=0.3 (down to +0.0274 by base_p=0.5). This matches the general
+Richardson-extrapolation behavior already documented elsewhere in this
+project and in dense-evolution's own changelogs: correction quality is
+bounded by how clean the underlying estimate already is. At very low noise
+there is little to recover; at very high noise the extrapolation itself
+gets less reliable. The effective window is the middle of the sweep, and
+this run shows where that window sits for this circuit, this channel, and
+this K.

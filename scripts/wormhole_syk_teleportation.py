@@ -119,16 +119,18 @@ CSV + plot:
     distribution within each size sector l, across 6 instances and 4
     post-quench times (verified first on 3 individual seeds spanning
     both correctly- and wrong-signed instances before running the full
-    official sweep). Third honest negative result: R(l)=1.0000 and
-    arg(q(l))=0.0000 exactly, for every instance and every time tested
-    -- the paper's own "perfect size winding" phase-coherence signature
-    is structurally trivial here (no winding, no decoherence) and,
-    like Experiment 11's two candidates, does not distinguish
-    correctly- from wrong-signed instances. The mean operator size
-    <l>(t) itself does show genuine chaos-consistent growth followed by
-    finite-size recurrence, confirming the underlying operator-growth
-    dynamics are real even though this particular phase diagnostic
-    isn't the explanation being sought.
+    official sweep). CORRECTED 2026-08-09: the original run omitted the
+    thermal factor rho_beta^(1/2) Eq. S18 actually requires, which
+    mathematically forces R(l)=1.0 and arg(q(l))=0.0 exactly regardless
+    of physics (a trace of two Hermitian operators is always real) --
+    not a physics finding, an implementation bug. With rho_beta^(1/2)
+    correctly included, the diagnostic is genuinely non-trivial
+    (max|phase| up to 2.94 rad, min R(l) down to 0.049 across the same
+    6 instances/4 times). Whether the corrected diagnostic correlates
+    with the sign has not yet been tested at scale. The mean operator
+    size <l>(t) itself (unaffected by this fix) does show genuine
+    chaos-consistent growth followed by finite-size recurrence,
+    confirming the underlying operator-growth dynamics are real.
 13. Mechanistic check -- two protocol-grounded (not just post-hoc
     statistical) candidate explanations, reusing Experiment 11's own
     n=100 instance set and delta values directly from
@@ -146,9 +148,11 @@ CSV + plot:
     but never correlated against the sign. Fourth honest negative
     result: neither correlates (message-mode participation r=-0.012,
     p=0.90; growth rate at t=1.2 r=+0.126, p=0.21) -- a 4th and 5th
-    candidate explanation ruled out, on top of Experiment 11's two and
-    Experiment 12's structurally-trivial phase diagnostic. Why the sign
-    varies remains genuinely open.
+    candidate explanation ruled out, on top of Experiment 11's two.
+    (Experiment 12's phase/R diagnostic itself was corrected 2026-08-09
+    -- see its own docstring -- and its correlation against the sign is
+    a separate, not-yet-tested open question, not a ruled-out candidate.)
+    Why the sign varies remains genuinely open.
 14. Qubit-coupling topology check -- tests whether *which specific
     modes* each instance's K=10 quads couple together (not just how
     many terms commute, or how many terms touch a given mode) predicts
@@ -1032,18 +1036,36 @@ def run_ensemble_sign_check(n_instances: int = 100, n_candidates: int = 120000) 
     return df
 
 
-def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -> pd.DataFrame:
+def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1, beta: float = 3.0) -> pd.DataFrame:
     """Computes arXiv:2604.10090's own "size winding" diagnostic (Sec.
-    S6, Eqs. S18-S22) directly: expands a Heisenberg-evolved Majorana
-    operator chi_j(t) = exp(iHt) chi_j exp(-iHt) in the basis of
-    Majorana strings Gamma_P (one L-side SYK Hamiltonian H -- single-
-    sided operator growth, matching the paper's own setup, not the
-    combined L+R+P+Q system used elsewhere in this script), then checks
-    (a) the winding size distribution's phase coherence within each
-    size sector, R(l) = |q(l)|/P(l) where q(l) = sum_{|P|=l} c_P(t)^2
-    and P(l) = sum_{|P|=l} |c_P(t)|^2, and (b) whether that phase,
-    arg(q(l)), grows with l as the paper's "perfect size winding"
-    ansatz predicts.
+    S6, Eqs. S18-S22) directly: expands the THERMALLY-WEIGHTED,
+    Heisenberg-evolved Majorana operator rho_beta^(1/2) chi_j(t), where
+    chi_j(t) = exp(iHt) chi_j exp(-iHt) and rho_beta = exp(-beta H) /
+    Tr(exp(-beta H)) (Eq. S18's own stated thermal state, "for a given
+    thermal state rho_beta = e^(-beta H)/tr e^(-beta H)"; H is the
+    one-sided Hamiltonian per the paper's own Sec. S6 setup) -- in the
+    basis of Majorana strings Gamma_P, then checks (a) the winding size
+    distribution's phase coherence within each size sector, R(l) =
+    |q(l)|/P(l) where q(l) = sum_{|P|=l} c_P(t)^2 and P(l) =
+    sum_{|P|=l} |c_P(t)|^2, and (b) whether that phase, arg(q(l)),
+    grows with l as the paper's "perfect size winding" ansatz predicts.
+
+    BUG FIX: this used to expand the BARE chi_j(t) (no rho_beta^(1/2)
+    factor at all) instead of rho_beta^(1/2) chi_j(t) as Eq. S18 actually
+    requires. Since chi_j(t) is Hermitian (a unitary conjugation of a
+    Hermitian Majorana operator) and each Gamma_P is Hermitian too,
+    Tr(Gamma_P^dagger chi_j(t)) is a trace of two Hermitian operators --
+    ALWAYS real, for ANY Hamiltonian, ANY seed, ANY time. That forces
+    q(l) = sum c_P^2 to be a sum of real squares (real, non-negative),
+    so arg(q(l))=0 and R(l)=1.0 EXACTLY, by construction, regardless of
+    the underlying physics -- this is almost certainly why every prior
+    run of this function found max|phase|=0 and min R=1.0 for every
+    single instance and time (a mathematically guaranteed triviality,
+    not a physics finding). rho_beta^(1/2), built from the same H (not
+    Hermitian-commuting with chi_j(t) in general), makes the thermally-
+    weighted operator genuinely non-Hermitian, so c_P(t) can now be
+    genuinely complex -- verified directly (non-trivial phases/R<1
+    confirmed on a real instance) before this fix was trusted.
 
     Gamma_P = 2^(|P|/2) * i^(|P|(|P|-1)/2) * (ordered product of chi_j
     for j in P) per Eq. S19 -- the paper's own stated normalization
@@ -1076,6 +1098,12 @@ def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -
         H = de.pauli_hamiltonian_to_matrix(terms, n_qubits)
         eigvals, eigvecs = np.linalg.eigh(H)
 
+        # rho_beta^(1/2) = exp(-beta*H/2) / sqrt(Tr(exp(-beta*H))), built
+        # from the same eigendecomposition -- the thermal factor Eq. S18
+        # actually requires and the earlier version of this function omitted.
+        partition_z = np.sum(np.exp(-beta * eigvals))
+        rho_half = (eigvecs @ np.diag(np.exp(-beta * eigvals / 2.0)) @ eigvecs.conj().T) / np.sqrt(partition_z)
+
         chis = {}
         for m in range(1, N_MAJORANA + 1):
             coeff, pdict = majorana_pauli_terms(m, n_qubits)
@@ -1096,7 +1124,8 @@ def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -
         for t in t_values:
             U = eigvecs @ np.diag(np.exp(-1j * eigvals * t)) @ eigvecs.conj().T
             op_t = U @ chi_j @ U.conj().T
-            c = {P: np.trace(gammas[P].conj().T @ op_t) / norms[P] for P in all_P}
+            thermal_op_t = rho_half @ op_t
+            c = {P: np.trace(gammas[P].conj().T @ thermal_op_t) / norms[P] for P in all_P}
             p_dist, q = {}, {}
             for l in range(N_MAJORANA + 1):
                 Ps_l = [P for P in all_P if len(P) == l]
@@ -1127,9 +1156,9 @@ def run_size_winding_check(seeds=None, t_values=None, majorana_index: int = 1) -
     ax.set_xlabel("t (post-quench evolution time)", color='#888888')
     ax.set_ylabel("mean operator size <l>(t)", color='#888888')
     ax.set_title(
-        f"Experiment 12: size winding (arXiv:2604.10090 Sec. S6) across {len(seeds)} instances\n"
-        f"max|phase|={overall_max_phase:.4f}, min R(l)={overall_min_R:.4f} everywhere "
-        f"(perfectly trivial -- no winding, no decoherence)",
+        f"Experiment 12 (corrected): size winding (arXiv:2604.10090 Sec. S6) across {len(seeds)} instances\n"
+        f"max|phase|={overall_max_phase:.4f}, min R(l)={overall_min_R:.4f} -- genuinely non-trivial "
+        f"(earlier version omitted rho_beta^(1/2), which forced phase=0/R=1 by construction)",
         fontsize=10, fontweight='bold'
     )
     ax.legend(loc="upper right", fontsize=8)
@@ -1726,6 +1755,102 @@ def run_term_order_noise_interaction_check(seeds=None, noise_p: float = 0.01, n_
     return df
 
 
+def run_t0_correction_check(n_instances: int = 100, t1: float = 1.25) -> pd.DataFrame:
+    """Re-tests Experiment 11's flagship ensemble sign check at the
+    paper's REAL hardware working point, t0=1.8 -- not t0=0.3, which
+    every prior experiment in this script (including Experiment 11)
+    mislabeled as "the paper's own default parameters."
+
+    Rereading arXiv:2604.10090 directly (2026-08-09) found that t0=1.8
+    is explicitly and repeatedly stated as the paper's actual chosen
+    injection time (Sec. S4: "t0=1.8 marks a turning point... we choose
+    t0=1.8 as the hardware working point"), chosen specifically to
+    balance signal strength against Trotterization error. t0=0.3 does
+    not appear anywhere in the paper's text as an injection time -- the
+    only "0.3" in the extracted PDF text is a y-axis tick label on
+    Fig. 5's mutual-information plot (0.0/0.1/0.2/0.3/0.4), not a
+    parameter value. Where t0=0.3 actually came from is unclear; it was
+    simply wrong, not a defensible alternate reading.
+
+    Unlike t0, the paper does not give one single "default" t1 -- Fig. 5
+    scans t1 in [0.5, 6.0] at fixed t0=1.8, for both signs of mu.
+    t1=1.25 (this function's default) was chosen by a real 23-point scan
+    (t1 in [0.5, 6.0], step 0.25, data/wormhole_t1_finescan_t0_1.8.csv)
+    on seed=61, the closest 34/11-matched analog to the paper's own
+    chosen instance: the sign flips repeatedly across the range (not a
+    single clean peak, itself notable), with the first local maximum
+    (closest to the injection time, the more natural reading of "near
+    the teleportation time") at t1=1.25 (delta=+0.01064 for that one
+    seed). A second, larger peak exists later, at t1=4.75
+    (delta=+0.01219), which looks more like a finite-size revival than
+    the primary teleportation signal, and is not used as the default
+    here.
+
+    Same 34/11-selection-matched instance criterion and n=100 sample
+    size as Experiment 11 (find_multiple_seeds, n_candidates=120000),
+    for a directly comparable wrong-sign fraction.
+
+    Sequential, not parallelized -- two real attempts were tried and
+    both abandoned. (1) ThreadPoolExecutor, reasoning that
+    np.linalg.eigh's BLAS/LAPACK backend releases the GIL: in practice
+    this hung/thrashed for tens of minutes instead of speeding up,
+    because BLAS libraries (OpenBLAS/MKL) spawn their OWN internal
+    thread pool per call, and N Python threads x BLAS's own M threads
+    each oversubscribes the CPU by a large factor. (2)
+    ProcessPoolExecutor (avoids the threading issue -- each worker
+    process gets its own independent BLAS thread pool) with each
+    worker's BLAS threads additionally pinned to 1 via an initializer:
+    correct (verified bit-identical to the sequential loop on a real
+    subset) but gave only ~1.1-1.2x wall-clock at 4 workers on an
+    8-core machine, far short of the expected ~4x. Direct measurement
+    traced the per-call cost floor (~5s/call, ~1.5s of which is a
+    one-time per-process warm-up) to something other than BLAS
+    diagonalization -- limiting OMP/OPENBLAS/MKL/XLA thread counts
+    made no measurable difference to a single sequential process's own
+    per-call time either, so the bottleneck isn't thread contention at
+    all; it's real, and evidently not straightforwardly parallel,
+    per-call cost inside run_wormhole_protocol/DenseSVSimulator
+    (JAX dispatch overhead is the leading suspect, not confirmed).
+    Root-causing that further was judged not worth the time against a
+    one-time ~18-minute sequential run that already produces a correct
+    result -- left as a genuinely open question, not silently dropped.
+    """
+    seeds = find_multiple_seeds(n_instances=n_instances, n_candidates=120000)
+    rows = []
+    for seed in seeds:
+        i_pos = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, +12.0, 1.8, t1, seed, with_message=True)
+        i_neg = run_wormhole_protocol(N_MAJORANA, K_TERMS, J, -12.0, 1.8, t1, seed, with_message=True)
+        delta = i_neg - i_pos
+        rows.append({"seed": seed, "delta_at_t0_1.8": delta})
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_ensemble_sign_check_t0_1.8.csv", index=False)
+
+    n_wrong = int((df["delta_at_t0_1.8"] < 0).sum())
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = ['#FF007F' if d < 0 else '#00FFFF' for d in df["delta_at_t0_1.8"]]
+    ax.bar(range(len(df)), df["delta_at_t0_1.8"], color=colors)
+    ax.axhline(0, color='white', linewidth=0.8)
+    ax.set_xlabel("instance index (discovery order)", color='#888888')
+    ax.set_ylabel("delta = I(mu=-12) - I(mu=+12)", color='#888888')
+    ax.set_title(
+        f"Experiment 18: ensemble sign check at the paper's REAL t0=1.8 (not t0=0.3)\n"
+        f"n={len(df)}: {n_wrong}/{len(df)} ({100*n_wrong/len(df):.0f}%) wrong-signed at "
+        f"t0=1.8, mu=12, t1={t1} (cyan = correct sign, magenta = wrong sign)",
+        fontsize=10, fontweight='bold'
+    )
+    ax.grid(True, linestyle='--', alpha=0.2, color='#444444')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_ensemble_sign_check_t0_1.8.png", dpi=300)
+    plt.close(fig)
+
+    print(f"{n_wrong}/{len(df)} ({100*n_wrong/len(df):.0f}%) wrong-signed at the paper's REAL "
+          f"t0=1.8 (vs. the previously-mislabeled t0=0.3 check's 49/100)")
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1811,12 +1936,14 @@ def run_all():
     max_phase12 = float(df12["max_abs_phase"].max())
     min_R12 = float(df12["min_R"].min())
     print(f"  {df12['seed'].nunique()} instances x {df12['t'].nunique()} times: "
-          f"max|phase|={max_phase12:.4f}, min R(l)={min_R12:.4f} everywhere -- the paper's own "
-          f"'perfect size winding' phase-coherence diagnostic is structurally trivial (no winding, "
-          f"no decoherence) regardless of instance, and so -- like mode-usage-imbalance and the "
-          f"level-spacing r-statistic in Experiment 11 -- does not explain the sign-dependent "
-          f"instance variance. Mean operator size <l>(t) does show genuine chaos-consistent "
-          f"growth-then-recurrence, confirming the underlying scrambling dynamics are real.")
+          f"max|phase|={max_phase12:.4f}, min R(l)={min_R12:.4f} -- the paper's own "
+          f"'perfect size winding' phase-coherence diagnostic, corrected 2026-08-09 to include "
+          f"the rho_beta^(1/2) thermal factor Eq. S18 requires (the original run omitted it, "
+          f"which forced R(l)=1.0/phase=0.0 exactly regardless of physics -- an implementation "
+          f"bug, not a finding). Whether this corrected diagnostic explains the sign-dependent "
+          f"instance variance has not yet been tested at scale. Mean operator size <l>(t) does "
+          f"show genuine chaos-consistent growth-then-recurrence, confirming the underlying "
+          f"scrambling dynamics are real.")
 
     print("\n=== Experiment 13: mechanistic check -- message-mode participation & operator growth rate ===")
     df13 = run_mechanistic_check(n_instances=100)
@@ -1850,6 +1977,12 @@ def run_all():
     df17 = run_term_order_noise_interaction_check(seeds=find_multiple_seeds(n_instances=50, n_candidates=50000))
     r17 = scipy_stats.pearsonr(df17["noisy_order_sensitivity"], df17["delta_mean_original_noisy"])
     print(f"  n={len(df17)}: noisy_order_sensitivity vs delta: r={r17.statistic:+.3f} (p={r17.pvalue:.4f})")
+
+    print("\n=== Experiment 18: ensemble sign check at the paper's REAL t0=1.8 (not t0=0.3) ===")
+    df18 = run_t0_correction_check(n_instances=100)
+    n_wrong18 = int((df18["delta_at_t0_1.8"] < 0).sum())
+    print(f"  n={len(df18)}: {n_wrong18}/{len(df18)} ({100*n_wrong18/len(df18):.0f}%) wrong-signed "
+          f"at t0=1.8 (vs. the mislabeled t0=0.3 check's 49/100)")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
