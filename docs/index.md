@@ -181,19 +181,19 @@ The high-resolution 3,500-point k-space parameter sweep executed via JAX maps th
 
 ### 8. Quantum Lattice Thermodynamics: Phonon Scattering & Decoherence
 
-A quantum-statistical simulation of electron-phonon scattering decoherence was executed over a 10–400 K temperature sweep at 3,500 discrete points, modeling the thermal degradation of coherent electronic hopping in a silicon lattice.
+**Corrected 2026-08-10**: the original version of this experiment imported and instantiated `DenseSVSimulator` but never actually called it -- the probe state was built as a fixed NumPy array (never depending on temperature) and "decoherence" was a purely classical scalar prefactor, $t_{\text{eff}}(T) = t_0(1 - 0.15\bar{n}(\omega,T))$, multiplying that one constant kinetic-energy number, recomputed identically at all 3,500 steps. No noise channel, no density matrix, no dissipative process was ever simulated. This version actually decoheres a real quantum state via a genuine Kraus channel.
 
-The Debye-Bose-Einstein phonon occupancy is computed as:
+The Debye-Bose-Einstein phonon occupancy is unchanged (this part was always correct):
 
 $$\bar{n}(\omega, T) = \frac{1}{\exp\!\left(\frac{\hbar\omega}{k_B T}\right) - 1}$$
 
-with $\hbar\omega = 32\text{ meV}$ (silicon optical phonon branch). The effective hopping integral degrades with phonon bath population according to:
+with $\hbar\omega = 32\text{ meV}$ (silicon optical phonon branch). Electron-phonon scattering now causes real LOCAL dephasing at each lattice site (qubit), with a rate set by the standard Markovian pure-dephasing result from the independent-boson/spin-boson model (Breuer & Petruccione, *The Theory of Open Quantum Systems*): the bath correlation function has both a phonon-emission term ($\sim\bar{n}+1$) and an absorption term ($\sim\bar{n}$), combining to
 
-$$t_{\text{eff}}(T) = t_0 \left(1 - 0.15 \cdot \bar{n}(\omega, T)\right)$$
+$$\Gamma(T) = \gamma_0 \left(2\bar{n}(\omega, T) + 1\right)$$
 
-This captures the physical mechanism by which thermally-activated phonon scattering reduces long-range electronic coherence. A fixed Bloch state $|\psi(k = \pi/4)\rangle$ is used as the probe state on 8 qubits; the coherent kinetic energy $E(k, T)$ is evaluated via XY-operator matrix elements at each temperature step, tracking the monotonic energy suppression from cryogenic to room temperature.
+mapped onto a per-site phaseflip Kraus probability via the standard dephasing-rate correspondence $p = \tfrac{1}{2}(1 - e^{-\Gamma})$. Each of the 8 qubits dephases independently (each lattice site couples to its own local phonon bath), applied **exactly** — a density-matrix Kraus channel, not Monte Carlo, so the 3,500-point sweep is smooth with no sampling noise to contend with. Two real observables are computed from the actual noisy density matrix at each $T$ (not a classical scalar): the coherent kinetic energy $E(k,T) = \text{Tr}(\rho_{\text{noisy}}(T)\, H_{XY})$, and — entirely absent from the original version — the fidelity with the ideal ($T\to0$) Bloch state, a direct coherence measure. Real result: fidelity decays smoothly and monotonically from **0.9167 to 0.8197** across the sweep; energy from **+2.559 to +2.246 eV**.
 
-[![Quantum Lattice Thermodynamics: Phonon Decoherence](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)
+[![Quantum Lattice Thermodynamics: real Kraus-channel dephasing](assets/manufacturing_thermodynamics/validazione_fabbricazione.png)](assets/manufacturing_thermodynamics/validazione_fabbricazione.png)
 
 ---
 
@@ -493,6 +493,18 @@ $U/t = 0.376$ sits deep in the weakly-correlated regime, consistent with GaAs be
 `scripts/vqe_tmi_material_design.py`'s `run_real_gaas_point()` runs the same VQE-vs-diagonalization pipeline from Section 18 at this point (right panel of the plot below). The variational bound holds (gap `+0.1028`).
 
 [![GaAs: exact vs. VQE-optimized ground-state energy](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)
+
+---
+
+### 20. Photonic Predictive Zero-Noise Extrapolation
+
+Does zero-noise extrapolation actually help with photon loss in photonic quantum computing? Mills & Mezher (arXiv:2405.02278) found that plain scalar ZNE does not beat postselection for discrete-variable photon loss — reproduced directly here (scalar ZNE went unphysical, fidelity > 1.0, at 14/16 swept points). Dense-Evolution's density-matrix ZNE avoids that failure mode by construction and gives a real correction (mean delta +0.086) — building on it, a new Jensen-Shannon-divergence-informed adaptive variant (`jsd_predictive_zne_density_matrix`, promoted to the main library in `dense-evolution>=8.1.56`) improves further: 76.1% win rate on a 72-point seed-diverse validation, p=0.0003.
+
+The honest part: compared directly against **true** postselection (tracking per-shot whether a photon-loss event was heralded, not an approximation) across two circuit families and three qubit counts, postselection still wins in 14/18 configurations. This narrows the gap, it doesn't close it — documented directly in the library's own changelog, not glossed over.
+
+[![Photonic predictive ZNE vs. postselection](assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)](assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)
+
+Full writeup, including the two design iterations and the bug caught during verification (a missing final renormalization step in the postselection-tracking reimplementation): **[Photonic Predictive ZNE](photonic_predictive_zne.md)**.
 
 ---
 

@@ -21,6 +21,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Photonic Predictive Zero-Noise Extrapolation](#22-photonic-predictive-zero-noise-extrapolation)** — a new JSD-informed density-matrix ZNE variant (promoted to `dense-evolution>=8.1.56`) improves photon-loss-noise correction by 76.1% win rate (p=0.0003) on a seed-diverse sample — but the honest, directly-checked comparison against **true postselection** (not scalar ZNE) finds postselection still wins in 14/18 tested configurations across multiple circuit families and qubit counts.
 - **[Traversable-Wormhole-Inspired Quantum Teleportation](#21-traversable-wormhole-inspired-quantum-teleportation-syk-model)** — real Gao-Jafferis-Wall protocol on a binary sparse SYK model: an iterated coordinate-ascent search converges to a joint (t0, mu, t1) fixed point +44.6% above the original 2D-grid headline value, but it does NOT generalize across other SYK instances and doesn't survive realistic depolarizing noise. **Strongest result**: arXiv:2604.10090's own "Ensemble robustness" section claims the sign-dependent asymmetry is "a generic feature of the ensemble" — a large-sample check at n=100 instances (matching the paper's own reported ensemble size) finds **49/100 (49%) wrong-signed at the paper's own default parameters**, essentially a coin flip; seven candidate structural/theoretical explanations were tested (Majorana mode-usage imbalance, spectral level-spacing chaos statistic, the paper's own "size winding" phase-coherence diagnostic, message-qubit-mode participation, operator growth rate, and two qubit-coupling-topology features) and none hold up — the sign variance remains unexplained.
 - **[Harrison / VHD Tight-Binding Validation](#20-harrison--vhd-tight-binding-validation-against-real-experimental-gaps)** — Harrison's universal tight-binding parameters vs. Vogl-Hjalmarson-Dow's material-specific ones, checked against real experimental gaps: GaAs 104.7% → 9.2% error, Si 227% → 4.6% error, Ge 177.5% → 15.9% error.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
@@ -194,19 +195,11 @@ The high-resolution 3,500-point k-space parameter sweep executed via JAX maps th
 
 ### 8. Quantum Lattice Thermodynamics: Phonon Scattering & Decoherence
 
-A quantum-statistical simulation of electron-phonon scattering decoherence was executed over a 10–400 K temperature sweep at 3,500 discrete points, modeling the thermal degradation of coherent electronic hopping in a silicon lattice.
+**Corrected 2026-08-10**: the original version imported and instantiated `DenseSVSimulator` but never actually called it — the probe state never depended on temperature, and "decoherence" was a purely classical scalar prefactor, $t_{\text{eff}}(T) = t_0(1-0.15\bar{n}(\omega,T))$, multiplying one fixed kinetic-energy number recomputed identically 3,500 times. No noise channel, no density matrix, no dissipative process was ever simulated. This version actually decoheres a real quantum state via a genuine Kraus channel.
 
-The Debye-Bose-Einstein phonon occupancy is computed as:
+The Debye-Bose-Einstein phonon occupancy is unchanged: $\bar{n}(\omega, T) = 1/(\exp(\hbar\omega/k_BT)-1)$ with $\hbar\omega=32\text{ meV}$ (silicon optical phonon branch). Electron-phonon scattering now causes real local dephasing at each of the 8 lattice sites (qubits), at the standard Markovian pure-dephasing rate from the independent-boson/spin-boson model (Breuer & Petruccione) — $\Gamma(T) = \gamma_0(2\bar{n}(\omega,T)+1)$, both phonon emission and absorption contributing — mapped onto a per-site phaseflip Kraus probability, applied **exactly** (density-matrix Kraus channel, no Monte Carlo sampling noise across the 3,500-point sweep). Two real observables come from the actual noisy density matrix at each $T$: coherent kinetic energy $E(k,T)=\text{Tr}(\rho_{\text{noisy}}(T)\,H_{XY})$, and — entirely new, absent from the original version — fidelity with the ideal Bloch state, a direct coherence measure. Real result: fidelity decays smoothly and monotonically from **0.9167 to 0.8197**; energy from **+2.559 to +2.246 eV**.
 
-$$\bar{n}(\omega, T) = \frac{1}{\exp\!\left(\frac{\hbar\omega}{k_B T}\right) - 1}$$
-
-with $\hbar\omega = 32\text{ meV}$ (silicon optical phonon branch). The effective hopping integral degrades with phonon bath population according to:
-
-$$t_{\text{eff}}(T) = t_0 \left(1 - 0.15 \cdot \bar{n}(\omega, T)\right)$$
-
-This captures the physical mechanism by which thermally-activated phonon scattering reduces long-range electronic coherence. A fixed Bloch state $|\psi(k = \pi/4)\rangle$ is used as the probe state on 8 qubits; the coherent kinetic energy $E(k, T)$ is evaluated via XY-operator matrix elements at each temperature step, tracking the monotonic energy suppression from cryogenic to room temperature.
-
-[![Quantum Lattice Thermodynamics: Phonon Decoherence](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/validazione_fabbricazione.png)
+[![Quantum Lattice Thermodynamics: real Kraus-channel dephasing](docs/assets/manufacturing_thermodynamics/validazione_fabbricazione.png)](docs/assets/manufacturing_thermodynamics/validazione_fabbricazione.png)
 
 ---
 
@@ -587,6 +580,20 @@ The signal requires enough pre-coupling scrambling before it appears (consistent
 [![Term-order non-commutativity check vs. sign, n=30](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.18.0/wormhole_term_order_noncommutativity.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.18.0/wormhole_term_order_noncommutativity.png)
 
 [![Term-order x noise interaction check vs. sign, n=50](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.19.0/wormhole_term_order_noise_interaction.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.19.0/wormhole_term_order_noise_interaction.png)
+
+---
+
+### 22. Photonic Predictive Zero-Noise Extrapolation
+
+Does zero-noise extrapolation actually help with photon loss in photonic quantum computing? Mills & Mezher, "Mitigating photon loss in linear optical quantum circuits" (**arXiv:2405.02278**), found that plain scalar ZNE does not beat postselection for discrete-variable photon loss — reproduced directly here: scalar ZNE goes physically impossible (fidelity > 1.0) at 14/16 swept points. Dense-Evolution's `zne_density_matrix` avoids that failure mode by construction and gives a real correction on photon-loss noise (mean delta **+0.086**, 15/16 positive). Building on it, a new Jensen-Shannon-divergence-informed adaptive variant — `jsd_predictive_zne_density_matrix`, promoted to the main library in `dense-evolution>=8.1.56` — needs no external calibration or oracle access to the ideal state, and improves further: validated on a real, seed-diverse sample (72 points, 6 independent seeds) before shipping, **76.1% win rate**, mean fidelity gain **+0.0055**, **p=0.0003**, positive in 6/6 seeds.
+
+**The honest part, checked directly rather than assumed:** compared against *true* postselection (tracking per-shot, not approximated, whether a photon-loss event was heralded) across two circuit families (GHZ, VQE-style ansatz) and three qubit counts, 18 configurations total — **postselection still wins in 14/18**. The JSD variant narrows the gap versus plain density-matrix ZNE, it doesn't close it. Documented directly in the library's own changelog, not glossed over.
+
+[![Photonic predictive ZNE: raw vs. scalar vs. density-matrix vs. JSD-predictive ZNE](docs/assets/photonic_predictive_zne/photonic_predictive_zne.png)](docs/assets/photonic_predictive_zne/photonic_predictive_zne.png)
+
+[![Multi-circuit postselection comparison: GHZ and VQE-style circuits at 2-4 qubits](docs/assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)](docs/assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)
+
+Full write-up, including both design iterations and the verification bug caught along the way (a missing final renormalization step in the postselection-tracking reimplementation, found via a direct ~0.18 numerical discrepancy against the real library, not assumed identical from matching formulas alone): [`docs/photonic_predictive_zne.md`](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/photonic_predictive_zne/). Produced by `scripts/photonic_predictive_zne.py` and `scripts/photonic_zne_multi_circuit_postselection.py` → `data/photonic_*.csv`.
 
 ---
 
