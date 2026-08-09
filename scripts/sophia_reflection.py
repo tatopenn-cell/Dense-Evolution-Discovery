@@ -15,10 +15,8 @@ repo (a hand-rolled stochastic dephasing + Richardson protocol), this uses
 the published `zne_density_matrix`/`uhlmann_fidelity` pipeline directly --
 the density-matrix extension of ZNE, not the scalar/vector one.
 
-Produces `data/sophia_reflection.csv`. The reflection an LLM (Claude) wrote
-after reading this script's real output -- not a simulated stand-in
-"Sophia" persona, not fabricated in advance of seeing the numbers -- lives
-alongside it in `SOPHIA_REFLECTION.md`.
+Produces `data/sophia_reflection.csv`, plotted in `images/sophia_reflection.png`
+and summarized in `SOPHIA_REFLECTION.md`.
 
     python scripts/sophia_reflection.py
 """
