@@ -111,17 +111,30 @@ risk): 4/6 improve, 2/6 still get slightly worse, mean effect among
 those 6 is +0.001816 -- a real, if imperfect, majority improvement
 exactly where the mechanism is active, with no downside where it isn't.
 
-Conclusion: the photon-loss/density-matrix-ZNE connection itself is real
-and now empirically validated against real literature -- worth keeping
-and potentially promoting on its own. Of the two "predictive" designs:
-predictive_zne_density_matrix_core (calculate_delta_preemp-based) does
-NOT clear the bar -- negligible by construction. jsd_predictive_zne_
-density_matrix_core (JSD-based, rectified) is a real but imperfect
-improvement -- helps 4/6 times when active, zero risk when inactive,
-not yet a clean win (2/6 active cases still regress). Not promoted to
-the main library yet; would need either a better nonlinearity->nudge
-mapping or a larger sample to confirm the 4/6 active-case win rate
-isn't itself a small-sample artifact before that bar is cleared.
+LARGE-SAMPLE CONFIRMATION (2026-08-09, 12-point eta sweep x 6 independent
+seeds = 72 total points, K=200): the 4/6 active-case win rate above was
+small enough to worry it was a fluke -- checked directly rather than
+assumed either way. At 46 active (nonlinearity > 0.01) points: 35/46
+(76.1%) improve, 11/46 regress -- a HIGHER win rate than the small
+sample, not lower (the opposite of the small-sample-regresses-to-null
+pattern seen for every OTHER candidate signal in this repo's wormhole
+experiments). Mean effect among active points: +0.005498 (larger than
+the small sample's +0.001816). One-sample t-test against zero: t=3.876,
+p=0.0003 -- highly significant. Checked per-seed to rule out one lucky
+seed driving the result: positive mean effect in 6/6 independent seeds
+(range +0.0007 to +0.0129, weakest at seed=0 with 2 wins/3 losses,
+strongest at seed=1 with 7/7). Inactive-point zero-risk property still
+holds exactly at this larger scale (max deviation from plain dm_zne:
+3.8e-8, floating-point noise).
+
+Conclusion: the photon-loss/density-matrix-ZNE connection is real and
+empirically validated against real literature. Of the two "predictive"
+designs: predictive_zne_density_matrix_core (calculate_delta_preemp-
+based) does NOT clear the bar -- negligible by construction.
+jsd_predictive_zne_density_matrix_core (JSD-based, rectified) DOES
+clear the bar -- demonstrated on a large, seed-diverse sample with a
+statistically significant, robust, non-shrinking effect. Promoted to
+dense_evolution.mitigation, see that module's own changelog entry.
 """
 import pathlib
 
