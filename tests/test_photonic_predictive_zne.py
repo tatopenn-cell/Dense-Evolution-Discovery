@@ -56,3 +56,24 @@ def test_density_matrix_zne_improves_fidelity_on_average_for_photon_loss():
         eta_sweep=np.linspace(0.95, 0.75, 5), k_trajectories=100, seed=3,
     )
     assert df['dm_zne_delta'].mean() > 0
+
+
+def test_jsd_nudge_is_rectified_to_zero_effect_when_nonlinearity_is_negative():
+    # Regression guard for the rectification fix: jsd_predictive_zne_
+    # density_matrix_core must reduce EXACTLY to plain zne_density_matrix
+    # (zero risk) whenever nonlinearity <= 0, not just approximately --
+    # this is what makes the mechanism safe to apply unconditionally.
+    df = photonic_predictive_zne.run_photon_loss_comparison(
+        eta_sweep=np.linspace(0.99, 0.7, 8), k_trajectories=50, seed=4,
+    )
+    inactive = df[df['nonlinearity_signal'] <= 0.0]
+    assert len(inactive) > 0, "expected at least one negative-nonlinearity point in this sweep"
+    assert (inactive['jsd_dm_zne_delta'] - inactive['dm_zne_delta']).abs().max() < 1e-6
+
+
+def test_jsd_predictive_fidelity_is_a_valid_probability():
+    df = photonic_predictive_zne.run_photon_loss_comparison(
+        eta_sweep=np.array([0.9, 0.75]), k_trajectories=50, seed=5,
+    )
+    assert (df['jsd_dm_zne_fidelity'] >= 0.0).all()
+    assert (df['jsd_dm_zne_fidelity'] <= 1.0 + 1e-9).all()
