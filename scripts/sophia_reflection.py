@@ -46,10 +46,12 @@ import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import jax
 import jax.numpy as jnp
 import dense_evolution as de
 from dense_evolution.registry import NoiseModel
 from dense_evolution.mitigation import uhlmann_fidelity, zne_density_matrix, richardson_extrapolate
+from dense_evolution.mitigation import _uhlmann_fidelity_core, _richardson_extrapolate_core, _zne_density_matrix_core
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
@@ -62,6 +64,112 @@ def bell_state_sv():
     sim = de.DenseSVSimulator(N_QUBITS)
     sim.run_circuit([("h", 0), ("cx", 0, 1)])
     return np.asarray(sim.get_statevector())
+
+
+# =====================================================================
+# Exact (closed-form) Kraus channels -- JAX-differentiable, no Monte
+# Carlo sampling. Built for Part 3's gradient-based adversarial noise
+# search (arXiv:2607.27465-style technique, transported from
+# ia_utils.adversarial_vector_attack's Phi-Trigger attack to noise-
+# channel parameters instead of vector-healing inputs).
+#
+# NoiseModel.apply_to_sv (dense_evolution.registry) is NOT usable here:
+# it decides each single-qubit outcome via a hard threshold on a random
+# draw (`fire = r < p`), which has ~zero gradient almost everywhere with
+# respect to p -- useless for a gradient-based search. This module
+# builds the same channels directly from their Kraus operators instead
+# (rho_out = sum_i K_i rho K_i^dagger), a smooth, exact function of the
+# channel parameters.
+#
+# Embedding convention verified directly against NoiseModel's own
+# behavior (not assumed): on an asymmetric 2-qubit probe state, a
+# deterministic X on qubit 0 vs. qubit 1 must land on the same
+# computational-basis index NoiseModel produces. Confirmed exact match
+# only when qubit n-1 is the outermost (first) kron factor and qubit 0
+# is the innermost (last) -- i.e. kron(op_{n-1}, ..., op_1, op_0),
+# matching NoiseModel's own `1 << q` (qubit q = bit q, LSB-based)
+# indexing convention.
+# =====================================================================
+
+def _kraus_ops(channel, p):
+    """Closed-form single-qubit Kraus operators for `channel` at
+    parameter `p` (error probability, or damping rate gamma for
+    amplitude_damping)."""
+    I = jnp.eye(2, dtype=jnp.complex128)
+    X = jnp.array([[0, 1], [1, 0]], dtype=jnp.complex128)
+    Y = jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex128)
+    Z = jnp.array([[1, 0], [0, -1]], dtype=jnp.complex128)
+    if channel == 'depolarizing':
+        return [jnp.sqrt(1 - p) * I, jnp.sqrt(p / 3) * X, jnp.sqrt(p / 3) * Y, jnp.sqrt(p / 3) * Z]
+    elif channel == 'bitflip':
+        return [jnp.sqrt(1 - p) * I, jnp.sqrt(p) * X]
+    elif channel == 'phaseflip':
+        return [jnp.sqrt(1 - p) * I, jnp.sqrt(p) * Z]
+    elif channel == 'amplitude_damping':
+        K0 = jnp.array([[1, 0], [0, jnp.sqrt(1 - p)]], dtype=jnp.complex128)
+        K1 = jnp.array([[0, jnp.sqrt(p)], [0, 0]], dtype=jnp.complex128)
+        return [K0, K1]
+    raise ValueError(f"unknown channel {channel!r}")
+
+
+def _embed_single_qubit_op(K, qubit, n_qubits):
+    """Full 2**n_qubits x 2**n_qubits operator = I (x) ... (x) K (x) ... (x) I,
+    with K on `qubit` -- see this section's own verification note above
+    for why the kron order must run qubit (n_qubits-1) down to qubit 0."""
+    I = jnp.eye(2, dtype=jnp.complex128)
+    ops = [K if q == qubit else I for q in range(n_qubits - 1, -1, -1)]
+    full = ops[0]
+    for op in ops[1:]:
+        full = jnp.kron(full, op)
+    return full
+
+
+def apply_channel_exact(rho, channel, p, n_qubits=N_QUBITS, qubits=None):
+    """Exact, JAX-differentiable single-channel application to `qubits`
+    (default: all) of density matrix `rho`.
+
+    Verified directly against NoiseModel.apply_to_sv's own per-branch
+    formula, analytically (not just via Monte Carlo, which has its own
+    sampling noise) -- for a superposition input state, computing what
+    each stochastic branch produces and averaging by its firing
+    probability, exactly, no randomness involved. 'depolarizing',
+    'bitflip', 'phaseflip' match this exact channel to machine precision
+    (max diff 0.000000 across several test states/probabilities).
+    'amplitude_damping' does NOT match: NoiseModel's decay branch fires
+    with flat probability `gamma`, but the correct Born-rule probability
+    is `gamma * |v1|^2` (state-dependent) -- verified analytically to
+    diverge by up to ~0.13 (max matrix-element difference) for
+    superposition states at gamma=0.5, a real bug in
+    dense_evolution.registry.NoiseModel, not in this exact
+    implementation (which is the textbook-correct Kraus map, used
+    deliberately here instead of replicating NoiseModel's current
+    amplitude_damping behavior)."""
+    if qubits is None:
+        qubits = list(range(n_qubits))
+    dim = 2 ** n_qubits
+    for q in qubits:
+        rho_out = jnp.zeros((dim, dim), dtype=jnp.complex128)
+        for K in _kraus_ops(channel, p):
+            K_full = _embed_single_qubit_op(K, q, n_qubits)
+            rho_out = rho_out + K_full @ rho @ K_full.conj().T
+        rho = rho_out
+    return rho
+
+
+_COMBINED_CHANNELS = ('depolarizing', 'bitflip', 'phaseflip', 'amplitude_damping')
+
+
+def apply_combined_channel_exact(rho, params, n_qubits=N_QUBITS):
+    """Sequentially applies all four base channels, each with its own
+    free parameter (params = [p_depolarizing, p_bitflip, p_phaseflip,
+    p_amplitude_damping]), to every qubit -- the "combined noise"
+    building block for the adversarial search below. Each parameter is
+    clipped to [0, 1] (a physical probability/rate) before use, so the
+    caller doesn't need to enforce that separately during optimization."""
+    params = jnp.clip(jnp.asarray(params), 0.0, 1.0)
+    for channel, p in zip(_COMBINED_CHANNELS, params):
+        rho = apply_channel_exact(rho, channel, p, n_qubits=n_qubits)
+    return rho
 
 
 def _noisy_density_matrix(ideal_sv, p, k, rng, channel='depolarizing'):
@@ -148,6 +256,122 @@ def run_scalar_vs_density_matrix_comparison(base_p_sweep, k_trajectories, channe
             'divergence': abs(scalar_extrapolated - density_matrix_fidelity),
         })
     return rows
+
+
+def _divergence_objective(base_params, ideal_sv, rho_ideal):
+    """Scalar-vs-density-matrix ZNE divergence for a combined-channel
+    noise profile, at 3 Richardson scales (SCALES) of `base_params` --
+    the quantity Part 2's sweep measured indirectly (by chance, at
+    whichever base_p/channel the sweep happened to land on); this makes
+    it a direct, differentiable optimization target instead."""
+    rho_at_scales = jnp.stack([
+        apply_combined_channel_exact(rho_ideal, base_params * scale)
+        for scale in SCALES
+    ])
+    # _uhlmann_fidelity_core (not the public uhlmann_fidelity) -- the
+    # public wrapper does a `float()` cast that isn't traceable inside
+    # jax.grad.
+    fidelities = jnp.stack([
+        _uhlmann_fidelity_core(rho_at_scales[i], rho_ideal) for i in range(len(SCALES))
+    ])
+    scalar_extrapolated = _richardson_extrapolate_core(fidelities, jnp.asarray(SCALES, dtype=jnp.float64))
+    corrected_rho = _zne_density_matrix_core(rho_at_scales, jnp.asarray(SCALES, dtype=jnp.float64), degree=2)
+    dm_fidelity = _uhlmann_fidelity_core(corrected_rho, rho_ideal)
+    return jnp.abs(scalar_extrapolated - dm_fidelity)
+
+
+_divergence_grad = jax.grad(_divergence_objective, argnums=0)
+
+
+def run_adversarial_combined_noise_search(n_steps=200, step_size=0.005, init_params=None, seed=20):
+    """Gradient-based search (arXiv:2607.27465-style chained-
+    differentiable-attack technique, transported from
+    ia_utils.adversarial_vector_attack's vector-healing Phi-Trigger
+    attack to noise-channel parameters instead) for a "combined" 4-
+    channel noise profile (depolarizing, bitflip, phaseflip,
+    amplitude_damping mixed together, see apply_combined_channel_exact)
+    that maximizes the scalar-vs-density-matrix ZNE divergence Part 2
+    found by chance on a plain amplitude-damping sweep.
+
+    Each parameter is bounded to [0, 1/max(SCALES)] so that the largest
+    Richardson scale point (3x base_params, SCALES=(1,2,3)) never
+    exceeds a physically valid probability/rate of 1 for any channel --
+    the adversarial "budget" this search operates within.
+
+    Same step_size/best-tracking pattern as
+    ia_utils.adversarial_vector_attack.craft_adversarial_healing_
+    perturbation, for the same verified reason: a step size that scales
+    with the budget overshoots and converges worse, not better (see
+    that function's own bug-fix note); a small fixed step size avoids
+    it here too.
+
+    Starts from init_params (default: a small uniform profile) rather
+    than from zero noise, since the objective's gradient at exactly
+    zero noise is degenerate for some of these channels (e.g.
+    amplitude_damping's sqrt(p) term has an infinite derivative at
+    p=0).
+
+    KNOWN ISSUE (2026-08-09, unresolved -- see the branch this landed
+    on): _divergence_grad returns NaN at every point tested so far,
+    including the simplest possible case (fidelity of a single noisy
+    density matrix, no ZNE/Richardson at all -- jax.grad through
+    dense_evolution.mitigation._uhlmann_fidelity_core alone already
+    gives NaN). Root cause: _uhlmann_fidelity_core's Uhlmann-fidelity
+    formula goes through an eigendecomposition (jnp.linalg.eigh) whose
+    JAX gradient rule is NaN at (near-)degenerate eigenvalues -- a well-
+    known JAX autodiff limitation, not a bug introduced here. A lightly
+    perturbed Bell state's density matrix is very close to pure (exact
+    eigenvalues [1,0,0,0] at zero noise), so its three near-zero
+    eigenvalues are exactly or near-exactly degenerate, which is
+    precisely the case this limitation bites. As a direct consequence,
+    this function currently makes NO progress: every gradient step's
+    direction falls back to the all-zero vector (see the `grad_norm >
+    1e-12` guard below), so `best_params` never moves past
+    `init_params` and `best_divergence` never improves. Not fixed here
+    -- would need either an eigh-free fidelity formula, a numerically-
+    regularized (symmetry-broken) input, or a custom JAX differentiation
+    rule for the degenerate-eigenvalue case, none of which were
+    attempted. Kept in the codebase (rather than deleted) as a concrete,
+    verified starting point for whoever picks this up next -- the
+    differentiable channels above (apply_channel_exact,
+    apply_combined_channel_exact) are correct and reusable regardless of
+    this blocker."""
+    ideal_sv = bell_state_sv()
+    rho_ideal = jnp.asarray(np.outer(ideal_sv, ideal_sv.conj()), dtype=jnp.complex128)
+
+    max_scale = max(SCALES)
+    bound = 1.0 / max_scale
+
+    if init_params is None:
+        rng = np.random.default_rng(seed)
+        params = jnp.asarray(rng.uniform(0.02, 0.1, size=4))
+    else:
+        params = jnp.asarray(init_params, dtype=jnp.float64)
+
+    best_params = params
+    best_divergence = float(_divergence_objective(params, ideal_sv, rho_ideal))
+
+    history = [{'step': 0, 'divergence': best_divergence, 'params': np.asarray(params).tolist()}]
+
+    for step in range(1, n_steps + 1):
+        grad = _divergence_grad(params, ideal_sv, rho_ideal)
+        grad_norm = jnp.linalg.norm(grad)
+        direction = jnp.where(grad_norm > 1e-12, grad / grad_norm, jnp.zeros_like(grad))
+        params = jnp.clip(params + step_size * direction, 0.0, bound)
+
+        current_divergence = float(_divergence_objective(params, ideal_sv, rho_ideal))
+        if current_divergence > best_divergence:
+            best_divergence = current_divergence
+            best_params = params
+
+        if step % 20 == 0 or step == n_steps:
+            history.append({'step': step, 'divergence': current_divergence, 'params': np.asarray(params).tolist()})
+
+    return {
+        'best_params': {name: float(v) for name, v in zip(_COMBINED_CHANNELS, best_params)},
+        'best_divergence': best_divergence,
+        'history': history,
+    }
 
 
 if __name__ == "__main__":
