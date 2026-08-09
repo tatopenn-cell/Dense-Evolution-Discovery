@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs seventeen real, verified experiments, each producing its own
+This script runs eighteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -265,6 +265,24 @@ CSV + plot:
     and how sensitive a given instance's term ordering is to that
     perturbation partly tracks how fragile its sign-dependent signal is
     to begin with.
+18. t0 correction -- rereading arXiv:2604.10090 directly found that
+    every prior experiment in this script (including Experiment 11's
+    flagship n=100 check) mislabeled t0=0.3 as "the paper's own default
+    parameters." The paper's REAL hardware working point is t0=1.8
+    (Sec. S4: "t0=1.8 marks a turning point... we choose t0=1.8 as the
+    hardware working point") -- t0=0.3 never appears as an injection
+    time anywhere in the paper's text; the only "0.3" in the extracted
+    PDF is a y-axis tick label on Fig. 5. Re-runs Experiment 11's exact
+    n=100, 34/11-selection-matched ensemble sign check at t0=1.8
+    (t1=1.25, chosen via a real 23-point scan on seed=61 -- the paper
+    itself gives no single default t1, scanning t1 in [0.5, 6.0] at
+    fixed t0=1.8 in its own Fig. 5). Result: 41/100 (41%) wrong-signed
+    at the paper's real t0=1.8, vs. 49/100 (49%) at the mislabeled
+    t0=0.3 -- closer to correctly-signed than the mislabeled check
+    suggested, but still far from the paper's "generic feature of the
+    ensemble" claim, and still close enough to a coin flip that the
+    core finding (the sign-dependent instance variance is real and
+    still unexplained) stands.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -389,6 +407,12 @@ Honest caveats, not glossed over:
   same two orderings as Experiment 16 (original vs. fully reversed)
   out of far more possible permutations -- the same scope caveat as
   Experiment 16 above.
+- Experiment 18's t1=1.25 default was chosen from a single-seed
+  (seed=61) 23-point scan, not re-derived per instance across the
+  n=100 ensemble -- the same "one instance's optimum applied to all"
+  confound Experiment 8 already found doesn't generalize for
+  (t0, mu, t1) jointly. A per-instance-optimal t1 could shift the
+  41/100 wrong-sign rate in either direction; untested here.
 """
 import itertools
 import pathlib
@@ -1851,6 +1875,88 @@ def run_t0_correction_check(n_instances: int = 100, t1: float = 1.25) -> pd.Data
     return df
 
 
+def run_noise_level_scan_check(seeds=None, n_instances: int = 20,
+                                noise_levels=(0.005, 0.01, 0.02),
+                                n_trials: int = 6,
+                                n_steps_evolution: int = 8,
+                                n_steps_coupling: int = 16) -> pd.DataFrame:
+    """Experiment 17's own caveat flagged this as untested: its
+    term-order x noise correlation (r=+0.340, p=0.0158 at n=50) was
+    only ever measured at a single noise_p=0.01 (Experiment 9's own
+    near-threshold value, reused rather than independently chosen).
+    This scans noise_p itself, reusing Experiment 17's exact method
+    (run_term_order_noise_interaction_check, unchanged) at each level,
+    on the SAME seed set across all levels (so any r/p trend reflects
+    noise_p, not a different random instance draw at each point).
+
+    Scope narrowed from Experiment 17's flagship n=50 to n=20 for cost:
+    each noise level costs ~n_instances x 24 noisy protocol calls x
+    ~7.8s/call (Experiment 17's own measured per-call cost) -- ~62
+    minutes at n=20 per level, ~2.6 hours at n=50. n=20 was not chosen
+    arbitrarily: Experiment 17's own write-up already reports it stayed
+    significant there (r=+0.587, p=0.0065) at noise_p=0.01, the one
+    overlapping point between that check and this one -- used below as
+    a direct consistency check that this scan's methodology reproduces
+    that number before trusting the new noise_p=0.005/0.02 points.
+
+    noise_levels defaults to (0.005, 0.01, 0.02): 0.01 is Experiment
+    9/17's own already-measured point, included here as the consistency
+    check described above rather than assumed to transfer; 0.005 and
+    0.02 bracket it at half and double, chosen to see the trend's
+    direction/shape with only 2 new (expensive) points rather than a
+    finer scan this session's time budget can't cover.
+    """
+    if seeds is None:
+        seeds = find_multiple_seeds(n_instances=n_instances)
+
+    rows = []
+    for noise_p in noise_levels:
+        df_level = run_term_order_noise_interaction_check(
+            seeds=seeds, noise_p=noise_p, n_trials=n_trials,
+            n_steps_evolution=n_steps_evolution, n_steps_coupling=n_steps_coupling,
+        )
+        r_result = scipy_stats.pearsonr(df_level["noisy_order_sensitivity"], df_level["delta_mean_original_noisy"])
+        n_wrong = int((df_level["delta_mean_original_noisy"] < 0).sum())
+        rows.append({
+            "noise_p": noise_p,
+            "n": len(df_level),
+            "pearson_r": r_result.statistic,
+            "p_value": r_result.pvalue,
+            "n_wrong_signed": n_wrong,
+        })
+        print(f"noise_p={noise_p}: r={r_result.statistic:+.3f}, p={r_result.pvalue:.4f}, "
+              f"{n_wrong}/{len(df_level)} wrong-signed")
+
+    df = pd.DataFrame(rows)
+    df.to_csv(_DATA_DIR / "wormhole_noise_level_scan.csv", index=False)
+
+    plt.style.use('dark_background')
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
+
+    ax1.plot(df["noise_p"], df["pearson_r"], marker='o', color='#00FFFF', linewidth=1.5)
+    ax1.axhline(0, color='#666666', linestyle=':')
+    ax1.set_xlabel("noise_p", color='#888888')
+    ax1.set_ylabel("Pearson r (order sensitivity vs. delta)", color='#888888')
+    ax1.set_title("Correlation strength vs. noise level", color='#CCCCCC')
+    ax1.grid(True, linestyle='--', alpha=0.2, color='#444444')
+
+    ax2.plot(df["noise_p"], df["p_value"], marker='o', color='#FF007F', linewidth=1.5)
+    ax2.axhline(0.05, color='#FFAA00', linestyle='--', label='p=0.05')
+    ax2.set_xlabel("noise_p", color='#888888')
+    ax2.set_ylabel("p-value", color='#888888')
+    ax2.set_title("Significance vs. noise level", color='#CCCCCC')
+    ax2.legend()
+    ax2.grid(True, linestyle='--', alpha=0.2, color='#444444')
+
+    fig.suptitle(f"Experiment 19: does Experiment 17's term-order x noise correlation "
+                 f"hold across noise levels? (n={n_instances})", fontsize=11, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(_IMAGES_DIR / "wormhole_noise_level_scan.png", dpi=300)
+    plt.close(fig)
+
+    return df
+
+
 def run_all():
     seed = find_seed()
 
@@ -1983,6 +2089,11 @@ def run_all():
     n_wrong18 = int((df18["delta_at_t0_1.8"] < 0).sum())
     print(f"  n={len(df18)}: {n_wrong18}/{len(df18)} ({100*n_wrong18/len(df18):.0f}%) wrong-signed "
           f"at t0=1.8 (vs. the mislabeled t0=0.3 check's 49/100)")
+
+    print("\n=== Experiment 19: noise-level scan for the term-order x noise correlation ===")
+    df19 = run_noise_level_scan_check()
+    for _, row in df19.iterrows():
+        print(f"  noise_p={row['noise_p']}: r={row['pearson_r']:+.3f}, p={row['p_value']:.4f}")
 
     print("\n============================================================")
     print("Data saved to data/wormhole_*.csv")
