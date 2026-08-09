@@ -17,7 +17,7 @@ bilinear L-R coupling exp(i*mu*V), and a readout that is NOT a
 single-qubit expectation value: mutual information between the reference
 qubit P and a qubit read out from R.
 
-This script runs eighteen real, verified experiments, each producing its own
+This script runs nineteen real, verified experiments, each producing its own
 CSV + plot:
 
 1. t1 sweep -- the protocol's headline signature, sign-dependent mutual
@@ -283,6 +283,30 @@ CSV + plot:
     ensemble" claim, and still close enough to a coin flip that the
     core finding (the sign-dependent instance variance is real and
     still unexplained) stands.
+19. Noise-level scan for the term-order x noise correlation --
+    Experiment 17's own caveats flagged its finding (r=+0.340,
+    p=0.0158 at n=50) as only ever tested at a single noise_p=0.01.
+    Scans noise_p at n=20 on a fixed 34/11-matched seed set (a smaller
+    n than Experiment 17's flagship 50, for cost -- see
+    run_noise_level_scan_check's own docstring), reusing Experiment
+    17's exact method unchanged at each level. Real result: noise_p=
+    0.005 (r=+0.210, p=0.374, NOT significant), noise_p=0.01 (r=+0.587,
+    p=0.0065), noise_p=0.02 (r=+0.622, p=0.0034, the STRONGEST of the
+    three). The noise_p=0.01 point is a direct methodology consistency
+    check, not a new measurement -- it reproduces Experiment 17's own
+    n=20 subsample number (r=+0.587, p=0.0065) exactly, confirming this
+    scan's approach is sound before trusting the two new points.
+    Genuine finding, not assumed from Experiment 17 alone: the
+    correlation is not a fixed property of the noise -- it is ABSENT
+    at very low noise (0.005) and STRENGTHENS as noise increases
+    through 0.01 to 0.02 (Experiment 9's own upper bound, where the
+    noiseless signal was already crossing zero), rather than being
+    flat or regressing back toward zero the way every OTHER candidate
+    in this script did as its sample size grew. Consistent with a
+    physical reading: term-order sensitivity needs enough noise-driven
+    perturbation to actually interact with the sign-dependent signal;
+    at near-zero noise there is barely any perturbation for it to
+    interact with.
 
 Experiments 1-7, 9, and 10 use seed=61 (n_majorana=8, k_terms=10, J=sqrt(2))
 -- the instance dashboard_core.wormhole.select_good_instance finds when
@@ -413,6 +437,16 @@ Honest caveats, not glossed over:
   confound Experiment 8 already found doesn't generalize for
   (t0, mu, t1) jointly. A per-instance-optimal t1 could shift the
   41/100 wrong-sign rate in either direction; untested here.
+- Experiment 19's n=20 is smaller than Experiment 17's own flagship
+  n=50 (cost -- see run_noise_level_scan_check's own docstring), and
+  only 3 noise_p points were tested (0.005/0.01/0.02); the trend
+  (absent -> significant -> strongest) is measured at exactly these 3
+  points, not a continuous scan, so whether it keeps strengthening
+  past 0.02, plateaus, or reverses is untested. A first run of this
+  experiment used only 6 seeds instead of the requested 20 due to a
+  real bug in the seed-screening call's n_candidates default (fixed;
+  see the fix's own commit) -- that invalid run's numbers were
+  discarded, not used anywhere in this write-up.
 """
 import itertools
 import pathlib
