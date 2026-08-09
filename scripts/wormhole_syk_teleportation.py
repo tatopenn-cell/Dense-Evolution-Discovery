@@ -1907,7 +1907,15 @@ def run_noise_level_scan_check(seeds=None, n_instances: int = 20,
     finer scan this session's time budget can't cover.
     """
     if seeds is None:
-        seeds = find_multiple_seeds(n_instances=n_instances)
+        # find_multiple_seeds's own default n_candidates=3000 is tuned
+        # for its original small n_instances=6 callers -- silently
+        # returns fewer than requested instead of erroring if the exact
+        # 34/11 match isn't found within that budget (confirmed by a
+        # real bug here: a first attempt at n_instances=20 without this
+        # override screened only 3000 candidates and silently returned
+        # just 6). 120000 matches the budget Experiments 11/13/14/18
+        # already use for their own n=100 seed sets.
+        seeds = find_multiple_seeds(n_instances=n_instances, n_candidates=120000)
 
     rows = []
     for noise_p in noise_levels:
