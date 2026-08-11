@@ -51,6 +51,7 @@ Dense-Evolution-Discovery/
 - **`scripts/scan_ising_vqe.py`**: Makes `scan_ising.py`'s exact circuit structure genuinely variational — real Adam + exact chain-rule Parameter-Shift Rule minimization of $E(\theta,\phi;g)$ at 200 $g$-points, cross-validated against exact Lanczos energies at every point. Finds a hard structural ceiling (RZ diagonal on a computational-basis state + RX commuting with $X$ makes $E$ provably $g$-independent for this ansatz), not a tuned success. Produces `data/scan_ising_vqe.csv` and `images/scan_ising_vqe.png`. See Section 1.
 - **`scripts/ising_freefermion_verification.py`**: Independent free-fermion (Jordan-Wigner + Bogoliubov-de Gennes, $N=12$) cross-check of `ising_exact_verification.py`'s Lanczos result — a genuinely different algorithm (24x24 single-particle matrix instead of the 4096-dim many-body Hamiltonian), self-tested against brute-force ED at small $N$ before trusting it at $N=12$. Confirms $g^\star=0.8600$ exactly. Produces `data/ising_freefermion_verification.csv`. See Section 1.
 - **`scripts/zne_mitigation.py`**: Mathematical implementation of a stochastic Richardson Zero-Noise Extrapolation (ZNE) protocol over discrete Pauli-Z phase dephasing channels with 2,000 hardware shot sampling. Produces `data/dati_mitigazione_zne.csv` and `images/transizione_ising_mitigata.png`.
+- **`scripts/zne_mitigation_verification.py`**: Independent verification of `zne_mitigation.py`'s headline claim — finds the "$-4.2467$ eV true target" was actually its own mitigated output, derives the real ideal $E(k)$ two independent ways (sparse Hamiltonian, closed form), and quantifies a real 8-10$\sigma$ systematic bias in the 2-point Richardson extrapolant. Produces `data/zne_mitigation_verification_summary.csv` and `images/zne_mitigation_verification.png`. See Section 2.
 - **`scripts/vqe_gradient.py`**: Exact numerical finite-difference gradient tracker (`h = 1e-5`) mapping the variational energy landscape and locating stationary points. Produces `data/vqe_gradient_landscape.csv` and `images/vqe_gradient_landscape.png`.
 - **`scripts/vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact Parameter-Shift Rule gate-by-gate via the chain rule over a massively parallel 73,500-track JAX batch array. Produces `data/vqe_jax_gradient.csv` and `images/vqe_jax_gradient.png`.
 - **`scripts/quantum_defect_scanner.py`**: Isotropic resilience topology mapper evaluating node-by-node quantum coherence under a localized parametric RZ dephasing rotation via `run_parametric_batch_jit()`. Produces `data/mappa_difetti_silicio.csv` and `images/mappa_difetti_silicio.png`.
@@ -105,7 +106,19 @@ $$E(0) = 2E(\lambda_1) - E(\lambda_2)$$
 
 The protocol operates on Bloch wavevector states $|\psi(k)\rangle = \frac{1}{\sqrt{N}} \sum_q e^{iqk} |1_q\rangle$ injected over 25 k-points spanning the full Brillouin zone $[-\pi, \pi]$. The base dephasing probability per qubit is $p = 0.06 \cdot \lambda$, applied stochastically via per-shot Kraus channel sampling with controlled seeds.
 
-The ZNE protocol successfully reconstructed the unperturbed, zero-noise ideal target trajectory, forcing the corrupted noisy minimum at $k=0$ (degraded up to $-3.3155\text{ eV}$) back to its true analytic target value of **$-4.2467\text{ eV}$** without introducing non-linear artifacts.
+`zne_mitigation.py`'s original claim here — that the protocol "successfully reconstructed the unperturbed, zero-noise ideal target trajectory," forcing the noisy minimum at $k=0$ (degraded to $-3.3155\text{ eV}$) back to a "true analytic target value" of $-4.2467\text{ eV}$ — did not hold up under independent verification (`scripts/zne_mitigation_verification.py`) and is kept only as documented history, alongside the original script and its plot below.
+
+**The $-4.2467\text{ eV}$/$-3.3155\text{ eV}$ claim is a mislabeling, not an approximation error in the numbers themselves**: both are literally the script's own outputs — the 2-point Richardson-*mitigated* estimate and the raw $\lambda{=}1$ *noisy* measurement at $k=0$ — not an independent ground truth and an independent corrupted reference, despite how the original wording framed them. The real ideal $E(k{=}0)$, verified two independent ways (an explicit sparse Pauli Hamiltonian $\langle\psi|H|\psi\rangle$ matrix-vector product, and a hand-derived closed form, agreeing to $\sim10^{-16}$), is exactly
+
+$$E(0) = -2\,t_{hopping} = -4.2200\text{ eV}$$
+
+the same textbook single-particle tight-binding band minimum as Section 3's $E_{ground}$. The general closed form for this exact ansatz's energy at *any* $k$ (not only the chain's eigenmomenta) is
+
+$$E(k) = -\frac{2t}{N}\Big[(N-1)\cos(k) + \cos\big((N-1)k\big)\Big]$$
+
+— the naive band formula $-2t\cos(k)$ used elsewhere in this repo (Section 5) is exact only at the chain's $N$ true eigenmomenta $k = 2\pi n/N$; away from those points it disagrees by up to 18%, verified against the sparse Hamiltonian to $\sim10^{-16}$.
+
+More importantly, the 2-point linear Richardson extrapolation itself has a **real, statistically robust systematic bias**, not just Monte Carlo scatter. Repeating the noise measurement 30 independent times per noise scale over a finer noise-scale grid, at $k=0$, $k=\pi/3$ (both eigenmomenta), and a generic non-eigenmomentum $k=1.0$, the 2-point Richardson result differs from the true ideal energy by $+0.12$, $+0.05$, and $+0.06\text{ eV}$ respectively — an 8-10$\sigma$ effect (SEM-normalized, far beyond sampling noise), because $E(\lambda)$ has genuine curvature that a 2-point linear extrapolant structurally cannot see. A degree-2 (quadratic) fit through a finer grid of noise-scale points recovers the true value to $<0.03\%$ at all three $k$ values tested. The original script's headline $-4.2467\text{ eV}$ looked deceptively close to the true $-4.2200\text{ eV}$ only because its one hardcoded seed happened to draw favorably — its $\lambda=1$ sample sits $\approx1.5\sigma$ below, and its $\lambda=2$ sample $\approx1.5\sigma$ above, the 60-trial mean, partially canceling the real bias by luck rather than by the method's actual accuracy. A follow-up using a higher-order fit through more noise-scale points would be needed for a genuinely accurate ZNE result here — that remediation is out of scope for this correction and is not attempted in this repo yet.
 
 [![Stochastic Zero-Noise Extrapolation Results](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)
 
@@ -624,6 +637,7 @@ python scripts/ising_exact_verification.py
 python scripts/scan_ising_vqe.py
 python scripts/ising_freefermion_verification.py
 python scripts/zne_mitigation.py
+python scripts/zne_mitigation_verification.py
 python scripts/vqe_gradient.py
 python scripts/vqe_jax_grad.py
 python scripts/quantum_defect_scanner.py
@@ -660,6 +674,7 @@ All produced under `data/` when you run the corresponding script (see [Repositor
 | `scan_ising_vqe.csv` | Adam+PSR-optimized (theta, phi) VQE energy/ZZ vs g, cross-checked against exact | 200 |
 | `ising_freefermion_verification.csv` | Independent free-fermion (JW+BdG) TFIM ZZ/susceptibility/gap vs g, cross-checked against Lanczos | 501 |
 | `dati_mitigazione_zne.csv` | ZNE ideal / noisy / mitigated energies vs k | 25 |
+| `zne_mitigation_verification_summary.csv` | True ideal E(k) (sparse Hamiltonian & closed form) vs. 2-point Richardson and quadratic-fit ZNE estimates, per k, with residuals and sigma | 3 |
 | `vqe_gradient_landscape.csv` | VQE energy and finite-diff gradient vs θ | 3,500 |
 | `vqe_jax_gradient.csv` | VQE energy and PSR gradient vs θ (JAX batch) | 3,500 |
 | `mappa_difetti_silicio.csv` | Residual qubit coherence vs defect node position | 12 |
