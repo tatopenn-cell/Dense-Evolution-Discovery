@@ -45,8 +45,11 @@ Dense-Evolution-Discovery/
 
 ## 📊 Repository Architecture & Ecosystem
 
-- **`scripts/scan_ising.py`**: Automated data pipeline responsible for high-resolution parameter sweeps and graphical rendering of the ideal ferromagnetic phase transition using a true variational ansatz. Produces `data/transizione_fase_ising.csv`.
-- **`scripts/plot_ising.py`**: Computes the first-order numerical derivative (quantum susceptibility) from the CSV dataset to locate the exact critical phase boundary. Produces `images/curva_transizione_ising.png`.
+- **`scripts/scan_ising.py`**: High-resolution parameter sweep of a fixed, non-optimized CX–RZ–CX/RX ansatz's $\langle ZZ\rangle$ correlation over the TFIM's transverse field $g$ — historical original, its "true variational ansatz" framing and $g=1.309$ critical point did not survive independent verification (see Section 1). Produces `data/transizione_fase_ising.csv`.
+- **`scripts/plot_ising.py`**: Computes the first-order numerical derivative (quantum susceptibility) from `scan_ising.py`'s CSV dataset to locate its (since-corrected) critical phase boundary. Produces `images/curva_transizione_ising.png`.
+- **`scripts/ising_exact_verification.py`**: Exact TFIM ground state via `scipy.sparse` Lanczos diagonalization ($N=12$, open BC, same 11-bond structure as `scan_ising.py`), cross-validated against the fixed ansatz's $\langle ZZ\rangle$ curve. Produces `data/ising_exact_verification.csv` and `images/ising_exact_verification.png`. See Section 1.
+- **`scripts/scan_ising_vqe.py`**: Makes `scan_ising.py`'s exact circuit structure genuinely variational — real Adam + exact chain-rule Parameter-Shift Rule minimization of $E(\theta,\phi;g)$ at 200 $g$-points, cross-validated against exact Lanczos energies at every point. Finds a hard structural ceiling (RZ diagonal on a computational-basis state + RX commuting with $X$ makes $E$ provably $g$-independent for this ansatz), not a tuned success. Produces `data/scan_ising_vqe.csv` and `images/scan_ising_vqe.png`. See Section 1.
+- **`scripts/ising_freefermion_verification.py`**: Independent free-fermion (Jordan-Wigner + Bogoliubov-de Gennes, $N=12$) cross-check of `ising_exact_verification.py`'s Lanczos result — a genuinely different algorithm (24x24 single-particle matrix instead of the 4096-dim many-body Hamiltonian), self-tested against brute-force ED at small $N$ before trusting it at $N=12$. Confirms $g^\star=0.8600$ exactly. Produces `data/ising_freefermion_verification.csv`. See Section 1.
 - **`scripts/zne_mitigation.py`**: Mathematical implementation of a stochastic Richardson Zero-Noise Extrapolation (ZNE) protocol over discrete Pauli-Z phase dephasing channels with 2,000 hardware shot sampling. Produces `data/dati_mitigazione_zne.csv` and `images/transizione_ising_mitigata.png`.
 - **`scripts/vqe_gradient.py`**: Exact numerical finite-difference gradient tracker (`h = 1e-5`) mapping the variational energy landscape and locating stationary points. Produces `data/vqe_gradient_landscape.csv` and `images/vqe_gradient_landscape.png`.
 - **`scripts/vqe_jax_grad.py`**: Advanced VQE gradient execution computing the exact Parameter-Shift Rule gate-by-gate via the chain rule over a massively parallel 73,500-track JAX batch array. Produces `data/vqe_jax_gradient.csv` and `images/vqe_jax_gradient.png`.
@@ -77,13 +80,18 @@ Dense-Evolution-Discovery/
 
 ### 1. Quantum Phase Transition & Order Parameters
 
-We present a rigorous physical validation of the longitudinal spin-correlation order parameter $\langle H_{zz} \rangle$ governed by the 1D Transverse Field Ising Model Hamiltonian:
+`scan_ising.py`'s original claim here (**$g = 1.309$**, "a rigorous physical validation" using a "true variational ansatz") did not hold up under independent verification and is kept only as documented history. Two follow-up scripts corrected it:
 
-$$H = -\sum_{i} Z_i Z_{i+1} - g\sum_{i} X_i$$
+**`ising_exact_verification.py`** built the exact 1D TFIM Hamiltonian $H = -\sum_i Z_iZ_{i+1} - g\sum_i X_i$ (same 11-bond open chain, $N=12$) via `scipy.sparse` and diagonalized it with Lanczos (`eigsh`). The real critical point is **$g = 0.860$**, not 1.309 — a 52% miss. The two curves' shapes correlate reasonably (Pearson $r=0.969$) but the original's susceptibility peak is broad/smeared, a crossover artifact rather than a real transition.
 
-As the transverse field coupling strength $g$ sweeps from $0.0$ to $2.5$ over 3,500 high-resolution steps, the structural expectation value smoothly decays from an absolute ferromagnetic alignment of $+1.0000$ down to $+0.0050$. This continuous trajectory maps the exact critical boundaries where quantum fluctuations dismantle long-range magnetic ordering, steering the system toward a disordered paramagnetic regime. The critical phase transition boundary is resolved via quantum susceptibility metrics at exactly **$g = 1.309$** with a maximum peak susceptibility of **$1.0000$** under zero-drift conditions.
+**`scan_ising_vqe.py`** went further and made the *same* circuit structure (CX–RZ–CX per bond, RX per qubit — same shared-parameter convention: one $\theta$ for every RZ, one $\phi$ for every RX) genuinely variational: $\theta,\phi$ are optimized by real Adam gradient descent (exact chain-rule Parameter-Shift Rule, `dense_evolution.compiler`'s own JIT primitives) to minimize $E(\theta,\phi;g) = -\sum_i\langle Z_iZ_{i+1}\rangle - g\sum_i\langle X_i\rangle$ at 200 points across $g\in[0,2.5]$, cross-validated against the exact Lanczos energies at every point. The result is a **structural negative result**, not a tuned success, and it explains *why* the original curve looked like a phase transition at all:
 
-The ansatz deploys alternating CX–RZ–CX entangling blocks across all 11 nearest-neighbor qubit pairs on a 12-qubit chain, followed by parametric RX rotations scaled to the transverse field strength ($\theta = 0.6 \cdot g$). The `<H_zz>` order parameter is computed analytically from the statevector probability distribution via bitwise parity extraction.
+1. **$\theta$ (the RZ angle) is provably inert.** CX–RZ–CX is diagonal in the computational basis (it implements $\exp(-i\theta/2\, Z_qZ_{q+1})$ up to a global phase), and it acts on $|0\ldots0\rangle$ — already an eigenstate of every $Z_qZ_{q+1}$ — so it contributes only an unobservable global phase. Confirmed by exact parameter-shift: $\max|\partial E/\partial\theta| = 2.0\times10^{-14}$ across the sweep, machine-precision zero.
+2. **RX($\phi$) cannot produce any $\langle X\rangle$ response either**, because RX is generated by $X$ and therefore commutes with it: $\langle X_q\rangle$ is invariant under RX($\phi$) applied to qubit $q$, and $|0\ldots0\rangle$ already has $\langle X_q\rangle=0$. Confirmed numerically: $\sum_q\langle X_q\rangle = 4.4\times10^{-17}$ at $\theta=1.2,\phi=1.0$.
+
+Together, $E(\theta,\phi;g) = -(N-1)\cos^2(\phi)$ for this exact ansatz — **$g$ never enters the energy at all**. Real minimization confirms it: the optimized $\phi^\star(g)$ converges to $\approx 0$ for *every* $g$ (final $|\phi^\star|<0.02$ rad everywhere), giving a $\langle ZZ\rangle$ curve pinned in $[0.9997, 1.0000]$ across the whole sweep — flat, not a phase transition — and an energy gap against the exact ground state that grows unboundedly with $g$ (VQE $-$ exact: $+0.00$ at $g=0$, $+2.81$ at $g=0.86$, $+6.88$ at $g=1.31$, $+20.11$ at $g=2.5$; the un-optimized fixed ansatz is worse everywhere except $g=0$: $+0.00$ / $+5.48$ / $+12.38$ / $+31.05$). The original's $g=1.309$ "critical point" was purely a trigonometric artifact of the arbitrary, non-variational $\phi=0.6g$ heuristic ($\langle ZZ\rangle = \cos^2(0.6g)$ to float64 precision) — it never had any connection to energy minimization or the transverse field's actual physics. A genuinely variational ansatz for this model needs to break these two degeneracies (e.g. reorder the circuit so RX creates superposition *before* any diagonal ZZ-coupling gate acts, or use a generator other than $X$ itself for the field-coupling rotation) — this repo does not attempt that here; the honest conclusion is that this specific circuit shape cannot do VQE on the TFIM at all, regardless of how well its two parameters are optimized.
+
+**`ising_freefermion_verification.py`** provides a third, fully independent confirmation of $g^\star=0.860$, using a different algorithm from either of the above: the open TFIM chain is exactly solvable via Jordan-Wigner fermionization + Bogoliubov-de-Gennes diagonalization (a $24\times24$ single-particle matrix at $N=12$, vs. the $4096$-dim many-body Hamiltonian diagonalized by `ising_exact_verification.py`). The free-fermion pipeline is self-tested against brute-force many-body ED at small $N$ (max error $<10^{-8}$) before being trusted at $N=12$; its $\langle ZZ\rangle(g)$ curve then agrees with the Lanczos result pointwise to $\sim10^{-15}$, and its susceptibility peak lands at $g^\star=0.8600$, exactly matching. A secondary bulk-gap indicator (the second-lowest single-particle mode, once the open chain's trivial Majorana edge zero-mode is excluded from the naive lowest mode) gives a consistent $g^\star=0.87$. With three independent methods — a fixed non-optimized ansatz's smeared crossover, exact many-body Lanczos, and exact free-fermion BdG — all agreeing on $g\approx0.86$, and a genuinely variational version of the original ansatz proving it is structurally incapable of finding any critical point at all, the case is closed: $g=1.309$ was never physical.
 
 [![Quantum Ising Phase Scan and Susceptibility](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)
 
@@ -612,6 +620,9 @@ pytest tests/ -v
 # safe to run from the repo root regardless of your current directory:
 python scripts/scan_ising.py
 python scripts/plot_ising.py
+python scripts/ising_exact_verification.py
+python scripts/scan_ising_vqe.py
+python scripts/ising_freefermion_verification.py
 python scripts/zne_mitigation.py
 python scripts/vqe_gradient.py
 python scripts/vqe_jax_grad.py
@@ -644,7 +655,10 @@ All produced under `data/` when you run the corresponding script (see [Repositor
 
 | CSV File | Description | Rows |
 |---|---|---|
-| `transizione_fase_ising.csv` | TFIM order parameter vs transverse field g | 3,500 |
+| `transizione_fase_ising.csv` | TFIM order parameter vs transverse field g (fixed, non-optimized ansatz) | 3,500 |
+| `ising_exact_verification.csv` | Exact Lanczos TFIM ground state vs g, cross-checked against the fixed ansatz | 501 |
+| `scan_ising_vqe.csv` | Adam+PSR-optimized (theta, phi) VQE energy/ZZ vs g, cross-checked against exact | 200 |
+| `ising_freefermion_verification.csv` | Independent free-fermion (JW+BdG) TFIM ZZ/susceptibility/gap vs g, cross-checked against Lanczos | 501 |
 | `dati_mitigazione_zne.csv` | ZNE ideal / noisy / mitigated energies vs k | 25 |
 | `vqe_gradient_landscape.csv` | VQE energy and finite-diff gradient vs θ | 3,500 |
 | `vqe_jax_gradient.csv` | VQE energy and PSR gradient vs θ (JAX batch) | 3,500 |
