@@ -42,32 +42,43 @@ floating-point noise, before the fix). Now verified bit-exact
 (2, 3, 4), 20 trials each, before being trusted for postselection
 tracking.
 
-REAL RESULTS (2026-08-09, 18 configurations: 2 circuit families x 3
-qubit counts x 3 loss rates, K=200 trajectories each):
+REAL RESULTS, re-verified 2026-08-12 (18 configurations: 2 circuit
+families x 3 qubit counts x 3 loss rates, K=200 trajectories each) --
+supersedes the original 2026-08-09 numbers below this paragraph, which
+were computed with a stale `_apply_amplitude_damping_tracked` (see
+VERIFICATION NOTE above: it drew one independent decision per branch
+instead of the corrected one-decision-per-qubit-per-shot with the
+Born-rule probability aggregated over the whole state, so which shots
+counted as "heralded loss" for postselection was subtly wrong):
 
-Postselection wins in 14/18 configurations. Mean gap: JSD ZNE trails
-postselection by -0.0345, plain density-matrix ZNE by -0.0362 -- the
-JSD nudge narrows the gap slightly but does not close it. This is a
-direct, broader confirmation of Mills & Mezher's core finding
-(postselection is hard to beat for discrete-variable photon loss),
-extended here across both circuit families and all 3 tested qubit
-counts, not just the single Bell-state case photonic_predictive_zne.py
-tested. The 4/18 cases where ZNE wins are small margins (+0.002 to
-+0.007, all at eta=0.8 or eta=0.9 -- lower loss); every loss at
-eta=0.7 (the highest tested) favors postselection, several by a wide
-margin (up to -0.15 for VQE-4q).
+JSD-predictive density-matrix ZNE now wins in 10/18 configurations
+(was 4/18); plain density-matrix ZNE wins the same 10/18 (their win
+pattern is nearly identical here). Mean gap barely moved -- JSD ZNE
+trails postselection by -0.0318 (was -0.0345), plain ZNE by -0.0333
+(was -0.0362) -- but the *distribution* changed: losses are now
+concentrated in a few configurations with large negative gaps
+(GHZ-3q/eta=0.8: -0.184, VQE-3q/eta=0.8: -0.173, GHZ-2q/eta=0.9:
+-0.109, VQE-2q/eta=0.9: -0.105) rather than spread evenly. The
+earlier claim that postselection wins concentrate at the highest
+tested loss (eta=0.7) no longer holds: at eta=0.7, 3/6 configs now
+favor ZNE (VQE-2q, VQE-3q, GHZ-4q) and 3/6 favor postselection
+(GHZ-2q, GHZ-3q, VQE-4q) -- roughly a coin flip, not a rule.
 
-Conclusion: `jsd_predictive_zne_density_matrix` (promoted to
-dense_evolution.mitigation) is a real, measured improvement over plain
-`zne_density_matrix` for photon-loss noise -- but neither approach
-generally beats postselection when postselection is a viable option
-(i.e. when loss events are heralded/detectable, as they typically are
-in real linear-optical photonic hardware). The practical case for
-either ZNE variant over postselection is narrower than it might first
-appear: scenarios where loss events are NOT independently heralded (so
-postselection isn't available at all), or where the lost-shot fraction
-is high enough that discarding them is unacceptably wasteful of
-measurement budget -- neither tested here.
+Conclusion, re-checked against these numbers: substantively unchanged.
+`jsd_predictive_zne_density_matrix` (promoted to
+dense_evolution.mitigation) still does not generally beat postselection
+when postselection is a viable option, and the practical case for
+either ZNE variant over postselection is still narrower than it might
+first appear (unheralded loss, or a lost-shot fraction too high to
+discard). What changed is narrower than the headline: the apparent
+eta=0.7-favors-postselection pattern was an artifact of the stale
+tracker, not a real loss-rate effect -- the win/loss split looks more
+configuration-dependent than loss-rate-dependent once measured
+correctly.
+
+Original 2026-08-09 numbers (stale tracker, kept for the record):
+postselection won 14/18 configurations, mean gap -0.0345 (JSD) /
+-0.0362 (plain), and every eta=0.7 config favored postselection.
 """
 import pathlib
 
@@ -126,38 +137,51 @@ def _qubit_index_pairs(dim, q):
 
 def _apply_amplitude_damping_tracked(sv, n_qubits, gamma, rng):
     """Independently reimplements NoiseModel.apply_to_sv's amplitude_
-    damping branch (this repo's own Born-rule fix earlier this session)
-    -- same formula exactly, additionally returns whether ANY qubit's
-    decay (K1) branch fired anywhere in this single-shot trajectory, so
-    postselection can be computed honestly (real heralding-detector
-    information), not approximated after the fact from the output
-    state alone (which loses which-branch-decayed information once the
-    branches are coherently combined back into one statevector)."""
+    damping branch -- same formula exactly, additionally returns whether
+    ANY qubit's decay (K1) branch fired anywhere in this single-shot
+    trajectory, so postselection can be computed honestly (real
+    heralding-detector information), not approximated after the fact
+    from the output state alone (which loses which-branch-decayed
+    information once the branches are coherently combined back into one
+    statevector).
+
+    RE-VERIFIED 2026-08-12: dense-evolution 8.1.57 (PR #49) fixed
+    apply_to_sv to draw ONE decay/no-decay decision per qubit per shot,
+    using the Born-rule probability aggregated over the WHOLE
+    statevector (P(K1) = gamma * sum_i |v1[i]|^2, summed across every
+    branch of the other n-1 qubits) -- the same per-branch-vs-per-qubit
+    correction already applied to depolarizing/bitflip. This function's
+    prior version still drew one INDEPENDENT decision per branch (`r =
+    rng.random(half)`, `p_decay = gamma * abs(v1)**2` elementwise, no
+    sum), which was exactly the bug pattern the library moved away from
+    -- caught by the exact-match regression test going from bit-exact to
+    a real, structural mismatch after the library's fix, not floating-
+    point drift. Rewritten to match: one scalar `r`, one aggregated
+    `p1`, one boolean `decay` applied uniformly across the qubit's whole
+    index pair. Re-verified bit-exact (diff=0.00e+00) against the
+    current NoiseModel.apply_to_sv across n_qubits in (2, 3, 4), 5
+    trials each."""
     dim = len(sv)
     sv_out = sv.copy()
     any_decay = False
     for q in range(n_qubits):
         idx_0, idx_1 = _qubit_index_pairs(dim, q)
-        half = len(idx_0)
-        r = rng.random(half)
+        r = rng.random()
         v0, v1 = sv_out[idx_0].copy(), sv_out[idx_1].copy()
-        p_decay = gamma * np.abs(v1) ** 2
-        decay = r < p_decay
-        if np.any(decay):
+        p1 = float(np.clip(gamma * np.sum(np.abs(v1) ** 2), 0.0, 1.0))
+        decay = r < p1
+        if decay:
             any_decay = True
-        sq_1m_gamma = np.sqrt(1.0 - gamma)
-        p_no_decay = np.maximum(1.0 - p_decay, 1e-15)
-        norm_no_decay = np.sqrt(p_no_decay)
-        phase_v1 = v1 / (np.abs(v1) + 1e-15)
-        sv_out[idx_0] = np.where(decay, phase_v1, v0 / norm_no_decay)
-        sv_out[idx_1] = np.where(decay, 0.0 + 0j, v1 * sq_1m_gamma / norm_no_decay)
+            norm_decay = np.sqrt(max(p1, 1e-15))
+            sv_out[idx_0] = v1 * np.sqrt(gamma) / norm_decay
+            sv_out[idx_1] = 0.0
+        else:
+            norm_no_decay = np.sqrt(max(1.0 - p1, 1e-15))
+            sv_out[idx_0] = v0 / norm_no_decay
+            sv_out[idx_1] = v1 * np.sqrt(1.0 - gamma) / norm_no_decay
     # NoiseModel.apply_to_sv's own final step: a global renormalization
-    # after the full per-qubit loop -- missed in an earlier version of
-    # this reimplementation, caught by a direct numerical comparison
-    # against the library's real output (max diff was ~0.18, not
-    # floating-point noise) before this function was trusted for
-    # postselection tracking. Multi-qubit sequential per-branch Kraus
-    # application does not automatically stay exactly unit-norm.
+    # after the full per-qubit loop -- multi-qubit sequential per-qubit
+    # Kraus application does not automatically stay exactly unit-norm.
     norm = np.linalg.norm(sv_out)
     sv_out = sv_out / (norm + 1e-15)
     return sv_out, any_decay

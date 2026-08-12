@@ -102,6 +102,31 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 # either -- specifically improved on static AT the critical theta=0.62 case
 # (0.175 vs. static's 0.248), something this SNR-based attempt did not
 # reproduce (it made that case worse, 0.307 vs. 0.263).
+#
+# RE-VERIFIED 2026-08-12 after dense-evolution 8.1.57 (PR #49) fixed
+# NoiseModel.apply_to_sv's depolarizing channel (one Pauli decision per
+# qubit per shot, applied globally -- see zne_stabilized_psr_gradient.py's
+# own re-verification note for the mechanism). Re-measured at n_trials=40,
+# n_shots=60 (smaller budget than the table above, for CI speed):
+#
+#   theta   static   SNR-adaptive
+#   0.38    0.4120   0.5310   (now WORSE than static -- the one claimed win
+#                              above is gone)
+#   1.00    0.6028   0.7758   (now clearly worse, not "essentially tied")
+#
+# The single bright spot in the original table -- theta=0.38 beating static
+# -- did not survive the corrected noise model: SNR-adaptive is now
+# dominated by static at every theta re-measured, same as it already was at
+# 0.62 (and, separately, the same collapse-of-static's-own-edge finding
+# from zne_stabilized_psr_gradient.py/zne_adaptive_psr_gradient.py does NOT
+# rescue this approach the way it helped the SEM-based adaptive variant --
+# SNR-adaptive's correction is attenuated in a way that tracks the wrong
+# signal regardless of what static itself is doing, per the WHY section
+# above, which is unaffected by this noise-model change). Conclusion
+# strengthens, it doesn't reverse: this SNR-threshold direction has no
+# surviving positive result to report, not even a narrow one. Development
+# stays halted; nothing here changes the recommendation to look at
+# zne_adaptive_psr_gradient.py's SEM-based model instead.
 # ═══════════════════════════════════════════════════════════════════════════
 
 N_Q = 6

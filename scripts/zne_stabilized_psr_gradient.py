@@ -94,6 +94,39 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 # variant; whether increasing shot count for the ZNE side specifically
 # could close or reverse its variance disadvantage while keeping the bias
 # win (plausible but unverified here).
+#
+# RE-VERIFIED 2026-08-12 after dense-evolution 8.1.57 (PR #49) fixed
+# NoiseModel.apply_to_sv's depolarizing channel to draw one Pauli decision
+# per qubit per shot (applied globally) instead of one independent decision
+# per computational-basis branch -- this changed the noise's correlation
+# structure on an entangled state, which is exactly what this experiment's
+# multi-qubit ansatz produces mid-circuit. Re-measured at n_trials=40,
+# n_shots=60 (smaller shot budget than the original table above, for CI
+# speed -- see the ratios, not the raw magnitudes, for a fair comparison):
+#
+#   theta=0.38: naive_rmse=0.7966  zne_rmse=0.4890  (zne ~1.6x better -- same
+#               qualitative story as the original table's theta=0.38 row)
+#   theta=1.00: naive_rmse=0.6015  zne_rmse=0.5992  naive_std=0.314  zne_std=0.598
+#
+# theta=0.38 is qualitatively unchanged: ZNE-pre-PSR still clearly reduces
+# RMSE by cutting bias more than it costs in variance.
+#
+# theta=1.00 is NOT unchanged, and this is the real finding here: the RMSE
+# advantage has essentially disappeared (0.5992 vs 0.6015, a ~0.4% gap --
+# well inside run-to-run noise; a smaller-budget rerun at n_trials=15 even
+# flipped the sign). Decomposing into bias/std explains why: ZNE's bias
+# reduction actually got MUCH stronger under the corrected noise (bias
+# ~0.513 -> ~0.033, over 15x smaller, computed from
+# bias = sqrt(rmse^2 - std^2)), but ZNE's variance amplification also grew
+# enough (std 0.314 -> 0.598, ~1.9x) to erase essentially the entire RMSE
+# win. theta=1.00 has quietly moved into the same territory as the theta=0.62
+# zero-crossing case: not "loses on every axis" like 0.62, but "wins on bias,
+# loses enough on variance that RMSE is a coin flip" -- a third regime this
+# script's original theta sweep didn't have a data point for. theta=0.20 and
+# 0.62 were not re-measured (0.62's "documented exception" still holds under
+# the current tests, unaffected by this finding). See
+# tests/test_zne_stabilized_psr_gradient.py for how the theta=1.00 assertion
+# was loosened accordingly -- it no longer claims a reliable RMSE win there.
 # ═══════════════════════════════════════════════════════════════════════════
 
 N_Q = 6
