@@ -9,6 +9,13 @@ fix the theta=0.62 zero-crossing regression that motivated it (it makes
 that case worse, not better at the full study budget). These tests lock in
 the honest, verified findings, not the originally-hoped-for outcome.
 
+Re-verified 2026-08-12 after dense-evolution 8.1.57 fixed NoiseModel's
+depolarizing channel: the study's ONE claimed positive result (SNR-adaptive
+beating static at theta=0.38) did not survive -- see
+test_snr_adaptive_no_longer_beats_static_at_a_large_gradient_theta below.
+This is now a negative-result study with no surviving bright spot, not a
+mostly-negative one with an exception.
+
 Note: an attempt to also lock in "raising SNR_TARGET makes theta=0.62
 worse" as a strict CI regression test was dropped -- verified directly,
 that comparison is too fragile at CI-sized budgets to reproduce reliably
@@ -55,7 +62,9 @@ def _stable_seed(*parts) -> int:
 m = _import_script("zne_snr_adaptive_psr_gradient")
 
 _TEST_THETAS = [0.38]
-_N_TRIALS = 15
+_N_TRIALS = 40  # raised from 15 (2026-08-12), matching the other two
+# ZNE-PSR test files, after the corrected depolarizing channel changed
+# this comparison's outcome -- see test_snr_adaptive_no_longer_beats_static.
 _N_SHOTS = 60
 
 
@@ -123,23 +132,22 @@ def test_snr_adaptive_reduces_exactly_to_static_at_high_snr():
     )
 
 
-@pytest.mark.xfail(
-    reason="dense-evolution 8.1.57 fixed NoiseModel.apply_to_sv's depolarizing "
-           "channel sampling (see dense-evolution PR #49); this test's "
-           "SNR-adaptive-beats-static ordering claim needs re-verification "
-           "against the corrected noise model, not just a threshold tweak. "
-           "Tracked, not silently dropped.",
-    strict=False,
-)
-def test_snr_adaptive_beats_static_at_a_large_gradient_theta():
-    """The one robust, reproducible win found in this study: at theta=0.38
-    (large exact-gradient magnitude), the SNR-adaptive correction reliably
-    beats the static one -- confirmed at both the full study budget (40
-    trials/200 shots: 0.862 vs 0.920) and this test's smaller CI budget."""
+def test_snr_adaptive_no_longer_beats_static_at_a_large_gradient_theta():
+    """Re-verified 2026-08-12, and the finding REVERSED: this test used to
+    lock in "the one robust, reproducible win" in this study -- SNR-adaptive
+    beating static at theta=0.38 (40 trials/200 shots: 0.862 vs 0.920).
+    After dense-evolution 8.1.57's depolarizing-channel fix (see the
+    top-of-file RE-VERIFIED note in zne_snr_adaptive_psr_gradient.py), that
+    win is gone: SNR-adaptive is now clearly WORSE than static here too,
+    the same as it already was at theta=0.62/1.0. This SNR-threshold
+    approach no longer has any surviving positive result -- kept as its own
+    (renamed) test, not silently deleted, so the reversal stays visible."""
     theta = 0.38
     exact, static_vals, snr_vals = _RESULTS[theta]
     static_rmse = m._rmse(static_vals, exact)
     snr_rmse = m._rmse(snr_vals, exact)
-    assert snr_rmse < static_rmse, (
-        f"theta={theta}: SNR-adaptive RMSE {snr_rmse:.4f} should beat static RMSE {static_rmse:.4f}"
+    assert snr_rmse > static_rmse, (
+        f"theta={theta}: SNR-adaptive RMSE {snr_rmse:.4f} should now be WORSE than static RMSE "
+        f"{static_rmse:.4f} -- if SNR-adaptive is winning again, that's a further change from "
+        f"the 2026-08-12 re-verification and needs its own investigation"
     )

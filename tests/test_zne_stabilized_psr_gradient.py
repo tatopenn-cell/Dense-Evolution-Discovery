@@ -50,7 +50,9 @@ m = _import_script("zne_stabilized_psr_gradient")
 # amplification has nothing to buy against.
 _TEST_THETAS = [0.38, 1.0]
 _ZERO_CROSSING_THETA = 0.62
-_N_TRIALS = 15
+_N_TRIALS = 40  # raised from 15 (2026-08-12): the corrected depolarizing
+# channel's changed variance made 15 trials too unstable at theta=1.0 --
+# see test_zne_pre_psr_rmse_is_roughly_tied_at_theta_1_0.
 _N_SHOTS = 60
 
 
@@ -139,26 +141,46 @@ def test_zne_pre_psr_has_higher_trial_to_trial_variance_than_naive():
         )
 
 
-@pytest.mark.xfail(
-    reason="dense-evolution 8.1.57 fixed NoiseModel.apply_to_sv's depolarizing "
-           "channel sampling (see dense-evolution PR #49); this test's "
-           "ZNE-pre-PSR-beats-naive RMSE ordering claim needs re-verification "
-           "against the corrected noise model, not just a threshold tweak. "
-           "Tracked, not silently dropped.",
-    strict=False,
-)
 def test_zne_pre_psr_has_lower_rmse_away_from_a_gradient_zero_crossing():
     """The metric that matters for 'stabilized' where the exact gradient
     magnitude is large: RMSE = sqrt(bias^2 + std^2) against the exact
-    gradient. Despite higher variance, ZNE-pre-PSR's much larger bias
-    reduction nets a clearly lower RMSE than the naive noisy PSR gradient,
-    at theta=0.38 and theta=1.0."""
-    for theta, (exact, naive_vals, zne_vals) in _RESULTS.items():
-        naive_rmse = _rmse(naive_vals, exact)
-        zne_rmse = _rmse(zne_vals, exact)
-        assert zne_rmse < naive_rmse, (
-            f"theta={theta}: ZNE RMSE {zne_rmse:.4f} should be lower than naive RMSE {naive_rmse:.4f}"
-        )
+    gradient. At theta=0.38, ZNE-pre-PSR's much larger bias reduction nets
+    a clearly lower RMSE than the naive noisy PSR gradient.
+
+    theta=1.0 is NOT asserted here as a reliable win anymore. Re-verified
+    2026-08-12 after dense-evolution 8.1.57's depolarizing-channel fix (see
+    the top-of-file note in zne_stabilized_psr_gradient.py): at theta=1.0
+    the RMSE gap has collapsed to ~0.4% (well inside run-to-run noise --
+    bias improved a lot, but variance amplification grew enough to erase
+    almost the entire win), unlike theta=0.38's robust ~1.6x margin. See
+    test_zne_pre_psr_rmse_is_roughly_tied_at_theta_1_0 below for that
+    honest, weaker claim."""
+    exact, naive_vals, zne_vals = _RESULTS[0.38]
+    naive_rmse = _rmse(naive_vals, exact)
+    zne_rmse = _rmse(zne_vals, exact)
+    assert zne_rmse < naive_rmse, (
+        f"theta=0.38: ZNE RMSE {zne_rmse:.4f} should be lower than naive RMSE {naive_rmse:.4f}"
+    )
+
+
+def test_zne_pre_psr_rmse_is_roughly_tied_at_theta_1_0():
+    """Honest, re-verified 2026-08-12 finding: under dense-evolution
+    8.1.57's corrected depolarizing channel, ZNE-pre-PSR's RMSE advantage
+    at theta=1.0 has essentially disappeared -- it is no longer a reliable
+    win (nor a reliable loss), just within noise of naive. This replaces
+    the old claim (a clear ~2x RMSE win at theta=1.0, see the historical
+    table in zne_stabilized_psr_gradient.py) rather than silently deleting
+    it. Asserted as a loose bound, not a directional winner, since the sign
+    of the (tiny) gap is not reproducible run to run at this budget."""
+    exact, naive_vals, zne_vals = _RESULTS[1.0]
+    naive_rmse = _rmse(naive_vals, exact)
+    zne_rmse = _rmse(zne_vals, exact)
+    assert zne_rmse < naive_rmse * 1.2, (
+        f"theta=1.0: ZNE RMSE {zne_rmse:.4f} should be within ~20% of naive RMSE "
+        f"{naive_rmse:.4f} (roughly tied, not a clear loss) -- if ZNE is now clearly "
+        f"WORSE than this, that is a bigger change than the 2026-08-12 re-verification "
+        f"found and needs its own investigation, not just a threshold bump"
+    )
 
 
 def test_zne_pre_psr_variance_penalty_persists_near_a_gradient_zero_crossing():

@@ -127,6 +127,37 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 # the most balanced of the three explored in the small-budget sweep. It is
 # a compromise point, not a solution -- do not present it as one in any
 # downstream summary of this work.
+#
+# RE-VERIFIED 2026-08-12 after dense-evolution 8.1.57 (PR #49) fixed
+# NoiseModel.apply_to_sv's depolarizing channel (one Pauli decision per
+# qubit per shot, applied globally, instead of one independent decision
+# per computational-basis branch -- see zne_stabilized_psr_gradient.py's
+# own re-verification note for the full mechanism). Re-measured at
+# n_trials=40, n_shots=60 (smaller budget than the table above, for CI
+# speed -- compare ratios, not raw magnitudes):
+#
+#   theta   naive    static   adaptive
+#   0.38    0.7966   0.4120   0.7125
+#   1.00    0.6015   0.6028   0.5784
+#
+# theta=0.38 is qualitatively unchanged: static wins big, adaptive is a
+# worse compromise much closer to naive -- same story as the original
+# table.
+#
+# theta=1.00 is NOT unchanged, and it changes the blanket claim above ("the
+# adaptive correction does NOT win outright at ANY theta"). That claim no
+# longer holds: static's own RMSE advantage over naive at theta=1.00 has
+# collapsed under the corrected noise (0.6028 vs 0.6015 -- see
+# zne_stabilized_psr_gradient.py's parallel finding, where the same
+# 2-point-Richardson correction's bias win at theta=1.00 got fully offset
+# by a variance increase). With static no longer clearly ahead of naive
+# there, adaptive's partial attenuation -- which always sits between the
+# two -- ends up with the lowest RMSE of the three at theta=1.00, a real
+# outright win, not a small-sample artifact (reproduced consistently across
+# n_trials in {15, 40, 80} at fixed n_shots=60). The mechanism (SEM being a
+# poor confidence proxy, independent of the actual bias/noise ratio) is
+# unchanged; what changed is that static stopped being a strictly-better
+# reference to be dominated BY at this particular theta.
 # ═══════════════════════════════════════════════════════════════════════════
 
 N_Q = 6
