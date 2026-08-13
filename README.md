@@ -630,7 +630,7 @@ Full write-up, including both design iterations and the verification bug caught 
 
 ### 23. Steane [[7,1,3]] Quantum Error Correction — Native Implementation Through a Real Hardware Bridge
 
-A five-part investigation into the 7-qubit Steane code, moving from a correctness-verified simulation to an actual bridge toward real IBM hardware.
+A six-part investigation into the 7-qubit Steane code, moving from a correctness-verified simulation to an actual bridge toward real IBM hardware, then to a real photonic-erasure decoding advantage.
 
 **Block 1 — encoding, syndrome table, correction, real noise.** Built the Steane `|0>_L` encoding natively in Dense-Evolution. A first attempt superposed over all 16 codewords of the classical Hamming[7,4,3] code instead of only the 8 codewords of its dual, giving a mixed state (`<Z_L>=0` instead of +1) — caught and fixed with the correct systematic generator. After the fix: all 6 stabilizer generators give exactly +1, logical `X_L` correctly flips `<Z_L>`, and all 21 single-qubit-error syndrome cases (7 qubits x X/Y/Z) are correctly localized and corrected to fidelity 1.0. A logical-vs-physical error-rate sweep under `NoiseModel`'s real depolarizing channel (4000 trials/point) found the code helping up to p~0.105 and starting to hurt above p~0.12 — the expected distance-3 threshold behavior, measured rather than assumed.
 
@@ -650,7 +650,15 @@ A five-part investigation into the 7-qubit Steane code, moving from a correctnes
 
 [![Encoded-state fidelity under real FakeSherbrooke (IBM Eagle) calibration noise](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.21.0/steane_block5_qiskit_bridge_fidelity.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.21.0/steane_block5_qiskit_bridge_fidelity.png)
 
-Scripts: `scripts/steane_code_block1.py` through `scripts/steane_code_block5_qiskit_bridge.py`, plus supporting cross-checks `scripts/ising_exact_verification.py`-style independents (`scripts/steane_code_block4_stim_translation.py`'s own STIM build). Produces `data/steane_*.csv` and `images/steane_*.png`.
+**Block 6 — heralded-erasure (photon-loss) decoding, grounded in real 2025 literature.** Motivated directly by this repo's own photon-loss work (`photonic_zne_multi_circuit_postselection.py`, re-verified earlier this session) and by Gu, Vaknin, Retzker & Kubica, "Optimizing quantum error correction protocols with erasure qubits," [arXiv:2408.00829](https://arxiv.org/abs/2408.00829), PRX Quantum 6, 040354 (2025) — real circuit-level STIM simulation of heralded erasures, the standard noise model for loss-dominant photonic qubit architectures. Tests a concrete, foundational claim directly rather than citing it on faith: Grassl, Beth & Pellizzari, "Codes for the quantum erasure channel," Phys. Rev. A 56, 33 (1997) -- a distance-d code corrects up to (d-1) erasures, vs. only floor((d-1)/2) arbitrary unlocated errors. For Steane (d=3): 1 arbitrary error vs. 2 known-location erasures.
+
+STIM's native `HERALDED_ERASE(p)` instruction was verified directly before use, not assumed from documentation: over 20,000 shots, P(herald)=0.5083 (target 0.5), P(measure 1 | no herald)=0.0000 exactly (undisturbed), P(measure 1 | herald)=0.5079 (maximally mixed, as claimed). Two decoders run on the IDENTICAL noisy shots: a standard syndrome-only table decoder (blind to which qubits were actually lost, structurally limited to one correction) vs. an erasure-aware decoder that, when exactly 2 qubits are heralded, brute-forces all 9 Pauli-pair assignments on just those two qubits and applies whichever one reproduces the observed syndrome exactly.
+
+Result, 40,000 trials x 10 physical-error-rate points (400,000 total samples): on shots with exactly 2 simultaneous heralded erasures, the standard decoder fails ~25% of the time at every tested p (94 to 12,469 such shots per point) -- the erasure-aware decoder achieves **exactly 0 failures on every single one of those shots, at every p tested**, a clean, perfect confirmation of the d-1=2 claim, not an approximate improvement. Overall logical error rate (all shots, not just double-heralds) drops substantially across the whole range: p=0.10, 4.145% -> 1.085% (-74% relative); p=0.25, 18.15% -> 10.35% (-43% relative).
+
+[![Steane erasure-aware vs. standard decoding under real heralded-erasure noise](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.22.0/steane_erasure_conversion_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.22.0/steane_erasure_conversion_sweep.png)
+
+Scripts: `scripts/steane_code_block1.py` through `scripts/steane_code_block6_erasure_conversion.py`, plus supporting cross-checks `scripts/ising_exact_verification.py`-style independents (`scripts/steane_code_block4_stim_translation.py`'s own STIM build). Produces `data/steane_*.csv` and `images/steane_*.png`.
 
 ---
 
