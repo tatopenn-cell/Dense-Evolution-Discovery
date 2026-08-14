@@ -10,6 +10,7 @@ Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense
 
 ## 🆕 Latest Results (start here)
 
+- **[Resilient Operational Topologies](#24-resilient-operational-topologies-the-split-has-a-closed-form-cause)** — the "resilient vs. non-resilient" gate-order split on a 3-qubit CX+X+Z circuit has a closed-form cause (whether $X$ fires before or after $CX$), reproduced identically across all 5 Kraus noise channels this library models.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
 - **[GaAs Parameters via DFT and Dielectric Screening](#19-gaas-parameters-via-dft-and-dielectric-screening)** — a converged, wavefunction-stability-confirmed PBE/STO-3G calculation grounds the model in GaAs's dielectric constant, landing the material in the weakly-correlated regime expected for a conventional semiconductor.
@@ -505,6 +506,26 @@ The honest part: compared directly against **true** postselection (tracking per-
 [![Photonic predictive ZNE vs. postselection](assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)](assets/photonic_predictive_zne/photonic_multi_circuit_postselection.png)
 
 Full writeup, including the two design iterations and the bug caught during verification (a missing final renormalization step in the postselection-tracking reimplementation): **[Photonic Predictive ZNE](photonic_predictive_zne.md)**.
+
+---
+
+### 24. Resilient Operational Topologies: the Split Has a Closed-Form Cause
+
+For a 3-qubit circuit built from one CX and two single-qubit gates (X, Z), the 6 possible application orders split into two groups of 3 — one group stays close together under noise ("resilient"), the other doesn't. Testing all 15 possible ordering pairs under every Kraus channel `NoiseModel` implements (depolarizing, bitflip, phaseflip, amplitude damping, combined) finds the mechanism directly: **it's whether $X$ is applied before or after $CX$.** $CX(q_0,q_1)$ only fires when its control is $1$ — starting from $|000\rangle$, $X$-before-$CX$ flips the control so $CX$ fires ($|110\rangle$); $X$-after-$CX$ leaves the control at $0$ so $CX$ is a no-op ($|100\rangle$). Orderings within a group compute the same noiseless bit string and stay close under any noise; orderings across groups compute different bit strings and diverge sharply — reproduced identically across all three topology labels (Linear_3Q, Ring_3Q, Complete_3Q) and all five noise channels tested.
+
+| Noise channel | Same-group max JS (resilient) | Cross-group max JS (non-resilient) |
+|---|---|---|
+| Depolarizing | 0.0007 – 0.0083 | 0.2977 – 0.3643 |
+| Bitflip | 0.0005 – 0.0055 | 0.2013 – 0.2561 |
+| Phaseflip | exactly 0 | exactly $\ln 2 = 0.6931$ |
+| Amplitude damping | 0.0000 – 0.0401 | 0.4085 – 0.5555 |
+| Combined | 0.0006 – 0.0085 | 0.3698 – 0.4454 |
+
+Phaseflip's exact 0-vs-$\ln 2$ split is the cleanest illustration: $Z$ errors never change which computational-basis state the circuit is in, so the outcome is perfectly deterministic per ordering under phaseflip alone.
+
+[![Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
+
+Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
 
 ---
 
