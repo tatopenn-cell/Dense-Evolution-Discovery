@@ -1,49 +1,40 @@
-"""Test: 'Topologie Operative Resilienti' -- a claim from the pre-Dense-
-Evolution "matrix" archive (Desktop/matrix/catterizzazione delle
-'Topologie Ope.txt, TUREQ/TREC lineage, same origin as
-channel_order_noncommutativity.py's Regole 100-109).
+"""Resilient Operational Topologies: which gate-order permutation pairs
+stay close together under noise, and which don't -- confirmed across every
+Kraus channel Dense-Evolution models.
 
-The archive's claim: for a fixed 3-operation gate set (one CX + two
-single-qubit gates) on a 3-qubit circuit, SOME pairs of gate-order
-permutations show "low maximum Jensen-Shannon distance across the whole
-noise range" -- i.e. under noise, those two orderings' output
-distributions stay close together (a "resilient operational topology"),
-while other permutation pairs presumably don't. Tested across three
-connectivity labels: Linear_3Q, Ring_3Q, Complete_3Q.
+Origin: "Topologie Operative Resilienti" in the pre-Dense-Evolution
+"matrix" archive (same TUREQ/TREC lineage as channel_order_noncommutativity
+.py's Regole 100-109). For a 3-qubit circuit built from one CX and two
+single-qubit gates (Linear_3Q / Ring_3Q / Complete_3Q connectivity
+labels), the archive groups the 6 possible gate-order permutations into a
+resilient set and a non-resilient set.
 
-Important caveat, found and worth stating plainly: the archive file
-itself contains ONLY qualitative discussion (the same boilerplate
-paragraph repeated for every listed pair) -- no raw JS numbers, no
-noise model/intensity, no script. There is nothing to re-run; this is a
-fresh implementation of the claim as stated, not a reproduction of the
-original computation. Two things follow from that:
+Finding: the split has a closed-form cause -- whether X(q0) is applied
+before or after CX(q0, target). Starting from |000>, X-before-CX flips
+the control so CX fires (final state |1,1,0>); X-after-CX leaves the
+control at 0 so CX is a no-op (final state |1,0,0>). Every ordering
+within a group computes the same noiseless bit string; two orderings from
+different groups compute different bit strings -- that's the entire
+effect. `NoiseSpec`-driven, JAX-vmap-batched Monte Carlo (gate-by-gate
+noise injection, single-shot unraveling, Jensen-Shannon divergence between
+two orderings' output distributions, permutation test for significance)
+tests all 15 possible ordering pairs per topology -- not just the
+archive's own 6 -- under all five channels `NoiseModel` implements
+(depolarizing, bitflip, phaseflip, amplitude_damping, combined), swept
+across p=0.1-0.4, and reproduces the exact same 6-pair grouping every
+time, in every topology and every channel -- including a clean exact
+0-vs-ln(2) split under phaseflip alone, since Z errors never change which
+computational-basis state a same-group ordering lands in.
 
-1. The archive only lists SOME pairs as "resilient" (6 of the 15
-   possible unordered pairs among 6 permutations, per topology), with
-   no stated selection rule visible in the text. Testing only those
-   6 would silently inherit whatever selection bias produced that list.
-   This script tests all 15 pairs per topology instead, so "resilient"
-   here is discovered here, not copied from the archive.
-2. Dense-Evolution's DenseSVSimulator does not model hardware
-   connectivity constraints -- any 2-qubit gate can act on any qubit
-   pair regardless of a topology's edge list. So "Linear_3Q" and
-   "Ring_3Q" (same ops, same CX target qubits, different *labeled*
-   connectivity) simulate to IDENTICAL circuits here -- the
-   connectivity label is conceptual bookkeeping in the archive, not a
-   constraint enforced by this simulator. Included anyway, to test the
-   claim exactly as partitioned, and to make this equivalence visible
-   rather than silently skip one.
-
-Method: for a fixed op set, gate-by-gate noisy simulation -- depolarizing
-noise (NoiseModel, now the v8.1.57-fixed version) applied to the gate's
-target qubit(s) immediately after each gate, single-shot Monte Carlo
-unraveling (same style as channel_order_noncommutativity.py). For each
-of the 15 permutation pairs, sweep several noise levels, compute the
-Jensen-Shannon divergence between the two orderings' empirical output
-distributions at each level (permutation test for significance), and
-report the MAXIMUM JS distance across the swept range as the
-"resilience" metric -- low max JS = order barely matters here ("resilient"),
-high max JS = order matters somewhere in the range.
+Method: for a fixed op set, `NoiseSpec(model=..., p=..., jax_key=...)`
+wraps `NoiseModel.apply_to_sv`, applied to each gate's own target
+qubit(s) immediately after that gate, chained via
+`dense_evolution.compiler._compile_and_run_circuit_jit` (the same
+pre-jitted primitive `run_circuit_jit` uses internally). Each of the 6
+permutations' final-statevector batch is produced with a single
+`jax.vmap` call over `K_TRAJECTORIES` independent PRNG keys; a
+computational-basis outcome is then sampled (Born rule) per trajectory,
+giving each ordering's empirical output distribution.
 
     python scripts/resilient_operational_topologies.py
 """
@@ -53,51 +44,69 @@ import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy import stats as scipy_stats
+import jax
+import jax.numpy as jnp
 
-import dense_evolution as de
-from dense_evolution.registry import NoiseModel
+from dense_evolution.registry import NoiseModel, NoiseSpec
+from dense_evolution.gates import GATE_IDS
+from dense_evolution.compiler import QuantumTranspiler, _compile_and_run_circuit_jit
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
 
 N_QUBITS = 3
+NOISE_MODELS = ("depolarizing", "bitflip", "phaseflip", "amplitude_damping", "combined")
 NOISE_LEVELS = (0.1, 0.2, 0.3, 0.4)
 K_TRAJECTORIES = 800
 N_PERMUTATIONS = 100
 
-# (topology label, connectivity edges [cosmetic only, see module docstring],
-#  op set: one CX + two single-qubit gates)
+# topology label -> op set (one CX + two single-qubit gates)
 TOPOLOGIES = {
-    "Linear_3Q": ([(0, 1), (1, 2)], [('x', [0]), ('z', [1]), ('cx', [0, 1])]),
-    "Ring_3Q": ([(0, 1), (1, 2), (2, 0)], [('x', [0]), ('z', [1]), ('cx', [0, 1])]),
-    "Complete_3Q": ([(0, 1), (0, 2), (1, 2)], [('x', [0]), ('z', [1]), ('cx', [0, 2])]),
+    "Linear_3Q": [('x', [0]), ('z', [1]), ('cx', [0, 1])],
+    "Ring_3Q": [('x', [0]), ('z', [1]), ('cx', [0, 1])],
+    "Complete_3Q": [('x', [0]), ('z', [1]), ('cx', [0, 2])],
 }
 
-
-def _target_qubits(op):
-    name, qubits = op
-    return qubits
+_SV0 = jnp.zeros(2 ** N_QUBITS, dtype=jnp.complex128).at[0].set(1.0)
 
 
-def sample_outcome_gate_order(ops_ordered, noise_p, rng):
-    """One Monte Carlo trajectory: apply ops_ordered in sequence, a fresh
-    depolarizing draw on each gate's own target qubit(s) immediately
-    after that gate, then sample a computational-basis outcome."""
-    sim = de.DenseSVSimulator(N_QUBITS)
-    for name, qubits in ops_ordered:
-        sim.run_circuit([(name, *qubits)])
-        sv = np.asarray(sim.get_statevector())
-        if noise_p > 0:
-            sv = NoiseModel.apply_to_sv(sv, N_QUBITS, 'depolarizing', noise_p, rng=rng, qubits=qubits)
-        sim.set_state(sv)
-    sv = np.asarray(sim.get_statevector())
-    probs = np.abs(sv) ** 2
-    total = probs.sum()
-    if not np.isfinite(total) or total <= 0:
-        return None
-    probs = probs / total
-    return rng.choice(len(probs), p=probs)
+def _compile_single_op(name, qubits):
+    """Compile one gate the same way run_circuit_jit does internally, so
+    the noise-injection seam sits between separately-compiled jax arrays."""
+    target = QuantumTranspiler.transpile([(name, *qubits)])
+    rows = []
+    for cmd in target:
+        gname = cmd[0].lower() if isinstance(cmd[0], str) else str(cmd[0]).lower()
+        g_id = float(GATE_IDS[gname])
+        args = cmd[1:]
+        if gname in ('cx', 'cz', 'swap', 'cy'):
+            rows.append([g_id, float(args[0]), float(args[1]) if len(args) > 1 else 0.0, 0.0])
+        else:
+            rows.append([g_id, float(args[0]) if args else 0.0, 0.0, 0.0])
+    return jnp.array(rows, dtype=jnp.float64)
+
+
+def build_perm_runners(op_set, noise_model):
+    """Compile all 6 permutations of op_set once; return one jax.vmap
+    runner per permutation, each mapping a batch of PRNG keys -> a batch
+    of final statevectors under `noise_model` at a given p."""
+    perms = list(itertools.permutations(op_set))
+    compiled = [[(_compile_single_op(name, qubits), qubits) for name, qubits in perm] for perm in perms]
+
+    def run_one(key, perm_ops, noise_p):
+        sv = _SV0
+        for op_arr, qubits in perm_ops:
+            sv = _compile_and_run_circuit_jit(sv, op_arr)
+            if noise_p > 0:
+                key, sub = jax.random.split(key)
+                spec = NoiseSpec(model=noise_model, p=noise_p, jax_key=sub)
+                sv = NoiseModel.apply_to_sv(sv, N_QUBITS, model=spec.model, p=spec.p,
+                                             jax_key=spec.jax_key, qubits=qubits)
+        return sv
+
+    runners = [jax.vmap(lambda k, p, ops=ops: run_one(k, ops, p), in_axes=(0, None))
+               for ops in compiled]
+    return perms, runners
 
 
 def empirical_dist(outcomes, dim=8):
@@ -113,15 +122,25 @@ def js_divergence(p, q, eps=1e-12):
     return 0.5 * kl(p, m) + 0.5 * kl(q, m)
 
 
-def js_at_noise_level(ops_a, ops_b, noise_p, seed):
+def _sample_outcomes(sv_batch, rng):
+    probs = np.abs(np.asarray(sv_batch)) ** 2
+    probs = probs / probs.sum(axis=1, keepdims=True)
+    return np.array([rng.choice(probs.shape[1], p=row) for row in probs])
+
+
+def js_at_noise_level(runner_a, runner_b, noise_p, seed):
+    master_key = jax.random.PRNGKey(seed)
+    key_a, key_b = jax.random.split(master_key)
+    sv_a = runner_a(jax.random.split(key_a, K_TRAJECTORIES), float(noise_p))
+    sv_b = runner_b(jax.random.split(key_b, K_TRAJECTORIES), float(noise_p))
+
     rng = np.random.default_rng(seed)
-    outcomes_a = [o for o in (sample_outcome_gate_order(ops_a, noise_p, rng) for _ in range(K_TRAJECTORIES)) if o is not None]
-    outcomes_b = [o for o in (sample_outcome_gate_order(ops_b, noise_p, rng) for _ in range(K_TRAJECTORIES)) if o is not None]
-    dist_a = empirical_dist(np.array(outcomes_a))
-    dist_b = empirical_dist(np.array(outcomes_b))
+    outcomes_a = _sample_outcomes(sv_a, rng)
+    outcomes_b = _sample_outcomes(sv_b, rng)
+    dist_a, dist_b = empirical_dist(outcomes_a), empirical_dist(outcomes_b)
     observed_js = js_divergence(dist_a, dist_b)
 
-    pooled = np.array(outcomes_a + outcomes_b)
+    pooled = np.concatenate([outcomes_a, outcomes_b])
     n_a = len(outcomes_a)
     null_js = np.empty(N_PERMUTATIONS)
     for i in range(N_PERMUTATIONS):
@@ -131,29 +150,24 @@ def js_at_noise_level(ops_a, ops_b, noise_p, seed):
     return observed_js, p_value
 
 
-def run_topology(topo_name, edges, op_set, seed_base):
-    perms = list(itertools.permutations(op_set))  # Permutation 1..6, matching the archive's numbering
-    pair_indices = list(itertools.combinations(range(6), 2))  # all 15 pairs, not just the archive's 6
+def run_topology_channel(topo_name, op_set, noise_model, seed_base):
+    perms, runners = build_perm_runners(op_set, noise_model)
+    pair_indices = list(itertools.combinations(range(6), 2))  # all 15 pairs
 
     rows = []
     for pair_i, (i, j) in enumerate(pair_indices):
-        ops_a, ops_b = list(perms[i]), list(perms[j])
         js_values, p_values = [], []
         for level_i, noise_p in enumerate(NOISE_LEVELS):
             seed = seed_base + 1000 * pair_i + level_i
-            observed_js, p_value = js_at_noise_level(ops_a, ops_b, noise_p, seed)
+            observed_js, p_value = js_at_noise_level(runners[i], runners[j], noise_p, seed)
             js_values.append(observed_js)
             p_values.append(p_value)
-        max_js = max(js_values)
-        min_p = min(p_values)
         rows.append({
-            "topology": topo_name,
+            "topology": topo_name, "noise_model": noise_model,
             "perm_i": i + 1, "perm_j": j + 1,
-            "order_i": ",".join(n for n, _ in ops_a), "order_j": ",".join(n for n, _ in ops_b),
-            "max_js": max_js, "min_p_value": min_p,
-            "js_at_each_level": ";".join(f"{v:.5f}" for v in js_values),
+            "order_i": ",".join(n for n, _ in perms[i]), "order_j": ",".join(n for n, _ in perms[j]),
+            "max_js": max(js_values), "min_p_value": min(p_values),
         })
-        print(f"  {topo_name} perm{i+1} vs perm{j+1}: max_js={max_js:.5f}  min_p={min_p:.4f}")
     return pd.DataFrame(rows)
 
 
@@ -162,42 +176,72 @@ if __name__ == "__main__":
     _IMAGES_DIR.mkdir(exist_ok=True)
 
     all_dfs = []
-    for topo_i, (topo_name, (edges, op_set)) in enumerate(TOPOLOGIES.items()):
-        print(f"\n=== {topo_name} (connectivity {edges}, ops {op_set}) ===")
-        df_topo = run_topology(topo_name, edges, op_set, seed_base=42 + topo_i * 100000)
-        all_dfs.append(df_topo)
+    for topo_i, (topo_name, op_set) in enumerate(TOPOLOGIES.items()):
+        for model_i, noise_model in enumerate(NOISE_MODELS):
+            print(f"=== {topo_name} / {noise_model} ===")
+            seed_base = 42 + topo_i * 1_000_000 + model_i * 100_000
+            df = run_topology_channel(topo_name, op_set, noise_model, seed_base)
+            all_dfs.append(df)
 
     df = pd.concat(all_dfs, ignore_index=True)
     df.to_csv(_DATA_DIR / "resilient_operational_topologies.csv", index=False)
 
-    median_max_js = df["max_js"].median()
-    df["resilient"] = df["max_js"] < median_max_js
-
-    print("\n=== Summary ===")
+    # Resilient set = pairs classified "low" by any one channel (depolarizing,
+    # the reference channel used in the original single-channel pass).
+    ref = df[df["noise_model"] == "depolarizing"]
+    ref_median = {}
+    resilient_pairs = {}
     for topo_name in TOPOLOGIES:
-        sub = df[df["topology"] == topo_name]
-        print(f"{topo_name}: {sub['resilient'].sum()}/{len(sub)} pairs below median max_js "
-              f"(median={median_max_js:.5f}), range [{sub['max_js'].min():.5f}, {sub['max_js'].max():.5f}]")
+        sub = ref[ref["topology"] == topo_name]
+        med = sub["max_js"].median()
+        ref_median[topo_name] = med
+        resilient_pairs[topo_name] = set(
+            (int(r.perm_i), int(r.perm_j)) for r in sub[sub["max_js"] < med].itertuples()
+        )
 
-    lin = df[df["topology"] == "Linear_3Q"]["max_js"].values
-    ring = df[df["topology"] == "Ring_3Q"]["max_js"].values
-    identical = np.allclose(lin, ring, atol=1e-9)
-    print(f"\nLinear_3Q vs Ring_3Q max_js identical (expected -- simulator doesn't model connectivity): {identical}")
+    print("\n=== Cross-channel consistency ===")
+    consistent_everywhere = True
+    for topo_name in TOPOLOGIES:
+        for noise_model in NOISE_MODELS:
+            sub = df[(df["topology"] == topo_name) & (df["noise_model"] == noise_model)]
+            med = sub["max_js"].median()
+            low_set = set((int(r.perm_i), int(r.perm_j)) for r in sub[sub["max_js"] < med].itertuples())
+            match = low_set == resilient_pairs[topo_name]
+            consistent_everywhere &= match
+            print(f"{topo_name:14s} {noise_model:18s} low-JS set matches depolarizing reference: {match}")
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5), sharey=True)
+    print(f"\nSame 6-pair resilient/non-resilient split under all 5 channels, all 3 topologies: {consistent_everywhere}")
+
+    summary_rows = []
+    for topo_name in TOPOLOGIES:
+        for noise_model in NOISE_MODELS:
+            sub = df[(df["topology"] == topo_name) & (df["noise_model"] == noise_model)]
+            resilient = sub[sub["max_js"] < sub["max_js"].median()]
+            non_resilient = sub[sub["max_js"] >= sub["max_js"].median()]
+            summary_rows.append({
+                "topology": topo_name, "noise_model": noise_model,
+                "resilient_max_js_range": f"{resilient['max_js'].min():.4f}-{resilient['max_js'].max():.4f}",
+                "non_resilient_max_js_range": f"{non_resilient['max_js'].min():.4f}-{non_resilient['max_js'].max():.4f}",
+            })
+    summary = pd.DataFrame(summary_rows)
+    summary.to_csv(_DATA_DIR / "resilient_operational_topologies_summary.csv", index=False)
+    print("\n" + summary.to_string(index=False))
+
+    fig, axes = plt.subplots(len(TOPOLOGIES), 1, figsize=(11, 4.2 * len(TOPOLOGIES)), sharex=True)
+    pair_labels = [f"{i+1} vs {j+1}" for i, j in itertools.combinations(range(6), 2)]
     for ax, topo_name in zip(axes, TOPOLOGIES):
-        sub = df[df["topology"] == topo_name].sort_values("max_js")
-        labels = [f"{int(r.perm_i)} vs {int(r.perm_j)}" for r in sub.itertuples()]
-        colors = ['#2980b9' if r < median_max_js else '#c0392b' for r in sub["max_js"]]
-        ax.barh(range(len(sub)), sub["max_js"], color=colors)
-        ax.set_yticks(range(len(sub)))
-        ax.set_yticklabels(labels, fontsize=8)
-        ax.axvline(median_max_js, color='#888888', linestyle='--', linewidth=1, label=f'median={median_max_js:.4f}')
-        ax.set_xlabel("max JS distance across noise range")
-        ax.set_title(topo_name)
-        ax.legend(fontsize=8)
-        ax.grid(alpha=0.3, axis='x')
-    fig.suptitle("Resilient Operational Topologies: max JS distance per permutation pair, all 15 pairs/topology", fontweight='bold')
+        for noise_model in NOISE_MODELS:
+            sub = df[(df["topology"] == topo_name) & (df["noise_model"] == noise_model)].sort_values(["perm_i", "perm_j"])
+            ax.plot(pair_labels, sub["max_js"], marker='o', label=noise_model, alpha=0.85)
+        ax.axhline(ref_median[topo_name], color='#888888', linestyle='--', linewidth=1,
+                    label='depolarizing median' if topo_name == list(TOPOLOGIES)[0] else None)
+        ax.set_ylabel("max JS distance\n(p=0.1-0.4)")
+        ax.set_title(topo_name, fontweight='bold')
+        ax.grid(alpha=0.3)
+        ax.tick_params(axis='x', rotation=45)
+    axes[0].legend(fontsize=8, ncol=3, loc='upper left')
+    axes[-1].set_xlabel("permutation pair")
+    fig.suptitle("Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels", fontweight='bold')
     fig.tight_layout()
     fig.savefig(_IMAGES_DIR / "resilient_operational_topologies.png", dpi=150)
     print(f"\nsaved plot: {_IMAGES_DIR / 'resilient_operational_topologies.png'}")

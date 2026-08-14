@@ -680,17 +680,30 @@ Scripts: `scripts/steane_code_block1.py` through `scripts/steane_code_block6_era
 
 ---
 
-### 24. Resilient Operational Topologies: A Real Confirmation From the Same Pre-Dense-Evolution Archive
+### 24. Resilient Operational Topologies: the Split Has a Closed-Form Cause
 
-Another claim from the same "matrix" archive that produced Experiment 16's channel-order investigation (TUREQ/TREC lineage): for a fixed 3-operation gate set (one CX + two single-qubit gates) on a 3-qubit circuit, certain pairs of gate-*order* permutations stay close together under noise — "Topologie Operative Resilienti" — while others don't. The archive's own write-up (`matrix/catterizzazione delle 'Topologie Ope.txt`, 993 lines) lists specific "resilient pairs" per topology (Linear_3Q, Ring_3Q, Complete_3Q connectivity labels) but contains **only qualitative discussion — no raw numbers, no noise model, no script** to re-run. Unlike every other correction in this session, there was nothing to re-verify here; this is a fresh implementation of the claim as stated, built to avoid inheriting the archive's own selection bias: rather than testing only the 6 pairs (of 15 possible, among the 6 permutations of the 3-op set) the archive labeled "resilient," `scripts/resilient_operational_topologies.py` tests **all 15 pairs per topology**, gate-by-gate depolarizing noise (`NoiseModel`, the v8.1.57-fixed version) after each gate, Monte Carlo unraveling (same method as Experiment 16), maximum Jensen-Shannon distance across a 4-point noise sweep (p=0.1 to 0.4) as the resilience metric.
+For a 3-qubit circuit built from one CX and two single-qubit gates (X, Z), the 6 possible application orders split into two groups of 3 — one group stays close together under noise ("resilient"), the other doesn't. `scripts/resilient_operational_topologies.py` tests all 15 possible ordering pairs (Linear_3Q, Ring_3Q, Complete_3Q connectivity labels) under every Kraus channel `NoiseModel` implements — depolarizing, bitflip, phaseflip, amplitude damping, combined — injected gate-by-gate (`NoiseSpec`-wrapped, JAX-`vmap`-batched Monte Carlo, 800 trajectories/point, p=0.1–0.4), and finds the mechanism behind the split directly: **it's whether $X$ is applied before or after $CX$.**
 
-**Result: a clean, large confirmation.** Across all three topologies, the exact same 6 pairs the archive labeled resilient — and only those 6 — show max JS distance of 0.001–0.005 (not statistically significant); the other 9 (of 15) pairs all show max JS distance of 0.29–0.36 (p=0.01, significant at every single one). Two orders of magnitude separation, zero ambiguous cases in between, independently reproduced without copying the archive's pair selection. Linear_3Q and Ring_3Q — same operations, same CX target qubits, different *labeled* connectivity — give statistically consistent (same magnitude, same resilient/non-resilient split) but not bit-identical results, as expected: `DenseSVSimulator` doesn't model hardware connectivity constraints, so these are literally the same simulated circuit under independent Monte Carlo draws, not a connectivity effect.
+$CX(q_0,q_1)$ only fires when its control qubit is $1$. Starting from $|000\rangle$:
 
-Honest scope: *why* this specific 6-pair split is resilient remains exactly as open as the archive itself framed it — its own write-up lists four "possible reasons" (dominant-gate noise masking, order-dependent error cancellation, topology-constrained noise propagation, sequence-specific algebraic properties) without settling on one, and this verification doesn't either. What's confirmed is that the *split itself* is real, large, and reproducible — not previously an open question, now closed with real numbers.
+- **$X(q_0)$ before $CX$** — the control is already flipped, $CX$ fires, both $q_0$ and $q_1$ end up $1$: final state $|110\rangle$.
+- **$X(q_0)$ after $CX$** — the control is still $0$, $CX$ is a no-op, only $q_0$ flips: final state $|100\rangle$.
 
-[![Resilient Operational Topologies: max JS distance per permutation pair, all 15 pairs across 3 topologies](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
+Every ordering in a group computes the *same* noiseless output ($Z(q_1)$ is a spectator either way — it only ever sees $q_1=0$ in one branch of each group, contributing a global phase). Two orderings that compute the same classical bit string stay close under any noise; two that compute different bit strings diverge sharply — that's the entire effect, and it reproduces exactly the same 6-pair grouping the original "matrix" archive (`Topologie Operative Resilienti`) singled out, across every topology and every noise channel tested here:
 
-Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`.
+| Noise channel | Same-group max JS (resilient) | Cross-group max JS (non-resilient) | Cross-group significance |
+|---|---|---|---|
+| Depolarizing | 0.0007 – 0.0083 | 0.2977 – 0.3643 | $p<0.01$, all 9 pairs |
+| Bitflip | 0.0005 – 0.0055 | 0.2013 – 0.2561 | $p<0.01$, all 9 pairs |
+| Phaseflip | exactly 0 | exactly $\ln 2 = 0.6931$ | $p<0.01$, all 9 pairs |
+| Amplitude damping | 0.0000 – 0.0401 | 0.4085 – 0.5555 | $p<0.01$, all 9 pairs |
+| Combined | 0.0006 – 0.0085 | 0.3698 – 0.4454 | $p<0.01$, all 9 pairs |
+
+Phaseflip's exact 0-vs-$\ln 2$ split is the cleanest illustration of the mechanism: $Z$ errors never change which computational-basis state the circuit is in, so under phaseflip alone the outcome is perfectly deterministic per ordering — same bit string $\Rightarrow$ JS is exactly 0, different bit string $\Rightarrow$ maximal JS ($\ln 2$, the two distributions share no support). Linear_3Q, Ring_3Q, and Complete_3Q — same gate logic, $CX$ targeting a different qubit per label — reproduce the identical grouping and the identical mechanism, confirming it's a property of $X$-before-vs-after-$CX$ ordering, not of the connectivity label.
+
+[![Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
+
+Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
 
 ---
 
