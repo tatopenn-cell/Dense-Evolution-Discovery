@@ -682,28 +682,11 @@ Scripts: `scripts/steane_code_block1.py` through `scripts/steane_code_block6_era
 
 ### 24. Resilient Operational Topologies: the Split Has a Closed-Form Cause
 
-For a 3-qubit circuit built from one CX and two single-qubit gates (X, Z), the 6 possible application orders split into two groups of 3 — one group stays close together under noise ("resilient"), the other doesn't. `scripts/resilient_operational_topologies.py` tests all 15 possible ordering pairs (Linear_3Q, Ring_3Q, Complete_3Q connectivity labels) under every Kraus channel `NoiseModel` implements — depolarizing, bitflip, phaseflip, amplitude damping, combined — injected gate-by-gate (`NoiseSpec`-wrapped, JAX-`vmap`-batched Monte Carlo, 800 trajectories/point, p=0.1–0.4), and finds the mechanism behind the split directly: **it's whether $X$ is applied before or after $CX$.**
-
-$CX(q_0,q_1)$ only fires when its control qubit is $1$. Starting from $|000\rangle$:
-
-- **$X(q_0)$ before $CX$** — the control is already flipped, $CX$ fires, both $q_0$ and $q_1$ end up $1$: final state $|110\rangle$.
-- **$X(q_0)$ after $CX$** — the control is still $0$, $CX$ is a no-op, only $q_0$ flips: final state $|100\rangle$.
-
-Every ordering in a group computes the *same* noiseless output ($Z(q_1)$ is a spectator either way — it only ever sees $q_1=0$ in one branch of each group, contributing a global phase). Two orderings that compute the same classical bit string stay close under any noise; two that compute different bit strings diverge sharply — that's the entire effect, and it reproduces exactly the same 6-pair grouping the original "matrix" archive (`Topologie Operative Resilienti`) singled out, across every topology and every noise channel tested here:
-
-| Noise channel | Same-group max JS (resilient) | Cross-group max JS (non-resilient) | Cross-group significance |
-|---|---|---|---|
-| Depolarizing | 0.0007 – 0.0083 | 0.2977 – 0.3643 | $p<0.01$, all 9 pairs |
-| Bitflip | 0.0005 – 0.0055 | 0.2013 – 0.2561 | $p<0.01$, all 9 pairs |
-| Phaseflip | exactly 0 | exactly $\ln 2 = 0.6931$ | $p<0.01$, all 9 pairs |
-| Amplitude damping | 0.0000 – 0.0401 | 0.4085 – 0.5555 | $p<0.01$, all 9 pairs |
-| Combined | 0.0006 – 0.0085 | 0.3698 – 0.4454 | $p<0.01$, all 9 pairs |
-
-Phaseflip's exact 0-vs-$\ln 2$ split is the cleanest illustration of the mechanism: $Z$ errors never change which computational-basis state the circuit is in, so under phaseflip alone the outcome is perfectly deterministic per ordering — same bit string $\Rightarrow$ JS is exactly 0, different bit string $\Rightarrow$ maximal JS ($\ln 2$, the two distributions share no support). Linear_3Q, Ring_3Q, and Complete_3Q — same gate logic, $CX$ targeting a different qubit per label — reproduce the identical grouping and the identical mechanism, confirming it's a property of $X$-before-vs-after-$CX$ ordering, not of the connectivity label.
+**What's being tested:** a simple 3-qubit circuit made of 3 gates (one CX, plus X and Z) can be run in 6 different orders. **What we find:** those 6 orders split into two groups of 3 — one group gives basically the same result no matter which order you pick ("resilient" to noise), the other group gives a clearly different result depending on order. **Why:** it comes down to one single fact — whether X fires before or after CX. CX only flips its target if its control qubit is already 1, so doing X first changes what CX does; doing X after doesn't. That ordering choice, not the noise itself, is what decides the outcome — and it holds up identically across all three topology labels tested and all five noise channels `NoiseModel` implements.
 
 [![Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
 
-Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
+Full method, the per-channel numbers table, and the step-by-step derivation are on the [docs site](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#24-resilient-operational-topologies-the-split-has-a-closed-form-cause). Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
 
 ---
 
