@@ -680,6 +680,20 @@ Scripts: `scripts/steane_code_block1.py` through `scripts/steane_code_block6_era
 
 ---
 
+### 24. Resilient Operational Topologies: A Real Confirmation From the Same Pre-Dense-Evolution Archive
+
+Another claim from the same "matrix" archive that produced Experiment 16's channel-order investigation (TUREQ/TREC lineage): for a fixed 3-operation gate set (one CX + two single-qubit gates) on a 3-qubit circuit, certain pairs of gate-*order* permutations stay close together under noise — "Topologie Operative Resilienti" — while others don't. The archive's own write-up (`matrix/catterizzazione delle 'Topologie Ope.txt`, 993 lines) lists specific "resilient pairs" per topology (Linear_3Q, Ring_3Q, Complete_3Q connectivity labels) but contains **only qualitative discussion — no raw numbers, no noise model, no script** to re-run. Unlike every other correction in this session, there was nothing to re-verify here; this is a fresh implementation of the claim as stated, built to avoid inheriting the archive's own selection bias: rather than testing only the 6 pairs (of 15 possible, among the 6 permutations of the 3-op set) the archive labeled "resilient," `scripts/resilient_operational_topologies.py` tests **all 15 pairs per topology**, gate-by-gate depolarizing noise (`NoiseModel`, the v8.1.57-fixed version) after each gate, Monte Carlo unraveling (same method as Experiment 16), maximum Jensen-Shannon distance across a 4-point noise sweep (p=0.1 to 0.4) as the resilience metric.
+
+**Result: a clean, large confirmation.** Across all three topologies, the exact same 6 pairs the archive labeled resilient — and only those 6 — show max JS distance of 0.001–0.005 (not statistically significant); the other 9 (of 15) pairs all show max JS distance of 0.29–0.36 (p=0.01, significant at every single one). Two orders of magnitude separation, zero ambiguous cases in between, independently reproduced without copying the archive's pair selection. Linear_3Q and Ring_3Q — same operations, same CX target qubits, different *labeled* connectivity — give statistically consistent (same magnitude, same resilient/non-resilient split) but not bit-identical results, as expected: `DenseSVSimulator` doesn't model hardware connectivity constraints, so these are literally the same simulated circuit under independent Monte Carlo draws, not a connectivity effect.
+
+Honest scope: *why* this specific 6-pair split is resilient remains exactly as open as the archive itself framed it — its own write-up lists four "possible reasons" (dominant-gate noise masking, order-dependent error cancellation, topology-constrained noise propagation, sequence-specific algebraic properties) without settling on one, and this verification doesn't either. What's confirmed is that the *split itself* is real, large, and reproducible — not previously an open question, now closed with real numbers.
+
+[![Resilient Operational Topologies: max JS distance per permutation pair, all 15 pairs across 3 topologies](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
+
+Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
