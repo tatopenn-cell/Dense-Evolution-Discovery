@@ -402,6 +402,33 @@ real effect. Produced by `scripts/wormhole_syk_teleportation.py`'s
 `run_trotter_noise_scan`. Full data:
 `data/wormhole_trotter_noise_scan.csv`.
 
+### Correction (2026-08-13): re-verified against the corrected noise model
+
+The scan above ran 2026-08-07, four days before `dense-evolution` v8.1.57
+(2026-08-11) fixed a real bug in `NoiseModel.apply_to_sv`'s depolarizing
+channel: it used to draw `2^(n-1)` independent fire/no-fire decisions per
+qubit per shot instead of one, over-decohering entangled states by up to
+~2.5x the nominal `p`. Re-run against v8.1.60
+(`scripts/wormhole_noise_scan_reverified.py`, a JAX-`vmap`-batched
+rewrite using the public `NoiseSpec` wrapper for `n=500` trials/point
+instead of the original `n=6` -- verified first against this page's own
+eager noiseless result bit-for-bit before trusting any noisy number):
+the signal **does not cross zero** anywhere in the originally-tested
+range (`p=0.0` to `0.05`), and stays positive out to `p=0.20`
+(delta=+0.0035, ~4 SEM above zero) before continuing to decay. The
+original `n=6` budget, sized for the old, much-more-aggressive buggy
+channel, also turned out to be too small for the corrected (weaker,
+single-shot) channel at low `p` -- several points showed exactly zero
+trial-to-trial variance simply because none of 6 trials happened to draw
+any error at all (a real ~16% chance at `p=0.01`, not a bug).
+
+![Re-verified noise robustness vs. corrected noise model (v8.1.60): does not cross zero up to p=0.20](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.23.0/wormhole_trotter_noise_scan_reverified_v8160.png)
+
+Experiments 17 and 18's noise-level scan below (the term-order x noise
+interaction check) predated the same fix and are re-verified in their
+own sections. Produced by `scripts/wormhole_noise_scan_reverified.py` ->
+`data/wormhole_trotter_noise_scan_reverified_v8160.csv`.
+
 ## Experiment 10: cross-check against the paper's own "Ensemble robustness" claim (run 2026-08-07)
 
 arXiv:2604.10090 has its own ensemble-robustness section: from 100
@@ -902,6 +929,39 @@ noiseless order_sensitivity itself) found nothing. Produced by
 `scripts/wormhole_syk_teleportation.py`'s
 `run_term_order_noise_interaction_check`. Full data:
 `data/wormhole_term_order_noise_interaction.csv`.
+
+### Correction (2026-08-13): re-verified against the corrected noise model
+
+Like Experiment 9, this scan used `noise_p=0.01` through the same
+pre-v8.1.57 buggy depolarizing channel. Re-run against v8.1.60
+(`scripts/wormhole_term_order_noise_reverified.py`, same
+`NoiseSpec`-wrapped `jax.vmap` approach, verified bit-for-bit against
+this page's own eager noiseless reference first): the flagship n=50
+result **holds and strengthens**, r=+0.340 (p=0.0158) -> **r=+0.4013
+(p=0.0039)**. The noise-level trend (how the correlation changes as
+`noise_p` itself increases, tested at n=20 with common random numbers
+reused across noise levels so the three points aren't confounded by a
+different random draw each time) reverses direction, though:
+
+| noise_p | original (r, p) | re-verified (r, p) |
+|---|---|---|
+| 0.005 | +0.210 (p=0.374, not significant) | +0.7498 (p=0.0001) |
+| 0.01 | +0.587 (p=0.0065) | +0.6755 (p=0.0011) |
+| 0.02 | +0.622 (p=0.0034), strongest originally | +0.1790 (p=0.4502, not significant) |
+
+Originally the correlation looked strongest at the **highest** tested
+noise; re-verified, it's strongest at the **lowest** and vanishes at the
+highest -- itself an artifact of the same over-aggressive buggy channel
+the original scan ran under. The single-point flagship claim (n=50,
+`noise_p=0.01`) survives and strengthens; the multi-point "gets stronger
+with more noise" trend does not. Produced by
+`scripts/wormhole_term_order_noise_reverified.py` ->
+`data/wormhole_term_order_noise_interaction_reverified_v8160.csv`,
+`data/wormhole_noise_level_scan_reverified_v8160.csv`.
+
+![Re-verified Experiment 17: term-order x noise interaction, corrected noise model, n=50](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.24.0/wormhole_term_order_noise_interaction_reverified_v8160.png)
+
+![Re-verified Experiment 19: noise-level scan, corrected noise model, trend reversed](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.24.0/wormhole_noise_level_scan_reverified_v8160.png)
 
 ## Experiment 18: ensemble sign check at the paper's REAL t0=1.8 (run 2026-08-09)
 
