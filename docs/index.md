@@ -10,6 +10,7 @@ Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense
 
 ## 🆕 Latest Results (start here)
 
+- **[JSD-Predictive ZNE on Oscillating Noise](#25-jsd-predictive-zne-on-oscillating-noise-a-confound-not-a-new-win)** — an 87%-win-rate draft claim for a new noise regime turned out to be a 3-point-vs-5-point comparison confound; fairly re-tested (3v3 and 5v5, 6 independent seeds), the JSD mechanism itself shows no real effect, though a genuine separate finding survives: fewer, closer extrapolation points beat more, farther ones on oscillating noise.
 - **[Resilient Operational Topologies](#24-resilient-operational-topologies-the-split-has-a-closed-form-cause)** — the "resilient vs. non-resilient" gate-order split on a 3-qubit CX+X+Z circuit has a closed-form cause (whether $X$ fires before or after $CX$), reproduced identically across all 5 Kraus noise channels this library models.
 - **[Loschmidt Echo](#17-loschmidt-echo-and-zero-noise-extrapolation)** — a kicked-Ising forward/backward circuit with noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation.
 - **[Topological Mott Isolator: VQE Ground-State Optimization](#18-topological-mott-isolator-vqe-ground-state-optimization)** — gradient-based optimization of a Topological Mott Isolator ansatz, validated against exact diagonalization, closes nearly all of the variational gap across the full Mott-repulsion sweep.
@@ -581,6 +582,32 @@ Phaseflip's exact 0-vs-$\ln 2$ split is the cleanest illustration: $Z$ errors ne
 [![Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
 
 Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
+
+---
+
+### 25. JSD-Predictive ZNE on Oscillating Noise: a Confound, Not a New Win
+
+Experiment 22's JSD-informed density-matrix ZNE (`jsd_predictive_zne_density_matrix`) was built and validated for photon-loss/amplitude-damping noise. An external draft tested it on a different regime -- synthetic oscillating depolarizing noise on a 4-qubit GHZ state (`p_eff = base_p * (1 + amp*sin(factor*pi/freq))`, not a validated model of any specific real hardware process like 1/f or crosstalk, used only to make the noise-scale-to-output-distribution relationship non-monotonic) -- and reported an 87% win rate (13/15 configurations) at a single seed, drafted directly into a paper abstract.
+
+**Two real problems, both fixed here.** First, the draft's classic-ZNE baseline saw **5** noise-scale points (a degree-2 least-squares fit) while its JSD method saw only **3** (`jsd_predictive_zne_density_matrix` is hard-restricted to exactly 3 equally-spaced factors -- its Lagrange coefficients `(3, -3, 1)` are specific to that spacing, not a general n-point formula). Second, every configuration used a single fixed seed, with no error bars or significance test -- the library's own validation of this method required "positive in 6/6 independent seeds" and a one-sample t-test before being trusted; this draft cleared neither bar.
+
+`scripts/jsd_zne_oscillating_noise.py` re-tests across `K_SEEDS=6` independent master seeds per configuration, with a paired one-sample t-test on the per-seed fidelity difference, in three controlled comparisons:
+
+1. **Fair 3v3** -- the shipped JSD method (`nudge_scale=0.5`) against the library's own plain 3-point Richardson baseline (`nudge_scale=0.0`, which the same core function reduces to exactly), both seeing the identical 3 noise scales.
+2. **Original 5v3** -- reproduces the draft's own design exactly (5-point classic vs. 3-point JSD), now with proper seeds and statistics, to see whether the original claim survives once the single-seed problem alone is fixed.
+3. **Fair 5v5** -- a from-scratch generalization of the JSD nudge to all 5 points (`jsd_nudge_5pt`), built on the *exact* linear extrapolation weights `zne_density_matrix` itself uses internally (extracted via `polynomial_extrapolate`'s linearity: feeding it each standard basis vector recovers its per-point weight exactly, not a hand-derived approximation). Mirrors the shipped 3-point nudge's structure (JSD-nonlinearity-rectified weight shifted from the two endpoint scales to the center scale, zero-sum) and is verified to reduce to `zne_density_matrix`'s own 5-point result to machine precision ($\sim10^{-16}$) whenever the nudge doesn't activate -- the same "zero risk in that regime" guarantee the shipped 3-point function has. This is **not** part of the shipped library API; a natural but unvalidated extension, built specifically to remove the point-count confound in both directions.
+
+| Comparison | Configs with p<0.05 | What it means |
+|---|---|---|
+| Fair 3v3 | 0/11 | JSD nudge itself: no effect |
+| Original 5v3 (draft's own design) | 9/11, mean +0.10 to +0.30 fidelity | Replicates strongly -- but see below |
+| Fair 5v5 (both methods, all 5 points) | 1/11, and that one's mean diff is $3.9\times10^{-16}$ | Floating-point noise, not a real effect |
+
+**The original 5v3 result is real and reproducible -- and has nothing to do with JSD.** Printing the raw baseline fidelities makes it direct: the 5-point classic fit is dramatically worse than the 3-point one at every tested configuration (e.g. base_p=0.08: 0.42 vs. 0.72 fidelity), regardless of any nudge. On smooth, monotonically-growing noise, `zne_density_matrix`'s own docstring documents that more points generally help or are neutral (a degree-2 least-squares fit trades a little bias for lower variance). Oscillating noise breaks that assumption structurally: no degree-2 polynomial can track a sine wave across a range spanning more than about a quarter-period, so a 5-point fit reaching out to 4x/5x noise is actively confused by scales whose phase has already wrapped around, while a 3-point fit confined to 1x-3x isn't. Consistent with this: the effect weakens or reverses exactly at the frequencies (freq=4, freq=5) where the oscillation's phase pattern across the 5 points changes.
+
+[![JSD-predictive ZNE vs. classic ZNE, oscillating depolarizing noise: fair 3v3, original 5v3 design, and fair 5v5](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.27.0/jsd_zne_oscillating_noise.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.27.0/jsd_zne_oscillating_noise.png)
+
+Produced by `scripts/jsd_zne_oscillating_noise.py` → `data/jsd_zne_oscillating_noise.csv`.
 
 ---
 
