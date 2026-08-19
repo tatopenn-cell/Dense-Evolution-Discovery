@@ -21,6 +21,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Healing Trigger False-Positive Audit](#27-healing-trigger-false-positive-audit-the-phi-trigger-fires-on-90-of-clean-data)** — the production Phi-Trigger that decides whether a healing-pipeline row is "genuine motion" or "noise" fires (replaces) **89.6% of ordinary, uncorrupted rows** across 4 corruption scenarios x 60 seeds — a real bug already hinted at but never measured in the shipped docstring. A NaN/Inf-aware, MAD-adaptive threshold cuts that to ~12.5% while matching or beating the original trigger's recall on every corruption type (including one where the original only caught 28.7%). Promoted to dense-evolution>=8.1.62 as an opt-in `trigger_mode='adaptive'`.
 - **[Stratonovich-Projection Vector Healing](#26-stratonovich-projection-vector-healing-a-real-but-partial-win-diluted-by-an-over-firing-trigger)** — a single-seed Colab demo claimed replacing the median fallback in `ia_utils.vector_healing` with a "Stratonovich projection" turns cosine phase alignment -0.16 into +0.98; tested properly (4 corruption types x 40 seeds, paired Wilcoxon), the win is real but partial — it beats the median on spike-type corruption (L2 error down 30-44%) but *loses* on pure NaN gaps, and even where it wins, alignment stays deeply negative, nowhere near +0.98. A separate finding: the shipped Phi-Trigger fires on 85-90% of *every* trajectory regardless of real corruption, diluting whichever correction step is used.
 - **[JSD-Predictive ZNE on Oscillating Noise](#25-jsd-predictive-zne-on-oscillating-noise-a-confound-not-a-new-win)** — an 87%-win-rate draft claim for a new noise regime turned out to be a 3-point-vs-5-point comparison confound; fairly re-tested (3v3 and 5v5, 6 independent seeds), the JSD mechanism itself shows no real effect, though a genuine separate finding survives: fewer, closer extrapolation points beat more, farther ones on oscillating noise.
 - **[Resilient Operational Topologies](#24-resilient-operational-topologies-the-split-has-a-closed-form-cause)** — the "resilient vs. non-resilient" gate-order split on a 3-qubit CX+X+Z circuit has a closed-form cause (whether X fires before or after CX), reproduced identically across all 5 Kraus noise channels this library models.
@@ -346,6 +347,23 @@ Full method, all three comparisons, and the 5-point generalization's own correct
 [![Stratonovich-projection correction vs. median correction, 40 seeds/scenario, same Phi-Trigger](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.28.0/stratonovich_vector_healing.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.28.0/stratonovich_vector_healing.png)
 
 Produced by `scripts/stratonovich_vector_healing.py` → `data/stratonovich_vector_healing.csv`, `data/stratonovich_vector_healing_summary.csv`.
+
+---
+
+### 27. Healing Trigger False-Positive Audit: the Phi-Trigger Fires on ~90% of Clean Data
+
+**What's being tested:** while validating Experiment 26's healing correction, the production Phi-Trigger's replacement rate looked suspiciously constant across every corruption scenario, regardless of which correction method was used. `enhanced_dense_healing_hybrid`'s own docstring already flagged that its trigger "also fires on structurally noisy-but-valid data" -- but never measured how often. This experiment measures it. **What we find:** the shipped Phi-Trigger (`dense_evolution.mitigation.healing.evaluate_phi_trigger`, a fixed `|v_dinamic| > 0.01` threshold) replaces **89.6% of ordinary, uncorrupted rows** on a smooth trend + Gaussian noise trajectory -- confirmed across 4 corruption scenarios x 60 seeds, using the exact non-cascading loop structure of the shipped function. A NaN/Inf-aware, MAD-adaptive local-deviation trigger (median + 3.5xMAD of the recent deviation history, with raw NaN/Inf rows forced to heal unconditionally) cuts the false-positive rate to ~12.5% while matching or *exceeding* the original trigger's recall on every corruption type tested -- including "combined" spike+NaN corruption, where the original trigger itself only caught 28.7% of the genuinely corrupted rows.
+
+| Scenario | False-positive rate | True-positive rate |
+|---|---|---|
+| single_spike | 89.6% -> 12.5% | 100% / 100% |
+| nan_string | 89.6% -> 12.5% | 100% / 100% |
+| scattered_outliers | 89.6% -> 12.5% | 100% / 98.3% |
+| combined | 89.6% -> 12.5% | **28.7%** / 100% |
+
+Promoted to `dense-evolution` as an opt-in `trigger_mode='adaptive'` parameter on `enhanced_dense_healing_hybrid` (default stays `'phi'`, since `ia_utils.adversarial_vector_attack`'s gradient-based red-teaming specifically targets the differentiable Phi-Trigger mechanism -- swapping the default would silently invalidate that entire adversarial-testing framework).
+
+Produced by `scripts/healing_trigger_false_positive_audit.py` → `data/healing_trigger_false_positive_audit.csv`, `data/healing_trigger_false_positive_audit_summary.csv`.
 
 ---
 
