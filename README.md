@@ -22,6 +22,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 ## 🆕 Latest Results (start here)
 
 - **[Sandwiched Renyi Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — a proposed noise-diagnostic metric had two real bugs, both fixed and validated against independent references.
+- **[Quantum Ruzsa Key Unitary & Magic Entropy](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_ruzsa_magic_entropy/)** — the qubit "Ruzsa divergence" doesn't actually exist in either source paper; the real object (3-fold self-convolution magic entropy) works as a noise diagnostic instead.
 - **[Leaky-Switch Differentiable Healing](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/leaky_differentiable_healing/)** — a JAX rewrite of healing really is differentiable, but its healing quality is far worse than the fix below — an honest negative result.
 - **[Healing Trigger False-Positive Audit](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/healing_trigger_false_positive_audit/)** — the healing pipeline's trigger flagged 89.6% of clean data as broken; fixed to ~12.5%, now shipped in Dense-Evolution.
 - **[Stratonovich-Projection Vector Healing](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/stratonovich_vector_healing/)** — a Colab demo's dramatic healing claim turns out real but partial once tested properly across 40 seeds.
@@ -339,6 +340,14 @@ Full write-up: **[docs/leaky_differentiable_healing.md](https://tatopenn-cell.gi
 A proposed noise-diagnostic metric had two real bugs — one that silently zeroed the signal, and a deeper one that returned a wrong-signed finite number instead of the mathematically correct `+∞` when two states' supports don't overlap; both fixed and validated against three independent references.
 
 Full write-up: **[docs/sandwiched_renyi_density_matrix.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)**.
+
+---
+
+### 30. Quantum Ruzsa Key Unitary & Magic Entropy
+
+The Colab's "Quantum Ruzsa Divergence" for qubits turned out to have no valid definition in either source paper (the pairwise s,t-convolution needs d odd prime); the real qubit object from the companion paper is a 3-fold self-convolution "magic entropy," which we built and used as a new noise diagnostic -- non-monotonic under amplitude damping, unlike fidelity or the Renyi divergence.
+
+Full write-up: **[docs/quantum_ruzsa_magic_entropy.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_ruzsa_magic_entropy/)**.
 
 ---
 

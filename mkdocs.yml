@@ -64,3 +64,4 @@ nav:
   - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
   - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
   - Repository Architecture & Ecosystem: repository_architecture.md
+  - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
