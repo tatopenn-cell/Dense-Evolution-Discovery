@@ -38,6 +38,7 @@ import pathlib
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from dense_evolution.mitigation.healing import (
     calculate_phi_ab, calculate_vettore_dinamico, evaluate_phi_trigger, GLOBAL_CONSTANTS,
@@ -192,3 +193,33 @@ if __name__ == "__main__":
             "phi_tp": phi_tp, "adaptive_tp": adaptive_tp,
         })
     pd.DataFrame(summary_rows).to_csv(_DATA_DIR / "healing_trigger_false_positive_audit_summary.csv", index=False)
+
+    summary = pd.DataFrame(summary_rows)
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    x = np.arange(len(SCENARIOS))
+    width = 0.35
+
+    axes[0].bar(x - width / 2, summary["phi_fp"] * 100, width, label="phi (shipped)", color="#888888")
+    axes[0].bar(x + width / 2, summary["adaptive_fp"] * 100, width, label="adaptive (fixed)", color="#00e5ff")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(SCENARIOS, rotation=20, ha="right")
+    axes[0].set_ylabel("false-positive rate on CLEAN data (%)")
+    axes[0].set_title("False positives (lower = better)")
+    axes[0].legend()
+    axes[0].grid(alpha=0.3)
+
+    axes[1].bar(x - width / 2, summary["phi_tp"] * 100, width, label="phi (shipped)", color="#888888")
+    axes[1].bar(x + width / 2, summary["adaptive_tp"] * 100, width, label="adaptive (fixed)", color="#00e5ff")
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(SCENARIOS, rotation=20, ha="right")
+    axes[1].set_ylabel("true-positive rate on corrupted rows (%)")
+    axes[1].set_title("True positives (higher = better)")
+    axes[1].legend()
+    axes[1].grid(alpha=0.3)
+
+    fig.suptitle("Experiment 27: Phi-Trigger vs. MAD-adaptive trigger, false/true-positive rates", fontweight="bold")
+    fig.tight_layout()
+    images_dir = _DATA_DIR.parent / "images"
+    images_dir.mkdir(exist_ok=True)
+    fig.savefig(images_dir / "healing_trigger_false_positive_audit.png", dpi=150)
+    print(f"\nsaved plot: {images_dir / 'healing_trigger_false_positive_audit.png'}")
