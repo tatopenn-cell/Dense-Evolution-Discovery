@@ -51,7 +51,7 @@ import jax.numpy as jnp
 import dense_evolution as de
 from dense_evolution.registry import NoiseModel
 from dense_evolution.mitigation import uhlmann_fidelity, zne_density_matrix, richardson_extrapolate
-from dense_evolution.mitigation import _uhlmann_fidelity_core, _richardson_extrapolate_core, _zne_density_matrix_core
+from dense_evolution.mitigation.zne import _uhlmann_fidelity_core, _richardson_extrapolate_core, _zne_density_matrix_core
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"

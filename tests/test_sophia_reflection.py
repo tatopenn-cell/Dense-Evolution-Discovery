@@ -66,7 +66,7 @@ def test_uhlmann_fidelity_core_gradient_is_finite_at_degenerate_eigenvalues():
     # installed package actually has the fix (not silently still on an
     # older, NaN-at-degeneracy version) using this script's own import
     # path, sharpest case: the fully mixed state, all eigenvalues tied.
-    from dense_evolution.mitigation import _uhlmann_fidelity_core
+    from dense_evolution.mitigation.zne import _uhlmann_fidelity_core
 
     d = 4
     rho_mixed = jnp.eye(d, dtype=jnp.complex128) / d
