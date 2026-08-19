@@ -1,10 +1,21 @@
 # Dense-Evolution-Discovery
 
-This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
+This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.61)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
 Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/blob/main/CITATION.cff) in the repository root, or cite directly via the concept DOI [10.5281/zenodo.21855620](https://doi.org/10.5281/zenodo.21855620).
 
 **New here?** Jump straight to the [Scientific Discoveries](#scientific-discoveries-empirical-evidence) section below and explore any result that catches your eye — every claim links to the exact script that produced it, so you can run it yourself. Or start with the three newest, most rigorously validated additions:
+
+---
+
+## Sections
+
+The newest work has its own dedicated page per topic (see the sidebar); everything older lives inline further down this page, one numbered experiment at a time.
+
+- **[Repository](repository_architecture.md)** — what every script and test file does.
+- **Density-Matrix Diagnostics** — [Sandwiched Renyi Divergence](sandwiched_renyi_density_matrix.md) · [Quantum Ruzsa Key Unitary & Magic Entropy](quantum_ruzsa_magic_entropy.md) · [Classical Shadows: Bug Fix & Magic Entropy Estimation](quantum_shadows_magic_entropy.md)
+- **Vector Healing** — [Stratonovich-Projection Vector Healing](stratonovich_vector_healing.md) · [Healing Trigger False-Positive Audit](healing_trigger_false_positive_audit.md) · [Leaky-Switch Differentiable Healing](leaky_differentiable_healing.md)
+- **Other Investigations** — [Harrison / VHD Tight-Binding](harrison_tight_binding.md) · [Traversable-Wormhole Teleportation](wormhole_syk_teleportation.md) · [Photonic Predictive ZNE](photonic_predictive_zne.md) · [Quantum Many-Body Scar Investigation](quantum_scar_investigation.md)
 
 ---
 
@@ -22,7 +33,7 @@ Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense
 
 ```
 Dense-Evolution-Discovery/
-├── scripts/     # 17 production scripts (see below) -- tracked in git
+├── scripts/     # 45 production scripts (see below) -- tracked in git
 ├── tests/       # pytest suite, run by CI on every push
 ├── data/        # CSV outputs -- NOT tracked (.gitignore); populated by running scripts/tests
 ├── images/      # PNG outputs -- NOT tracked (.gitignore); populated by running scripts/tests
@@ -307,7 +318,7 @@ Open for anyone who wants to pick it up: translating the PXP dynamics into an ac
 
 | Component | Version / Detail |
 |---|---|
-| Simulator | Dense Evolution v8.1.21 |
+| Simulator | Dense Evolution v8.1.61 |
 | Backend | DenseSVSimulator (Statevector) |
 | Precision | `complex128` (64-bit double) |
 | Compilation | JAX XLA JIT static compilation |
@@ -324,7 +335,7 @@ Open for anyone who wants to pick it up: translating the PXP dynamics into an ac
 To guarantee the mathematical stability and absolute physical accuracy of the simulated quantum dynamics, the repository includes a strict continuous integration (CI) pipeline executed via GitHub Actions (`ci.yml`). 
 
 The test suite (`test_pennylane_comparison.py`) establishes an automated cross-validation layer by mirroring the statevector computations on two completely independent software architectures:
-- **Target Simulator:** Dense Evolution (v8.1.21) accelerated via JAX XLA.
+- **Target Simulator:** Dense Evolution (v8.1.61) accelerated via JAX XLA.
 - **Baseline Reference:** PennyLane.
 
 The pipeline runs on every code splotch or pull request, evaluating the numerical consistency of the 1D Transverse Field Ising Model (TFIM) expectation values, variational gradients, and Bloch state rotations. By testing the outputs across both engines, the CI automatically flags floating-point drift or algebraic regressions exceeding machine-epsilon tolerances.
