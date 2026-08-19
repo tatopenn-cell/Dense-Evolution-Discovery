@@ -285,9 +285,7 @@ Grounds Section 18's arbitrary-unit sweep in real chemistry: a converged, stabil
 
 ### 20. Harrison / VHD Tight-Binding Validation Against Real Experimental Gaps
 
-**What:** checks two textbook tight-binding parameter sets (Harrison's universal table, Vogl-Hjalmarson-Dow's material-specific set) against real experimental band gaps for GaAs, Si, and Ge. **What we find:** Harrison's universal parameters are qualitatively sane but 2-3x off quantitatively, and can't place indirect band-gap minima correctly; VHD's material-specific parameters land within 5-16% of experiment and get the physics right.
-
-[![Harrison universal vs. VHD material-specific tight-binding gaps, GaAs/Si/Ge vs. experiment](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.5.0/harrison_vhd_gap_comparison.png)
+Checks two textbook tight-binding parameter sets against real experimental band gaps for GaAs, Si, and Ge: Harrison's universal table is qualitatively sane but 2-3x off quantitatively and misplaces indirect gap minima, while Vogl-Hjalmarson-Dow's material-specific set lands within 5-16% of experiment and gets the physics right.
 
 Full write-up: **[docs/harrison_tight_binding.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/harrison_tight_binding/)**.
 
@@ -295,9 +293,7 @@ Full write-up: **[docs/harrison_tight_binding.md](https://tatopenn-cell.github.i
 
 ### 21. Traversable-Wormhole-Inspired Quantum Teleportation (SYK Model)
 
-**What:** a real reproduction of the Gao-Jafferis-Wall traversable-wormhole teleportation protocol on a chaotic SYK model (arXiv:2604.10090), across 18 sub-experiments. **What we find:** the sign-dependent teleportation signal is real and requires the injected message (vanishes exactly without it), but does **not** generalize across other SYK instances, and the paper's own "generic feature" claim is closer to a coin flip (41-49% wrong-signed) than generic. **Update:** the noise-robustness result was re-verified against a since-fixed noise-model bug — the signal turns out to be *more* robust than first measured (no longer crosses zero up to p=0.20), and a term-order/noise-interaction correlation survives and strengthens.
-
-[![Traversable-wormhole teleportation signal vs. t1](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t1_sweep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.6.0/wormhole_t1_sweep.png)
+A real reproduction of the Gao-Jafferis-Wall traversable-wormhole teleportation protocol on a chaotic SYK model (arXiv:2604.10090), across 18 sub-experiments, finds the sign-dependent teleportation signal is real (vanishes without the injected message) but does **not** generalize across other SYK instances — the paper's own "generic feature" claim is closer to a coin flip (41-49% wrong-signed) than generic.
 
 Full write-up, all 18 sub-experiments and every image: **[docs/wormhole_syk_teleportation.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/wormhole_syk_teleportation/)**.
 
@@ -305,9 +301,7 @@ Full write-up, all 18 sub-experiments and every image: **[docs/wormhole_syk_tele
 
 ### 22. Photonic Predictive Zero-Noise Extrapolation
 
-**What:** does zero-noise extrapolation help with photon loss in photonic quantum computing? Reproduces Mills & Mezher (arXiv:2405.02278): plain scalar ZNE fails outright (goes physically impossible at 14/16 points). **What we find:** Dense-Evolution's density-matrix ZNE avoids that failure and gives a real correction; a new JSD-informed adaptive variant improves further (76.1% win rate, p=0.0003) but honestly still loses to true postselection in 14/18 configurations — narrows the gap, doesn't close it.
-
-[![Photonic predictive ZNE: raw vs. scalar vs. density-matrix vs. JSD-predictive ZNE](docs/assets/photonic_predictive_zne/photonic_predictive_zne.png)](docs/assets/photonic_predictive_zne/photonic_predictive_zne.png)
+Reproducing Mills & Mezher (arXiv:2405.02278) on photon loss, plain scalar ZNE fails outright (physically impossible at 14/16 points) while Dense-Evolution's density-matrix ZNE gives a real correction, and a new JSD-informed adaptive variant improves further (76.1% win rate, p=0.0003) but still loses to true postselection in 14/18 configurations.
 
 Full write-up: **[docs/photonic_predictive_zne.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/photonic_predictive_zne/)**.
 
