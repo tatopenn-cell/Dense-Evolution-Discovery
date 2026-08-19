@@ -55,14 +55,18 @@ plugins:
 
 nav:
   - Home: index.md
-  - Harrison / VHD Tight-Binding: harrison_tight_binding.md
-  - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
-  - Photonic Predictive ZNE: photonic_predictive_zne.md
-  - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
-  - Stratonovich-Projection Vector Healing: stratonovich_vector_healing.md
-  - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md
-  - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
-  - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
-  - Repository Architecture & Ecosystem: repository_architecture.md
-  - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
-  - Classical Shadows: Bug Fix & Magic Entropy Estimation: quantum_shadows_magic_entropy.md
+  - Repository:
+    - Architecture & Ecosystem: repository_architecture.md
+  - Density-Matrix Diagnostics:
+    - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
+    - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
+    - "Classical Shadows: Bug Fix & Magic Entropy Estimation": quantum_shadows_magic_entropy.md
+  - Vector Healing:
+    - Stratonovich-Projection Vector Healing: stratonovich_vector_healing.md
+    - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md
+    - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
+  - Other Investigations:
+    - Harrison / VHD Tight-Binding: harrison_tight_binding.md
+    - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
+    - Photonic Predictive ZNE: photonic_predictive_zne.md
+    - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
