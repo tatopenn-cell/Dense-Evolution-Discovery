@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 import jax
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 from scipy import stats
 
 from ia_utils.vector_healing import enhanced_dense_healing_hybrid
@@ -228,3 +229,34 @@ if __name__ == "__main__":
     _DATA_DIR.mkdir(exist_ok=True)
     diff_results = part1_differentiability_audit()
     quality_df = part2_healing_quality()
+
+    summary = quality_df.groupby("scenario")[["cos_phi", "cos_adaptive", "cos_leaky"]].mean().reindex(SCENARIOS)
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    x = np.arange(len(SCENARIOS))
+    width = 0.25
+
+    axes[0].bar(x - width, summary["cos_phi"], width, label="phi (shipped)", color="#888888")
+    axes[0].bar(x, summary["cos_adaptive"], width, label="adaptive (Exp. 27 fix)", color="#00e5ff")
+    axes[0].bar(x + width, summary["cos_leaky"], width, label="leaky (this exp.)", color="#ff7f0e")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(SCENARIOS, rotation=20, ha="right")
+    axes[0].set_ylabel("cosine alignment vs. ground truth (higher = better)")
+    axes[0].set_title("Healing quality: leaky trails adaptive on every scenario")
+    axes[0].legend(fontsize=8)
+    axes[0].grid(alpha=0.3)
+    axes[0].axhline(0, color="black", linewidth=0.8)
+
+    axes[1].bar(["with leak (eps=1e-4)", "no leak (eps=0)"],
+                [diff_results["with_leak_finite_nonzero"], diff_results["no_leak_finite_nonzero"]],
+                color=["#00e5ff", "#ff7f0e"])
+    axes[1].set_ylim(0, 32)
+    axes[1].set_ylabel("seeds out of 30")
+    axes[1].set_title("Differentiability: real, but the leaky floor changes nothing")
+    axes[1].grid(alpha=0.3, axis="y")
+
+    fig.suptitle("Experiment 28: Leaky-Switch differentiable healing -- real gradients, poor healing quality", fontweight="bold")
+    fig.tight_layout()
+    images_dir = _DATA_DIR.parent / "images"
+    images_dir.mkdir(exist_ok=True)
+    fig.savefig(images_dir / "leaky_differentiable_healing.png", dpi=150)
+    print(f"saved plot: {images_dir / 'leaky_differentiable_healing.png'}")
