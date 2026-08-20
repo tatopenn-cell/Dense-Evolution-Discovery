@@ -110,10 +110,31 @@ def estimate_purity_buggy(snapshot_matrices):
     return float(jnp.mean(vals))
 
 
-def estimate_purity_fixed(snapshot_matrices):
+def _median_of_means(values, n_groups):
+    """Split real-valued `values` into n_groups contiguous batches, average
+    each batch, then return the median of those batch means -- Huang et
+    al.'s standard robustification for shadow-estimator U-statistics (this
+    experiment originally shipped with plain averaging over all
+    triples/pairs instead; see PART 4 below for why that matters).
+    Unlike a single overall mean, the median tolerates up to
+    (n_groups // 2) entirely corrupted/outlier batches without being
+    dragged toward them -- e.g. a systematic calibration fault affecting
+    one contiguous stretch of a measurement run -- at the cost of some
+    extra variance from averaging within fewer, larger batches instead of
+    every sample individually."""
+    values = np.asarray(values, dtype=float)
+    n = len(values)
+    n_groups = max(1, min(n_groups, n))
+    group_size = n // n_groups
+    trimmed = values[: group_size * n_groups]
+    group_means = trimmed.reshape(n_groups, group_size).mean(axis=1)
+    return float(np.median(group_means))
+
+
+def estimate_purity_fixed(snapshot_matrices, n_groups=20):
     left, right = _disjoint_pairs(snapshot_matrices)
-    vals = jnp.einsum("tij,tji->t", left, right).real
-    return float(jnp.mean(vals))
+    vals = np.array(jnp.einsum("tij,tji->t", left, right).real)
+    return _median_of_means(vals, n_groups)
 
 
 # --- Magic-entropy Key Unitary (K=3), duplicated from
@@ -183,18 +204,22 @@ def _o_operators():
 _O_AB = _o_operators()
 
 
-def estimate_magic_entropy_from_shadows(snapshot_matrices):
+def estimate_magic_entropy_from_shadows(snapshot_matrices, n_groups=20):
     """Groups the n independent single-qubit shadow snapshots of the SAME
     state into disjoint triples (n//3 groups), estimates each entry of the
-    3-copy-convolution reduced matrix R as the average over groups of
-    Tr[O_ab . (rho_hat_i (x) rho_hat_j (x) rho_hat_k)] -- an unbiased
-    U-statistic-style estimator, since each triple is drawn from 3
-    independent unbiased single-copy estimators of rho -- then computes
-    the von Neumann entropy of the (Hermitized, eigenvalue-clipped,
+    3-copy-convolution reduced matrix R via median-of-means (see
+    _median_of_means) over Tr[O_ab . (rho_hat_i (x) rho_hat_j (x) rho_hat_k)]
+    -- an unbiased U-statistic-style estimator, since each triple is drawn
+    from 3 independent unbiased single-copy estimators of rho -- then
+    computes the von Neumann entropy of the (Hermitized, eigenvalue-clipped,
     renormalized) ESTIMATED R classically. Entropy itself is never
     shadow-estimated directly (Huang et al. never do this either, even for
     their own Renyi-2 entanglement entropy example); only the linear
-    reduced-matrix reconstruction is shadow-based."""
+    reduced-matrix reconstruction is shadow-based. Real and imaginary parts
+    of each R_ab entry are median-of-means'd independently -- the median of
+    a set of complex numbers has no single standard definition, but the
+    median of their real/imaginary parts separately is the standard
+    practical choice."""
     n = snapshot_matrices.shape[0]
     n_triples = n // 3
     triples = snapshot_matrices[: n_triples * 3].reshape(n_triples, 3, 2, 2)
@@ -206,8 +231,10 @@ def estimate_magic_entropy_from_shadows(snapshot_matrices):
 
     r_hat = jnp.zeros((2, 2), dtype=jnp.complex128)
     for (a, b), o_ab in _O_AB.items():
-        vals = jnp.einsum("ij,tji->t", o_ab, rho3_batch)
-        r_hat = r_hat.at[a, b].set(jnp.mean(vals))
+        vals = np.array(jnp.einsum("ij,tji->t", o_ab, rho3_batch))
+        real_part = _median_of_means(vals.real, n_groups)
+        imag_part = _median_of_means(vals.imag, n_groups)
+        r_hat = r_hat.at[a, b].set(real_part + 1j * imag_part)
 
     r_hat = 0.5 * (r_hat + jnp.conj(r_hat).T)  # enforce Hermiticity
     ev = jnp.linalg.eigvalsh(r_hat)
@@ -283,10 +310,51 @@ if __name__ == "__main__":
         assert err < 0.15, f"{name}: shadow-estimated magic entropy did not converge close enough to the exact value (err={err})"
     print(f"    PASS: at n={largest_n}, shadow-estimated magic entropy is within 0.15 bits of Experiment 30's exact value for both states\n")
 
+    print("=== PART 4: MEDIAN-OF-MEANS ROBUSTNESS (naive mean vs. MoM under a corrupted batch) ===\n")
+    # Simulates a systematic fault affecting one CONTIGUOUS stretch of a
+    # measurement run (e.g. a calibration drift), not independent per-sample
+    # noise -- the case median-of-means is specifically built for. A single
+    # stray outlier is already diluted fine by a plain mean over thousands
+    # of samples; a systematic block failure is not.
+    n_snap_robust = 30000
+    n_groups_robust = 20
+    snaps_robust = sample_shadow_snapshots(psi_t, n_snap_robust, seed=3)
+    left_r, right_r = _disjoint_pairs(snaps_robust)
+    vals_clean = np.array(jnp.einsum("tij,tji->t", left_r, right_r).real)
+
+    rows_robust = []
+    for corrupt_fraction in (0.0, 0.1, 0.2, 0.3, 0.4, 0.45):
+        corrupted = vals_clean.copy()
+        n_bad = int(len(corrupted) * corrupt_fraction)
+        corrupted[:n_bad] = -50.0  # a wildly wrong systematic-fault value
+        naive_mean = float(np.mean(corrupted))
+        mom = _median_of_means(corrupted, n_groups_robust)
+        rows_robust.append({
+            "corrupt_fraction": corrupt_fraction, "naive_mean": naive_mean,
+            "median_of_means": mom, "exact_purity": 1.0,
+        })
+        print(f"corrupted={corrupt_fraction:.0%}  naive_mean={naive_mean:8.3f}  "
+              f"median_of_means={mom:7.4f}  (exact=1.0000)")
+    df_robust = pd.DataFrame(rows_robust)
+    df_robust.to_csv(_DATA_DIR / "quantum_shadows_median_of_means_robustness.csv", index=False)
+
+    # Up to n_groups_robust // 2 - 1 = 9 of 20 groups (45%) can be entirely
+    # corrupted before the median itself is forced to pick a corrupted
+    # group's mean -- verified directly rather than assumed: at 40%
+    # corruption MoM must still be close to the true value 1.0, while the
+    # naive mean has already been dragged far away by the same corruption.
+    row_40 = df_robust[df_robust["corrupt_fraction"] == 0.4].iloc[0]
+    assert abs(row_40["median_of_means"] - 1.0) < 0.5, \
+        f"expected median-of-means to still be near 1.0 at 40% corruption, got {row_40['median_of_means']}"
+    assert abs(row_40["naive_mean"] - 1.0) > 10.0, \
+        f"expected the naive mean to be dragged far from 1.0 at 40% corruption, got {row_40['naive_mean']}"
+    print(f"    PASS: at 40% of samples corrupted, median-of-means stays within 0.5 of the true value 1.0 "
+          f"(got {row_40['median_of_means']:.4f}) while the naive mean is dragged to {row_40['naive_mean']:.2f}\n")
+
     print("All assertions passed.")
 
-    # --- Plot: purity bug fix + magic-entropy shadow convergence ---
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    # --- Plot: purity bug fix + magic-entropy shadow convergence + MoM robustness ---
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
     df_purity = pd.DataFrame(rows_purity)
     axes[0].plot(df_purity["n_snapshots"], df_purity["purity_buggy"], marker="s", label="buggy einsum (Colab)", color="#888888")
@@ -310,7 +378,16 @@ if __name__ == "__main__":
     axes[1].legend(fontsize=7)
     axes[1].grid(alpha=0.3)
 
-    fig.suptitle("Experiment 31: Classical Shadows -- purity bug fix and shadow-based magic entropy", fontweight="bold")
+    axes[2].plot(df_robust['corrupt_fraction'] * 100, df_robust['naive_mean'], marker='s', label='naive mean', color='#888888')
+    axes[2].plot(df_robust['corrupt_fraction'] * 100, df_robust['median_of_means'], marker='o', label='median-of-means', color='#00e5ff')
+    axes[2].axhline(1.0, color='#ff7f0e', linestyle='--', label='exact purity = 1.0')
+    axes[2].set_xlabel('% of samples corrupted (one contiguous block)')
+    axes[2].set_ylabel('estimated purity')
+    axes[2].set_title('MoM tolerates a corrupted block; naive mean does not')
+    axes[2].legend(fontsize=8)
+    axes[2].grid(alpha=0.3)
+
+    fig.suptitle("Experiment 31: Classical Shadows -- purity bug fix, shadow-based magic entropy, and MoM robustness", fontweight="bold")
     fig.tight_layout()
     fig.savefig(_DATA_DIR.parent / "images" / "quantum_shadows_magic_entropy.png", dpi=150)
     print(f"saved plot: {_DATA_DIR.parent / 'images' / 'quantum_shadows_magic_entropy.png'}")

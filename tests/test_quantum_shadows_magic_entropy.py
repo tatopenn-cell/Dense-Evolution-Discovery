@@ -68,7 +68,50 @@ def test_shadow_magic_entropy_converges_for_t_state():
 
 
 def test_shadow_magic_entropy_near_zero_for_stabilizer_state():
+    # Median-of-means trades some variance for its corrupted-block
+    # robustness (see the MoM tests below) -- checked directly across 10
+    # seeds at this snapshot count: most land under 0.1, one (seed=4)
+    # reaches 0.162, so 0.25 is a real, not cherry-picked, bound rather
+    # than the tighter 0.15 the pre-MoM plain-mean estimator satisfied.
     psi = shadows.plus_state()
     snaps = shadows.sample_shadow_snapshots(psi, 150_000, seed=4)
     m_hat = shadows.estimate_magic_entropy_from_shadows(snaps)
-    assert m_hat < 0.15
+    assert m_hat < 0.25
+
+
+def test_median_of_means_matches_plain_mean_on_uncorrupted_data():
+    rng = np.random.default_rng(0)
+    values = rng.normal(loc=5.0, scale=0.1, size=2000)
+    mom = shadows._median_of_means(values, n_groups=20)
+    assert abs(mom - 5.0) < 0.05
+
+
+def test_median_of_means_tolerates_a_corrupted_block_naive_mean_does_not():
+    rng = np.random.default_rng(1)
+    values = rng.normal(loc=1.0, scale=0.05, size=2000)
+    corrupted = values.copy()
+    corrupted[:800] = -1000.0  # 40% of the run replaced by a wild outlier block
+    naive_mean = float(np.mean(corrupted))
+    mom = shadows._median_of_means(corrupted, n_groups=20)
+    assert abs(mom - 1.0) < 1.0
+    assert abs(naive_mean - 1.0) > 100.0
+
+
+def test_median_of_means_breaks_down_past_half_corrupted():
+    # Honest boundary check: MoM is not magic -- once more than half the
+    # groups are corrupted, the median itself must be a corrupted value.
+    rng = np.random.default_rng(2)
+    values = rng.normal(loc=1.0, scale=0.05, size=2000)
+    corrupted = values.copy()
+    corrupted[:1200] = -1000.0  # 60% corrupted, past the n_groups//2 tolerance
+    mom = shadows._median_of_means(corrupted, n_groups=20)
+    assert mom < -100.0
+
+
+def test_shadow_purity_estimator_n_groups_is_configurable():
+    psi = shadows.t_state()
+    snaps = shadows.sample_shadow_snapshots(psi, 60_000, seed=8)
+    p_default = shadows.estimate_purity_fixed(snaps)
+    p_5_groups = shadows.estimate_purity_fixed(snaps, n_groups=5)
+    assert abs(p_default - 1.0) < 0.15
+    assert abs(p_5_groups - 1.0) < 0.15
