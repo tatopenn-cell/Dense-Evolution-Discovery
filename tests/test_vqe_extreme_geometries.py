@@ -70,7 +70,7 @@ def test_per_bond_jacobian_matches_finite_difference():
     kinetic, jac = eg.batched_per_bond_kinetic_and_jacobian(theta_vec[None, :])
 
     def _kinetic_per_bond_single(tv):
-        s = eg.de.DenseSVSimulator(n_qubits=eg.N_Q, use_gpu=False, use_float32=False)
+        s = eg.de.DenseSVSimulator(n_qubits=eg.N_Q, use_float32=False)
         ops = [['x', 0]]
         for q in range(eg.N_BONDS):
             ops += [['cx', q + 1, q], ['ry', q + 1, float(tv[q])], ['cx', q, q + 1],

@@ -66,7 +66,7 @@ def _reference_statevector(rz_angles: np.ndarray) -> np.ndarray:
     ops = [['ry', q, float(RY_ANGLE)] for q in range(N_Q)]
     ops += [['rz', q, float(rz_angles[q])] for q in range(N_Q)]
     ops += [['cx', q, q + 1] for q in range(N_Q - 1)]
-    sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+    sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
     sim.set_initial_state()
     sim.run_circuit_jit_beast_mode(ops)
     return np.asarray(sim.get_statevector())
@@ -76,7 +76,7 @@ def test_batch_positional_slots_ry_fixed_rz_varying():
     """Every row of parameter_batch must fill ALL 2*N_Q rotation slots
     (N_Q constant RY columns + N_Q varying RZ columns) — not just the
     ones written as string placeholders in base_circuit."""
-    sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+    sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
     base_ops = _build_base_ops()
 
     grid = np.zeros((N_Q, 2 * N_Q), dtype=np.float64)
@@ -102,7 +102,7 @@ def test_coerenza_x_reads_the_correct_msb_first_physical_bit():
     marked_angle = 1.0
     ops = [['ry', q, float(np.pi / 4)] for q in range(qds.N_Q)]
     ops[marked_qubit] = ['ry', marked_qubit, float(marked_angle)]
-    sim = de.DenseSVSimulator(n_qubits=qds.N_Q, use_gpu=False, use_float32=False)
+    sim = de.DenseSVSimulator(n_qubits=qds.N_Q, use_float32=False)
     sim.set_initial_state()
     sim.run_circuit_jit_beast_mode(ops)
     sv = np.asarray(sim.get_statevector())

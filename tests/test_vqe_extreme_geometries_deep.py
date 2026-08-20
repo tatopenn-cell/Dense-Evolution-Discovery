@@ -60,7 +60,7 @@ def test_energy_matches_independent_reference_for_uniform_geometry():
         t_R = deep.T0_MOL * np.exp(-deep.BETA * (R_test - deep.R0_MOL))
         v_rep = deep.V0_MOL * np.exp(-deep.GAMMA * (R_test - deep.R0_MOL))
 
-        s = deep.de.DenseSVSimulator(n_qubits=deep.N_Q, use_gpu=False, use_float32=False)
+        s = deep.de.DenseSVSimulator(n_qubits=deep.N_Q, use_float32=False)
         ops = [['x', 0]]
         for q in range(deep.N_BONDS):
             ops += [['cx', q + 1, q], ['ry', q + 1, float(theta_test)], ['cx', q, q + 1],
@@ -86,7 +86,7 @@ def test_per_bond_jacobian_matches_finite_difference():
     kinetic, jac = deep.batched_per_bond_kinetic_and_jacobian(theta_vec[None, :])
 
     def _kinetic_per_bond_single(tv):
-        s = deep.de.DenseSVSimulator(n_qubits=deep.N_Q, use_gpu=False, use_float32=False)
+        s = deep.de.DenseSVSimulator(n_qubits=deep.N_Q, use_float32=False)
         ops = [['x', 0]]
         for q in range(deep.N_BONDS):
             ops += [['cx', q + 1, q], ['ry', q + 1, float(tv[q])], ['cx', q, q + 1],

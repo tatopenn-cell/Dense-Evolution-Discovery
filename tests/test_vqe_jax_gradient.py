@@ -6,7 +6,7 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 
 NUM_QUBITS, TUNNELING_HOPPING_PARAM, CHUNK_SIZE, MEMORY_THRESHOLD_PERCENT, POINTS_FOR_MAIN_BENCHMARK = 12, 2.11, 4000, 0.15, 300
 jax.config.update("jax_enable_x64", True)
-_sim = de.DenseSVSimulator(n_qubits=NUM_QUBITS, use_gpu=False, use_float32=False)
+_sim = de.DenseSVSimulator(n_qubits=NUM_QUBITS, use_float32=False)
 from dense_evolution.chunk import SafeMemoryGuard, MemoryChunker
 _guard = SafeMemoryGuard(threshold_pct=MEMORY_THRESHOLD_PERCENT)
 _chunker = MemoryChunker(n_qubits=NUM_QUBITS)

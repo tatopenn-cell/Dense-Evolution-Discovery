@@ -21,7 +21,7 @@ N_Q = 8
 T_HOP = 2.11
 ATOL = 1e-10
 
-_sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+_sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
 _dev = qml.device("default.qubit", wires=N_Q)
 
 # Pre-allocazione degli osservabili per impedire colli di bottiglia in PennyLane

@@ -10,7 +10,7 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 def test_vqe_silicon_complete_simulation():
     N_Q, THETA = 6, 0.38
     R_SPACE = np.linspace(1.2, 4.5, 3500)
-    sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+    sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
     DIM = 1 << N_Q
     IDX = np.arange(DIM)
     MSK = [(1 << q) | (1 << (q + 1)) for q in range(N_Q - 1)]
