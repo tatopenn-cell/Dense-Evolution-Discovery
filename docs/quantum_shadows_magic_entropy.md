@@ -51,9 +51,33 @@ Trade-off, also checked directly rather than assumed: MoM has somewhat higher va
 
 [![Classical shadows: purity bug fix and shadow-estimated magic entropy](assets/quantum_shadows_magic_entropy/quantum_shadows_magic_entropy.png)](assets/quantum_shadows_magic_entropy/quantum_shadows_magic_entropy.png)
 
+## Sample-complexity guidance
+
+The last open blocker before promotion was a concrete answer to "how many snapshots do I need for what error bound?" Measured directly rather than assumed: ran `estimate_magic_entropy_from_shadows` 20 independent times at each of several snapshot counts (`|T>`-state), recorded the empirical standard deviation of the estimate, then fit `std(n) ~ C / n^p` via log-log linear regression.
+
+| snapshots | mean estimate | measured std | \|mean - exact\| |
+|---|---|---|---|
+| 3,000 | 0.685 | 0.165 | 0.126 |
+| 10,000 | 0.795 | 0.071 | 0.017 |
+| 30,000 | 0.802 | 0.037 | 0.010 |
+| 100,000 | 0.810 | 0.025 | 0.001 |
+
+Fitted: `std(n) ≈ 11.75 / n^0.546` — the exponent lands at `0.546`, close to the `0.5` ("error shrinks like `1/sqrt(n)`") standard shadow/median-of-means theory predicts, asserted in the script rather than just eyeballed (`0.3 < p < 0.7`). Inverting that fit gives a practical lookup table (same fitted constants, `|T>`-state-like magic states):
+
+| target std (bits) | snapshots needed |
+|---|---|
+| 0.10 | ~6,200 |
+| 0.05 | ~22,200 |
+| 0.02 | ~118,800 |
+| 0.01 | ~423,200 |
+
+`sample_complexity_fit(psi, m_exact, n_snapshots_list, n_trials)` runs this study for any state, and `n_snapshots_for_target_std(target_std, fit_c, fit_p)` inverts a fit to answer "how many snapshots" directly — both are real, tested functions in the script now, not just numbers quoted in this page.
+
+[![Classical shadows: purity bug fix, shadow-based magic entropy, MoM robustness, and sample complexity](assets/quantum_shadows_magic_entropy/quantum_shadows_magic_entropy.png)](assets/quantum_shadows_magic_entropy/quantum_shadows_magic_entropy.png)
+
 ## Status
 
-`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both now median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. The robustness gap that blocked promotion is now closed. Two things still open before promotion: the API shape needs its own design (measurement snapshots in, not a density matrix — unlike every other function in `dense_evolution.mitigation`), and a proper sample-complexity guide (how many snapshots for what confidence bound) hasn't been derived yet.
+`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. Two of the three original blockers are now closed (robustness, sample-complexity guidance). One remains open: the API shape needs its own design (measurement snapshots in, not a density matrix — unlike every other function in `dense_evolution.mitigation`).
 
 ## Reproduce
 
@@ -61,4 +85,4 @@ Trade-off, also checked directly rather than assumed: MoM has somewhat higher va
 python scripts/quantum_shadows_magic_entropy.py
 ```
 
-Produces `data/quantum_shadows_purity_bugfix.csv`, `data/quantum_shadows_magic_entropy_convergence.csv`, `data/quantum_shadows_median_of_means_robustness.csv`.
+Produces `data/quantum_shadows_purity_bugfix.csv`, `data/quantum_shadows_magic_entropy_convergence.csv`, `data/quantum_shadows_median_of_means_robustness.csv`, `data/quantum_shadows_sample_complexity.csv`.

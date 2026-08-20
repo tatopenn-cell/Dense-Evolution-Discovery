@@ -115,3 +115,29 @@ def test_shadow_purity_estimator_n_groups_is_configurable():
     p_5_groups = shadows.estimate_purity_fixed(snaps, n_groups=5)
     assert abs(p_default - 1.0) < 0.15
     assert abs(p_5_groups - 1.0) < 0.15
+
+
+def test_sample_complexity_fit_exponent_is_near_theoretical_half():
+    # Small budget (fast for CI) -- just checks the fitting machinery
+    # itself works and lands in a sane range, not a tight reproduction of
+    # the full 20-trial study's exact exponent.
+    psi = shadows.t_state()
+    rho = jnp.outer(psi, jnp.conj(psi))
+    m_exact = shadows.exact_magic_entropy(rho)
+    rows, fit_c, fit_p = shadows.sample_complexity_fit(
+        psi, m_exact, n_snapshots_list=(3000, 30000), n_trials=6, seed_base=500,
+    )
+    assert len(rows) == 2
+    assert fit_c > 0
+    assert 0.1 < fit_p < 1.0
+
+
+def test_n_snapshots_for_target_std_is_monotonically_decreasing_in_target():
+    # A tighter (smaller) target std must need MORE snapshots, not fewer.
+    n_loose = shadows.n_snapshots_for_target_std(0.1, fit_c=10.0, fit_p=0.5)
+    n_tight = shadows.n_snapshots_for_target_std(0.01, fit_c=10.0, fit_p=0.5)
+    assert n_tight > n_loose
+    # Sanity-check the inversion is actually correct: plugging n back into
+    # C/n^p should reproduce the target std.
+    recovered_std = 10.0 / n_tight ** 0.5
+    assert abs(recovered_std - 0.01) < 1e-6

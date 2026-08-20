@@ -243,6 +243,37 @@ def estimate_magic_entropy_from_shadows(snapshot_matrices, n_groups=20):
     return float(-jnp.sum(safe_ev * jnp.log2(safe_ev)))
 
 
+def sample_complexity_fit(psi, m_exact, n_snapshots_list, n_trials, seed_base=1000):
+    """Empirically measures the std of estimate_magic_entropy_from_shadows
+    across n_trials independent seeds at each snapshot count in
+    n_snapshots_list, then fits std(n) ~ C / n^p via log-log linear
+    regression (a real measured error bar, not a theoretical constant
+    taken on faith). Returns (rows, C, p)."""
+    rows = []
+    for n_snap in n_snapshots_list:
+        estimates = []
+        for trial in range(n_trials):
+            snaps_trial = sample_shadow_snapshots(psi, n_snap, seed=seed_base + trial)
+            estimates.append(estimate_magic_entropy_from_shadows(snaps_trial))
+        estimates = np.array(estimates)
+        rows.append({
+            "n_snapshots": n_snap, "n_trials": n_trials,
+            "mean_estimate": float(estimates.mean()), "std_estimate": float(estimates.std()),
+            "exact": m_exact, "mean_abs_error": float(abs(estimates.mean() - m_exact)),
+        })
+    log_n = np.log([r["n_snapshots"] for r in rows])
+    log_std = np.log([r["std_estimate"] for r in rows])
+    slope, intercept = np.polyfit(log_n, log_std, 1)
+    return rows, float(np.exp(intercept)), float(-slope)
+
+
+def n_snapshots_for_target_std(target_std, fit_c, fit_p):
+    """Inverts std(n) ~ fit_c / n^fit_p (see sample_complexity_fit) to
+    solve for the snapshot count needed to reach a target standard
+    deviation, in bits, on the magic-entropy estimate."""
+    return (fit_c / target_std) ** (1.0 / fit_p)
+
+
 def t_state():
     zero = jnp.array([1.0, 0.0], dtype=jnp.complex128)
     one = jnp.array([0.0, 1.0], dtype=jnp.complex128)
@@ -351,10 +382,40 @@ if __name__ == "__main__":
     print(f"    PASS: at 40% of samples corrupted, median-of-means stays within 0.5 of the true value 1.0 "
           f"(got {row_40['median_of_means']:.4f}) while the naive mean is dragged to {row_40['naive_mean']:.2f}\n")
 
+    print("=== PART 5: SAMPLE-COMPLEXITY STUDY (empirical error vs. snapshot count) ===\n")
+    # Repeats the magic-entropy estimate n_trials times, independently, at
+    # each snapshot count, and measures the empirical standard deviation --
+    # a real measured error bar, not a theoretical constant taken on faith.
+    # Used to fit error ~ C / n_snapshots^p and give
+    # magic_entropy_sample_complexity() below a concrete, checked formula
+    # instead of an arbitrary guess.
+    sc_n_snapshots = (3000, 10000, 30000, 100000)
+    sc_n_trials = 20
+    m_exact_t = exact_magic_entropy(rho_t)
+    rows_sc, fitted_c, fitted_p = sample_complexity_fit(psi_t, m_exact_t, sc_n_snapshots, sc_n_trials)
+    for r in rows_sc:
+        print(f"n={r['n_snapshots']:>7d}  mean={r['mean_estimate']:.4f}  std={r['std_estimate']:.4f}  |mean-exact|={r['mean_abs_error']:.4f}")
+    df_sc = pd.DataFrame(rows_sc)
+    df_sc.to_csv(_DATA_DIR / "quantum_shadows_sample_complexity.csv", index=False)
+
+    # theory predicts an exponent of 0.5 for this kind of estimator (error
+    # shrinks like 1/sqrt(n)) -- checked empirically, not assumed.
+    print(f"\n    Fitted: std(n) ~ {fitted_c:.3f} / n^{fitted_p:.3f}")
+    assert 0.3 < fitted_p < 0.7, f"fitted exponent {fitted_p:.3f} is far from the ~0.5 theory predicts -- investigate before trusting the formula"
+    print(f"    PASS: fitted exponent {fitted_p:.3f} is consistent with the theoretical ~0.5 scaling\n")
+
+    with open(_DATA_DIR / "quantum_shadows_sample_complexity_fit.txt", "w") as fh:
+        fh.write(f"C={fitted_c!r}\np={fitted_p!r}\n")
+
+    print("Practical lookup (T-state-like magic states, fitted on this data):")
+    for target_std in (0.1, 0.05, 0.02, 0.01):
+        n_needed = n_snapshots_for_target_std(target_std, fitted_c, fitted_p)
+        print(f"    target std={target_std:.2f} bits  ->  ~{n_needed:,.0f} snapshots")
+
     print("All assertions passed.")
 
-    # --- Plot: purity bug fix + magic-entropy shadow convergence + MoM robustness ---
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    # --- Plot: purity bug fix + magic-entropy shadow convergence + MoM robustness + sample-complexity fit ---
+    fig, axes = plt.subplots(1, 4, figsize=(23, 5))
 
     df_purity = pd.DataFrame(rows_purity)
     axes[0].plot(df_purity["n_snapshots"], df_purity["purity_buggy"], marker="s", label="buggy einsum (Colab)", color="#888888")
@@ -387,7 +448,16 @@ if __name__ == "__main__":
     axes[2].legend(fontsize=8)
     axes[2].grid(alpha=0.3)
 
-    fig.suptitle("Experiment 31: Classical Shadows -- purity bug fix, shadow-based magic entropy, and MoM robustness", fontweight="bold")
+    axes[3].loglog(df_sc["n_snapshots"], df_sc["std_estimate"], "o", label="measured std (20 trials each)", color="#00e5ff")
+    fit_n = np.array(sc_n_snapshots, dtype=float)
+    axes[3].loglog(fit_n, fitted_c / fit_n ** fitted_p, "--", label=f"fit: {fitted_c:.2f} / n^{fitted_p:.3f}", color="#ff7f0e")
+    axes[3].set_xlabel("number of shadow snapshots")
+    axes[3].set_ylabel("std of magic-entropy estimate (bits)")
+    axes[3].set_title("Sample-complexity fit: error shrinks ~1/sqrt(n)")
+    axes[3].legend(fontsize=8)
+    axes[3].grid(alpha=0.3, which="both")
+
+    fig.suptitle("Experiment 31: Classical Shadows -- purity bug fix, shadow-based magic entropy, MoM robustness, and sample complexity", fontweight="bold")
     fig.tight_layout()
     fig.savefig(_DATA_DIR.parent / "images" / "quantum_shadows_magic_entropy.png", dpi=150)
     print(f"saved plot: {_DATA_DIR.parent / 'images' / 'quantum_shadows_magic_entropy.png'}")
