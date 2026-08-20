@@ -13,7 +13,7 @@
 
 📖 **[Dense Evolution ising-test-discoveries-- full documentation, API reference, and worked examples →](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/)**
 
-This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.21)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
+This repository contains a rigorous empirical study, raw datasets, and quantum error mitigation protocols executed on **Dense Evolution (v8.1.63)**—a high-performance *Statevector* quantum simulator. Utilizing 64-bit double precision (`complex128`) and hardware-accelerated static compilation via the JAX XLA engine, this project maps the non-linear physics of the Transverse Field Ising Model (TFIM), Tight-Binding Fermionic dynamics, and semiconductor solid-state thermodynamics.
 
 **New here?** Jump straight to the [Scientific Discoveries](#-scientific-discoveries--empirical-evidence) section below and explore any result that catches your eye — every claim links to the exact script that produced it, so you can run it yourself. Or start with the three newest, most rigorously validated additions:
 
@@ -176,7 +176,7 @@ Full writeup, with every image: **[docs/quantum_scar_investigation.md](https://t
 
 | Component | Version / Detail |
 |---|---|
-| Simulator | Dense Evolution v8.1.21 |
+| Simulator | Dense Evolution v8.1.63 |
 | Backend | DenseSVSimulator (Statevector) |
 | Precision | `complex128` (64-bit double) |
 | Compilation | JAX XLA JIT static compilation |
