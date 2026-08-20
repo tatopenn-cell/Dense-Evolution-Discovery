@@ -161,7 +161,7 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 # ═══════════════════════════════════════════════════════════════════════════
 
 N_Q = 6
-sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
 N_BONDS = N_Q - 1                  # 5
 N_PARAMS = 2 * N_BONDS              # 10
 B_COEFF = -1.0                       # theta_B = -theta_A, same ansatz as elsewhere in this repo

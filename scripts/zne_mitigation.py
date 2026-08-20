@@ -15,7 +15,7 @@ _IMAGES_DIR.mkdir(exist_ok=True)
 jax.config.update("jax_enable_x64", True)
 
 N_Q = 6
-sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
 t_hopping = 2.11
 NUM_SHOTS = 2000
 

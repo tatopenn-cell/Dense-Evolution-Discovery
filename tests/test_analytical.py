@@ -18,8 +18,8 @@ import dense_evolution as de
 
 # ── shared setup ──────────────────────────────────────────────────────────────
 
-_sim_6q = de.DenseSVSimulator(n_qubits=6, use_gpu=False, use_float32=False)
-_sim_1q = de.DenseSVSimulator(n_qubits=1, use_gpu=False, use_float32=False)
+_sim_6q = de.DenseSVSimulator(n_qubits=6, use_float32=False)
+_sim_1q = de.DenseSVSimulator(n_qubits=1, use_float32=False)
 
 # Molecular PEC parameters (vqe_silicon_molecular.py)
 _T0_MOL  = 2.11   # eV

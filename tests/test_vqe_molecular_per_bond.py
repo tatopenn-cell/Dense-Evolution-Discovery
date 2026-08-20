@@ -34,7 +34,7 @@ def _independent_single_circuit_kinetic(theta_vec: np.ndarray) -> float:
     for q in range(pb.N_BONDS):
         ops += [['cx', q + 1, q], ['ry', q + 1, float(theta_vec[q])], ['cx', q, q + 1],
                 ['ry', q + 1, float(-theta_vec[q])], ['cx', q + 1, q]]
-    s = de.DenseSVSimulator(n_qubits=pb.N_Q, use_gpu=False, use_float32=False)
+    s = de.DenseSVSimulator(n_qubits=pb.N_Q, use_float32=False)
     s.set_initial_state()
     s.run_circuit_jit_beast_mode(ops)
     return pb._kinetic_from_sv(np.asarray(s.get_statevector()))
@@ -131,7 +131,7 @@ def test_closed_form_generalizes_across_chain_lengths(n_q):
     n_bonds = n_q - 1
     theta = pb.theta_ground_state_closed_form(n_bonds)
 
-    s = de.DenseSVSimulator(n_qubits=n_q, use_gpu=False, use_float32=False)
+    s = de.DenseSVSimulator(n_qubits=n_q, use_float32=False)
     ops = [['x', 0]]
     for q in range(n_bonds):
         ops += [['cx', q + 1, q], ['ry', q + 1, float(theta[q])], ['cx', q, q + 1],

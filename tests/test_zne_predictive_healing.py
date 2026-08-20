@@ -3,7 +3,7 @@ from dense_evolution.healing import calculate_delta_preemp
 jax.config.update("jax_enable_x64", True)
 
 N_Q, T_HOP, ATOL_MITIGATED, TARGET_SIGMA_IDEALE = 20, 2.11, 1e-3, 10.0
-_sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+_sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
 
 def _bloch_state(k, n):
     sv = np.zeros(1 << n, dtype=np.complex128)

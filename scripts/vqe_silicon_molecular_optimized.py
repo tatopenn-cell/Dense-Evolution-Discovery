@@ -32,7 +32,7 @@ jax.config.update("jax_enable_x64", True)
 # ═══════════════════════════════════════════════════════════════════════════
 
 N_Q = 6
-sim = de.DenseSVSimulator(n_qubits=N_Q, use_gpu=False, use_float32=False)
+sim = de.DenseSVSimulator(n_qubits=N_Q, use_float32=False)
 
 T0_MOL, BETA, R0_MOL, V0_MOL, GAMMA = 2.11, 1.5, 2.35, 5.4, 3.0
 
