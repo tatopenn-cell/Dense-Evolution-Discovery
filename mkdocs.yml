@@ -61,6 +61,7 @@ nav:
     - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
     - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
     - "Classical Shadows: Bug Fix & Magic Entropy Estimation": quantum_shadows_magic_entropy.md
+    - Kullback-Leibler Divergence: kullback_leibler_divergence.md
   - Vector Healing:
     - Stratonovich-Projection Vector Healing: stratonovich_vector_healing.md
     - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md

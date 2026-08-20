@@ -21,6 +21,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Kullback-Leibler Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)** -- healing.py's docstring flags an honest gap (a scalar log-ratio, not a real distributional KL); this builds the real, paper-checked thing and confirms it's a genuinely different signal, not a rescaling.
 - **[Sandwiched Renyi Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — a proposed noise-diagnostic metric had two real bugs, both fixed and validated against independent references.
 - **[Quantum Ruzsa Key Unitary & Magic Entropy](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_ruzsa_magic_entropy/)** — the qubit "Ruzsa divergence" doesn't actually exist in either source paper; the real object (3-fold self-convolution magic entropy) works as a noise diagnostic instead.
 - **[Classical Shadows: Bug Fix & Magic Entropy Estimation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_shadows_magic_entropy/)** — fixed a real bug in a Colab's shadow-based purity estimator, then used shadows to estimate magic entropy from measurement snapshots, converging to the exact value.
@@ -357,6 +358,14 @@ Full write-up: **[docs/quantum_ruzsa_magic_entropy.md](https://tatopenn-cell.git
 A prior Colab's classical-shadows purity estimator had a real bug (a missing transpose in an einsum contraction, silent on real-valued snapshots, wrong whenever X/Y-basis snapshots appear); fixed and validated, then used the same multi-copy shadow trick -- which the source paper says "readily generalizes to higher order polynomials" -- to estimate Experiment 30's magic entropy from measurement snapshots instead of the exact state, converging to the exact value within 0.03 bits at 300k snapshots. Later upgraded from plain averaging to real median-of-means (Huang et al.'s own robustification): verified directly that it tolerates a 40%-corrupted measurement block while a naive mean is dragged from 1.0 to -19.4. Then fitted a real sample-complexity curve (error ~ n^-0.546, matching the ~0.5 theory predicts) from 20-trial empirical runs, giving a concrete snapshots-needed-for-target-error lookup.
 
 Full write-up: **[docs/quantum_shadows_magic_entropy.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_shadows_magic_entropy/)**.
+
+---
+
+### 32. Kullback-Leibler Divergence
+
+dense_evolution.mitigation.healing's own docstring flags an honest gap: its core log(E_B/E_A) term is a log-likelihood ratio, not a full probability-weighted KL divergence. Built the real thing (Kullback & Leibler, 1951), validated against scipy.stats.entropy, Gibbs' inequality, and a genuine support-violation case, then confirmed on real measurement distributions that it's a different signal from healing.py's scalar, not a rescaling of it. A real terminological nuance surfaced checking the paper directly: what's implemented (and commonly called "KL divergence" today) is what Kullback & Leibler themselves called I(1:2); their own word "divergence" named the symmetrized J(1,2) = I(1:2)+I(2:1) instead -- not implemented here, since it would duplicate the Jensen-Shannon divergence this codebase already uses (mps.py, zne.py), which is bounded and better-behaved at disjoint supports.
+
+Full write-up: **[docs/kullback_leibler_divergence.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)**.
 
 ---
 
