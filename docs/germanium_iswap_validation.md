@@ -13,9 +13,17 @@ A third bug (a factor-of-2 error in the peak-amplitude calibration, giving a 50%
 
 ## Reference circuit and Trotterized pulse
 
-The native `iswap` gate defines ground truth directly through dense_evolution's own gate set (drawn as a Quirk-style box diagram by this experiment's `draw_circuit` utility), sidestepping any basis-convention mismatch with the paper's matrix notation. Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotation_ops` directly (not `trotter_evolve_ops`, since the coefficient varies per slice with the pulse envelope). Running `scripts/germanium_iswap_validation.py` regenerates both circuit diagrams plus the pulse-envelope/population-dynamics figure under `images/`.
+The native `iswap` gate defines ground truth directly through dense_evolution's own gate set (drawn as a Quirk-style box diagram by this experiment's `draw_circuit` utility), sidestepping any basis-convention mismatch with the paper's matrix notation.
+
+![Native iSWAP reference circuit](assets/germanium_iswap_validation/germanium_iswap_reference_circuit.png)
+
+Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotation_ops` directly (not `trotter_evolve_ops`, since the coefficient varies per slice with the pulse envelope).
+
+![One Trotterized pulse slice](assets/germanium_iswap_validation/germanium_iswap_trotter_slice.png)
 
 **Notable derived fact:** X⊗X, Y⊗Y, and Z⊗Z always pairwise commute (simultaneously diagonal in the Bell basis). Since this operating point has `J∥=0` by construction, the Trotter decomposition here is *exact* at any slice count -- fidelity is already >0.999 at just 4 slices, saturating to 1.0 by 32. The small residual is pure quadrature error from approximating the smooth envelope with piecewise-constant steps, not Trotter truncation error.
+
+![Pulse envelope and population dynamics](assets/germanium_iswap_validation/germanium_iswap_pulse_dynamics.png)
 
 ## SPAM noise: the paper's own exact channel
 
