@@ -21,6 +21,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Germanium Baseband iSWAP Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)** -- reproduces a real 4-day-old IBM experimental result (arXiv:2608.16716) via dense_evolution's Trotter engine, and answers the paper's own explicit "left to follow-up work" call for randomized benchmarking.
 - **[Kullback-Leibler Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)** -- healing.py's docstring flags an honest gap (a scalar log-ratio, not a real distributional KL); this builds the real, paper-checked thing and confirms it's a genuinely different signal, not a rescaling.
 - **[Sandwiched Renyi Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — a proposed noise-diagnostic metric had two real bugs, both fixed and validated against independent references.
 - **[Quantum Ruzsa Key Unitary & Magic Entropy](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_ruzsa_magic_entropy/)** — the qubit "Ruzsa divergence" doesn't actually exist in either source paper; the real object (3-fold self-convolution magic entropy) works as a noise diagnostic instead.
@@ -369,6 +370,14 @@ Full write-up: **[docs/kullback_leibler_divergence.md](https://tatopenn-cell.git
 
 ---
 
+### 33. Germanium Baseband iSWAP Validation
+
+A real, days-old experimental result (arXiv:2608.16716, IBM Research Europe -- Zurich) demonstrates a single-pulse baseband iSWAP gate in strained-germanium hole spin qubits. Reproduced here with `dense_evolution.circuits.trotter`, applied for the first time to a genuinely time-dependent pulse, plus the paper's own exact 2-qubit SPAM depolarizing channel scored via `dense_evolution.uhlmann_fidelity` -- reproduces their reported `F_iSWAP≈87%` exactly. Four follow-ups extend the analysis: simplified randomized benchmarking (directly answering the paper's own "left to follow-up work" line), a real per-state SPAM profile from their own figure (not a uniform average), a coherent-vs-stochastic error comparison, and the general off-resonance regime, the only place in this paper's physics where Trotter decomposition has genuine, non-zero error to converge.
+
+Full write-up: **[docs/germanium_iswap_validation.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
@@ -406,6 +415,7 @@ python scripts/sophia_reflection.py
 python scripts/channel_order_noncommutativity.py
 python scripts/loschmidt_echo_zne.py
 python scripts/vqe_tmi_material_design.py
+python scripts/germanium_iswap_validation.py
 ```
 
 `data/` and `images/` are gitignored -- they exist only after you run something, so it's always unambiguous whether what you're looking at is fresh. Pre-made results are on the [Releases page](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases) instead.
