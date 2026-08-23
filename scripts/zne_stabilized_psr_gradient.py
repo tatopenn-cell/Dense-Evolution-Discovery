@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import dense_evolution as de
-from dense_evolution.registry import NoiseModel
+from dense_evolution.circuits.registry import NoiseModel
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
