@@ -1,6 +1,6 @@
 # Quantum Ruzsa Key Unitary -> Magic Entropy as a Noise Diagnostic
 
-A Colab proposal wanted a "Quantum Ruzsa Divergence" for `dense_evolution`: a pairwise convolution `rho \boxtimes sigma` parametrized by `s,t` with `s^2+t^2 = 1 mod d`, following Bu, Gu, Jaffe (arXiv:2401.14385). That equation has **no solution for qubits** (`d=2` -- confirmed by reading the paper directly, not just re-reading the Colab). The companion paper (arXiv:2306.09292, "Stabilizer testing and magic entropy") does not patch this gap with a qubit-specific pairwise formula; it replaces the pairwise convolution with a structurally different object entirely.
+A "Quantum Ruzsa Divergence" for `dense_evolution` was proposed as a pairwise convolution `rho \boxtimes sigma` parametrized by `s,t` with `s^2+t^2 = 1 mod d`, following Bu, Gu, Jaffe (arXiv:2401.14385). That equation has **no solution for qubits** (`d=2` -- confirmed by reading the paper directly). The companion paper (arXiv:2306.09292, "Stabilizer testing and magic entropy") does not patch this gap with a qubit-specific pairwise formula; it replaces the pairwise convolution with a structurally different object entirely.
 
 ## What the paper actually defines (Def. 7-8, p.6)
 
@@ -13,7 +13,7 @@ On computational basis states this gives (Lemma 9, verified against our implemen
 
 For qubits the smallest valid `K` is 3, and there is no pairwise `rho boxtimes sigma` -- only a minimum **3-fold self-convolution** `boxtimes_3(psi,psi,psi)` of one state with itself. The paper calls the entropy of that reduced output register "magic entropy": zero for stabilizer states, positive for non-stabilizer ("magic") states.
 
-**So the Colab's original ask -- "a Ruzsa divergence between two qubit states" -- is not implementable correctly, because no correct definition of it exists in either source paper.** The real, well-defined qubit object is different: a single-state magic monotone, not a two-state divergence.
+**So "a Ruzsa divergence between two qubit states" is not implementable correctly, because no correct definition of it exists in either source paper.** The real, well-defined qubit object is different: a single-state magic monotone, not a two-state divergence.
 
 ## What we built instead
 

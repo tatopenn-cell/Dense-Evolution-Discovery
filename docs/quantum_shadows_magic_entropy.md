@@ -1,8 +1,8 @@
-# Classical Shadows: a Real Bug Fix, and Shadow-Estimated Magic Entropy
+# Classical Shadows: a Purity-Estimator Correction, and Shadow-Estimated Magic Entropy
 
-A prior Colab session (following Huang, Kueng, Preskill 2020, "Predicting Many Properties of a Quantum System from Very Few Measurements") proposed a `dense_evolution/circuits/shadows.py` module with a `ClassicalShadow` class and `predict_renyi_entropy`. Checking it against the real paper turned up a real bug, and also a genuine, well-supported extension worth building: using the same shadow machinery to estimate Experiment 30's magic entropy from measurement snapshots instead of the exact state.
+Following Huang, Kueng, Preskill 2020, "Predicting Many Properties of a Quantum System from Very Few Measurements," `dense_evolution/circuits/shadows.py` implements a `ClassicalShadow` class and `predict_renyi_entropy`. Checking the purity estimator against the real paper turned up a correction, and also a genuine, well-supported extension worth building: using the same shadow machinery to estimate Experiment 30's magic entropy from measurement snapshots instead of the exact state.
 
-## The bug: a missing transpose
+## A correction: a missing transpose
 
 The purity estimator's cross-trace between independent shadow snapshots was computed as:
 
@@ -12,7 +12,7 @@ jnp.einsum('ijk,mjk->im', matrices, matrices)
 
 This contracts matching indices with no transpose — `sum_jk A_i[j,k]*A_m[j,k]` — not `Tr(A_i @ A_m) = sum_jk A_i[j,k]*A_m[k,j]`. Verified directly on two fixed Hermitian test matrices with complex off-diagonal entries: the buggy contraction gives `23.0`, the true `Tr(A@B)` is `11.0`.
 
-The bug is **silent whenever every snapshot happens to be real-valued** — a Z-basis-only demo, which is exactly why the Colab's own Bell-state `S2=1.000000` output never caught it. It is wrong whenever X/Y-basis snapshots (complex entries) are mixed in, which is the normal case for a real random-Pauli shadow protocol. `predict_renyi_entropy` inherits the bug since it calls the buggy purity function.
+The error is **silent whenever every snapshot happens to be real-valued** — a Z-basis-only case, which is exactly why an earlier Bell-state `S2=1.000000` check never caught it. It is wrong whenever X/Y-basis snapshots (complex entries) are mixed in, which is the normal case for a real random-Pauli shadow protocol. `predict_renyi_entropy` inherited the error since it calls the same purity function.
 
 Fixed on a genuinely complex case (a `|T>`-state shadow run, which does exercise all three Pauli bases): the buggy estimator stays biased at **0.48** even at 100,000 snapshots (`Tr[rho^2]=1` is the true value for a pure state) — a systematic bias, not statistical noise, so more samples do not fix it. The corrected contraction converges to `1.01`.
 
