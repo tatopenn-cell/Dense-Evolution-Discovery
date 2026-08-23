@@ -61,6 +61,43 @@ Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotatio
 
 ## SPAM noise: the paper's own exact channel
 
+<div style="background:#ffffff;border:1px solid #d7dbe0;border-radius:12px;padding:28px 24px 22px;overflow-x:auto">
+<svg viewBox="0 0 620 130" width="100%" style="max-width:620px;display:block;margin:0 auto">
+  <text x="10" y="40" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q0</text>
+  <text x="10" y="95" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q1</text>
+  <line x1="50" y1="35" x2="600" y2="35" stroke="#8891a0" stroke-width="1.5"/>
+  <line x1="50" y1="90" x2="600" y2="90" stroke="#8891a0" stroke-width="1.5"/>
+
+  <line x1="120" y1="18" x2="120" y2="108" stroke="#b3261e" stroke-width="1.2" opacity="0.55"/>
+  <rect x="80" y="18" width="80" height="90" rx="8" fill="none" stroke="#b3261e" stroke-width="1.3" stroke-dasharray="3 3" opacity="0.75"/>
+  <text x="120" y="65" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="12" fill="#b3261e">D&#7605;</text>
+  <text x="120" y="132" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#57606a">prep</text>
+
+  <line x1="340" y1="35" x2="340" y2="90" stroke="#00875f" stroke-width="1.5"/>
+  <rect x="290" y="18" width="100" height="90" rx="8" fill="#e9f7f1" stroke="#00875f" stroke-width="1.5"/>
+  <text x="340" y="68" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="14" fill="#00875f">iSWAP</text>
+
+  <line x1="520" y1="18" x2="520" y2="108" stroke="#b3261e" stroke-width="1.2" opacity="0.55"/>
+  <rect x="480" y="18" width="80" height="90" rx="8" fill="none" stroke="#b3261e" stroke-width="1.3" stroke-dasharray="3 3" opacity="0.75"/>
+  <text x="520" y="65" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="12" fill="#b3261e">D&#7605;</text>
+  <text x="520" y="132" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#57606a">measure</text>
+</svg>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#57606a;text-align:center;margin-top:12px">D<sub>p</sub>(&rho;) = (1&minus;p)&rho; + (p/4)&middot;I&#8324;&nbsp;&nbsp;&mdash;&nbsp;&nbsp;paper's own global 2-qubit channel, not dense_evolution's per-qubit NoiseModel</p>
+</div>
+
+<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:20px">
+<thead><tr>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">p (source)</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">uhlmann_fidelity</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Exact composition (hand-derived)</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Paper's own approximation</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.2258 (from &#10216;diag(P<sub>SPAM</sub>)&#10217;=0.69)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6996</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6996</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6900</td></tr>
+<tr><td style="padding:9px 10px">0.2100 (as stated in text)</td><td style="padding:9px 10px">0.7181</td><td style="padding:9px 10px">0.7181</td><td style="padding:9px 10px">0.7098</td></tr>
+</tbody>
+</table>
+
 `dense_evolution.circuits.registry.NoiseModel`'s built-in `'depolarizing'` model is a **per-qubit local** channel -- physically different from the paper's own **global 2-qubit** depolarizing model, `D_p(ρ) = (1-p)ρ + (p/4)I₄` (Section XVIII.C). Reusing `NoiseModel` here would silently model different physics, so this experiment implements the paper's exact channel by hand and scores it with `dense_evolution.uhlmann_fidelity` -- verified to match a hand-derived exact sequential-composition formula to machine precision, and to differ, as expected, from the paper's own explicitly-labeled "back-of-envelope" approximation (which composes two independent survival probabilities rather than the true channel composition).
 
 Combining the paper's own real measurements -- `F_QPT = 60%` (full process tomography) and `⟨diag(P_SPAM)⟩ = 0.69` (SPAM-only measurement) -- reproduces their reported **`F_iSWAP ≈ 87%`** exactly: `0.60 / 0.69 = 0.87`.
