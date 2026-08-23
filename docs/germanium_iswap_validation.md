@@ -15,7 +15,25 @@ A third bug (a factor-of-2 error in the peak-amplitude calibration, giving a 50%
 
 The native `iswap` gate defines ground truth directly through dense_evolution's own gate set (drawn as a Quirk-style box diagram by this experiment's `draw_circuit` utility), sidestepping any basis-convention mismatch with the paper's matrix notation.
 
-![Native iSWAP reference circuit](assets/germanium_iswap_validation/germanium_iswap_reference_circuit.png)
+<div style="background:#ffffff;border:1px solid #d7dbe0;border-radius:12px;padding:28px 24px 22px;overflow-x:auto">
+<svg viewBox="0 0 560 130" width="100%" style="max-width:560px;display:block;margin:0 auto">
+  <text x="10" y="40" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q0: |0&#10217;</text>
+  <text x="10" y="95" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q1: |0&#10217;</text>
+  <line x1="95" y1="35" x2="540" y2="35" stroke="#8891a0" stroke-width="1.5"/>
+  <line x1="95" y1="90" x2="540" y2="90" stroke="#8891a0" stroke-width="1.5"/>
+
+  <rect x="150" y="72" width="44" height="36" rx="6" fill="#eaf6f8" stroke="#0086a8" stroke-width="1.5"/>
+  <text x="172" y="95" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="14" fill="#0086a8">X</text>
+
+  <line x1="330" y1="35" x2="330" y2="90" stroke="#00875f" stroke-width="1.5"/>
+  <rect x="280" y="18" width="100" height="94" rx="8" fill="#e9f7f1" stroke="#00875f" stroke-width="1.5"/>
+  <text x="330" y="70" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="15" fill="#00875f">iSWAP</text>
+
+  <circle cx="330" cy="35" r="4" fill="#00875f"/>
+  <circle cx="330" cy="90" r="4" fill="#00875f"/>
+</svg>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#57606a;text-align:center;margin-top:12px">DenseSVSimulator(2).run_circuit([('x', 1), ('iswap', 0, 1)])</p>
+</div>
 
 Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotation_ops` directly (not `trotter_evolve_ops`, since the coefficient varies per slice with the pulse envelope).
 
