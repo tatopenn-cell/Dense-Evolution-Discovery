@@ -39,6 +39,22 @@ Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotatio
 
 ![One Trotterized pulse slice](assets/germanium_iswap_validation/germanium_iswap_trotter_slice.png)
 
+<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px">
+<thead><tr>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">N slices</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Gate count</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Infidelity vs. iSWAP</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;min-width:160px">&minus;log&#8321;&#8320;(infidelity)</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">4</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">73</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8.2 &times; 10&#8315;&#8308;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:34%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">145</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.9 &times; 10&#8315;&#8309;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:52%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">16</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">289</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.0 &times; 10&#8315;&#8311;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:78%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">32</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">577</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0;font-style:italic;color:#57606a">&lt; 5 &times; 10&#8315;&#8313; (print floor)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:95%"></div></div></td></tr>
+<tr><td style="padding:9px 10px">64</td><td style="padding:9px 10px">1153</td><td style="padding:9px 10px;font-style:italic;color:#57606a">&lt; 5 &times; 10&#8315;&#8313; (print floor)</td><td style="padding:9px 10px"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:97%"></div></div></td></tr>
+</tbody>
+</table>
+
 **Notable derived fact:** X⊗X, Y⊗Y, and Z⊗Z always pairwise commute (simultaneously diagonal in the Bell basis). Since this operating point has `J∥=0` by construction, the Trotter decomposition here is *exact* at any slice count -- fidelity is already >0.999 at just 4 slices, saturating to 1.0 by 32. The small residual is pure quadrature error from approximating the smooth envelope with piecewise-constant steps, not Trotter truncation error.
 
 ![Pulse envelope and population dynamics](assets/germanium_iswap_validation/germanium_iswap_pulse_dynamics.png)
