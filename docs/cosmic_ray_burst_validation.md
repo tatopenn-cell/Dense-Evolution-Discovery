@@ -31,7 +31,7 @@ At `t=20us`, survival with the event is **5.1x lower** than the undisturbed base
 
 ## Status
 
-Validated in `scripts/cosmic_ray_burst_validation.py` and `tests/test_cosmic_ray_burst_validation.py` (7/7 passing). Depends on Dense-Evolution PR [#121](https://github.com/tatopenn-cell/Dense-Evolution/pull/121)/[#122](https://github.com/tatopenn-cell/Dense-Evolution/pull/122), not yet merged at the time this experiment was written -- the script inserts that worktree onto `sys.path` directly (see its own top-of-file note) as a temporary shim, to be removed once a release picks the functions up normally.
+Validated in `scripts/cosmic_ray_burst_validation.py` and `tests/test_cosmic_ray_burst_validation.py` (7/7 passing). Uses `continuous_dissipative_evolve`/`amplitude_damping_channel`, both released in Dense-Evolution v8.1.67.
 
 ## Reproduce
 

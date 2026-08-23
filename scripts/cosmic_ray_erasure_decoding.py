@@ -28,18 +28,6 @@ own bit-flip-like treatment in this repo's simplified Pauli-error
 simulations. Non-hot-spot qubits also carry a small independent X-error
 rate, so this isn't an artificially clean single-event shot.
 """
-import pathlib
-import sys
-
-_DE_WORKTREE = pathlib.Path(
-    r"C:\Users\Admin\Desktop\Dense-Evolution-main\Dense-Evolution-main\.claude\worktrees\de-utilities"
-)
-if _DE_WORKTREE.exists():
-    # cosmic_ray_burst_profile is still on Dense-Evolution PR #124 (and its
-    # prerequisites #121-123), not yet merged/released -- see
-    # cosmic_ray_burst_validation.py's identical shim for the same reason.
-    sys.path.insert(0, str(_DE_WORKTREE))
-
 import numpy as np
 import jax.numpy as jnp
 

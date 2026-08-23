@@ -1,6 +1,6 @@
 """
-Validates dense_evolution.continuous_dissipative_evolve (new -- Dense-Evolution
-PR #122, not yet merged/released) against real measured data from
+Validates dense_evolution.continuous_dissipative_evolve (Dense-Evolution
+v8.1.67+) against real measured data from
 arXiv:2104.05219 (McEwen et al., "Resolving catastrophic error bursts from
 cosmic rays in large arrays of superconducting qubits", published in Nature
 Physics): a cosmic-ray/gamma-ray impact on a 26-qubit Google Sycamore chip
@@ -58,19 +58,6 @@ images/cosmic_ray_burst_survival.png. See
 docs/cosmic_ray_burst_validation.md for the full write-up.
 """
 import pathlib
-import sys
-
-_DE_WORKTREE = pathlib.Path(
-    r"C:\Users\Admin\Desktop\Dense-Evolution-main\Dense-Evolution-main\.claude\worktrees\de-utilities"
-)
-if _DE_WORKTREE.exists():
-    # dense_evolution's globally-installed editable package currently
-    # resolves to an older worktree lacking continuous_dissipative_evolve /
-    # continuous_pulse_evolve (still pending Dense-Evolution PR #121/#122
-    # merge) -- insert this worktree's path first so imports pick up the
-    # new functions. Remove this shim once the PRs merge and a release
-    # picks them up normally.
-    sys.path.insert(0, str(_DE_WORKTREE))
 
 import jax
 import jax.numpy as jnp

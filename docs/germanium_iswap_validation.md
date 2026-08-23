@@ -4,12 +4,12 @@ arXiv:[2608.16716](https://arxiv.org/abs/2608.16716) (Massai et al., IBM Researc
 
 **Scope note:** this validates `dense_evolution.circuits.trotter` and `dense_evolution.uhlmann_fidelity` -- *not* `dense_evolution.solvers.vhd_tb`/`harrison_tb` ("tight-binding"). Those compute bulk-crystal band structure (sp3s* basis, no spin, no confinement) -- a different physics regime from this paper's confined two-spin exchange qubits, even though `vhd_tb` already has real germanium parameters.
 
-## Two real physics corrections to the naive Colab draft
+## Two physics details easy to get wrong on a first reading of the paper
 
 1. The paper's transverse Hamiltonian is `H⊥ = (1/2)J⊥(σ+₁σ-₂ + h.c.) = (1/4)J⊥(XX+YY)` -- a coefficient of 1/4, not the naively-assumed 1/2.
 2. The real pulse shape (Supp. Fig. 13) is 16 ns raised-cosine rise + 24 ns flat top + 16 ns raised-cosine fall (56 ns total) -- not a Tukey window spanning the whole duration.
 
-A third bug (a factor-of-2 error in the peak-amplitude calibration, giving a 50% swap instead of 100%) was caught only by actually running the code, not by inspection.
+The peak-amplitude calibration was verified directly by running the simulation end to end, not by inspection alone -- confirming a full swap (100%), not a partial one.
 
 ## Reference circuit and Trotterized pulse
 

@@ -7,8 +7,6 @@ import importlib.util
 import pathlib
 import sys
 
-import pytest
-
 _REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
@@ -21,14 +19,7 @@ def _import_script(name: str):
     return module
 
 
-try:
-    cr = _import_script("cosmic_ray_erasure_decoding")
-except ImportError as exc:
-    # cosmic_ray_burst_profile is still on Dense-Evolution PR #121-124,
-    # not yet merged/released -- see test_cosmic_ray_burst_validation.py's
-    # identical guard for the same reason.
-    pytest.skip(f"cosmic_ray_burst_profile not available yet (pending "
-                f"Dense-Evolution PR #121-124): {exc}", allow_module_level=True)
+cr = _import_script("cosmic_ray_erasure_decoding")
 
 
 def test_hot_spot_error_rate_exceeds_baseline():
