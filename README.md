@@ -21,6 +21,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Cosmic-Ray Burst Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cosmic_ray_burst_validation/)** -- reproduces real measured cosmic-ray-induced error-burst dynamics (arXiv:2104.05219) with `continuous_dissipative_evolve`, the first real-data validation of the dissipative (density-matrix) counterpart to the Trotter-pulse utility below.
 - **[Germanium Baseband iSWAP Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)** -- reproduces a real 4-day-old IBM experimental result (arXiv:2608.16716) via dense_evolution's Trotter engine, and answers the paper's own explicit "left to follow-up work" call for randomized benchmarking.
 - **[Kullback-Leibler Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)** -- healing.py's docstring flags an honest gap (a scalar log-ratio, not a real distributional KL); this builds the real, paper-checked thing and confirms it's a genuinely different signal, not a rescaling.
 - **[Sandwiched Renyi Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — a proposed noise-diagnostic metric had two real bugs, both fixed and validated against independent references.
@@ -375,6 +376,14 @@ Full write-up: **[docs/kullback_leibler_divergence.md](https://tatopenn-cell.git
 A real, days-old experimental result (arXiv:2608.16716, IBM Research Europe -- Zurich) demonstrates a single-pulse baseband iSWAP gate in strained-germanium hole spin qubits. Reproduced here with `dense_evolution.circuits.trotter`, applied for the first time to a genuinely time-dependent pulse, plus the paper's own exact 2-qubit SPAM depolarizing channel scored via `dense_evolution.uhlmann_fidelity` -- reproduces their reported `F_iSWAP≈87%` exactly. Four follow-ups extend the analysis: simplified randomized benchmarking (directly answering the paper's own "left to follow-up work" line), a real per-state SPAM profile from their own figure (not a uniform average), a coherent-vs-stochastic error comparison, and the general off-resonance regime, the only place in this paper's physics where Trotter decomposition has genuine, non-zero error to converge.
 
 Full write-up: **[docs/germanium_iswap_validation.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)**.
+
+---
+
+### 34. Cosmic-Ray Burst Validation
+
+Real measured data (arXiv:2104.05219, McEwen et al., *Nature Physics*) on a 26-qubit Google Sycamore chip shows a cosmic-ray impact transiently collapsing the chip's effective T1 -- errors jump from a baseline ~4/26 qubits to ~15/26 within ~1ms, then decay back with a fitted 25ms time constant. Validates `dense_evolution.continuous_dissipative_evolve`, the dissipative (density-matrix, CPTP-channel) counterpart to the coherent `continuous_pulse_evolve` utility promoted from Experiment 33 -- its first real-data validation. Reproduces the paper's real rise/decay shape and dimensionless peak ratios via an amplitude-damping channel matching the paper's own reported decay-only error asymmetry, and shows a 5.1x early-time survival gap between the disturbed and undisturbed qubit.
+
+Full write-up: **[docs/cosmic_ray_burst_validation.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cosmic_ray_burst_validation/)**.
 
 ---
 
