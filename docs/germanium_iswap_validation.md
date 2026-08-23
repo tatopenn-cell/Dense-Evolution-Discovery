@@ -15,17 +15,88 @@ A third bug (a factor-of-2 error in the peak-amplitude calibration, giving a 50%
 
 The native `iswap` gate defines ground truth directly through dense_evolution's own gate set (drawn as a Quirk-style box diagram by this experiment's `draw_circuit` utility), sidestepping any basis-convention mismatch with the paper's matrix notation.
 
-![Native iSWAP reference circuit](assets/germanium_iswap_validation/germanium_iswap_reference_circuit.png)
+<div style="background:#ffffff;border:1px solid #d7dbe0;border-radius:12px;padding:28px 24px 22px;overflow-x:auto">
+<svg viewBox="0 0 560 130" width="100%" style="max-width:560px;display:block;margin:0 auto">
+  <text x="10" y="40" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q0: |0&#10217;</text>
+  <text x="10" y="95" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q1: |0&#10217;</text>
+  <line x1="95" y1="35" x2="540" y2="35" stroke="#8891a0" stroke-width="1.5"/>
+  <line x1="95" y1="90" x2="540" y2="90" stroke="#8891a0" stroke-width="1.5"/>
+
+  <rect x="150" y="72" width="44" height="36" rx="6" fill="#eaf6f8" stroke="#0086a8" stroke-width="1.5"/>
+  <text x="172" y="95" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="14" fill="#0086a8">X</text>
+
+  <line x1="330" y1="35" x2="330" y2="90" stroke="#00875f" stroke-width="1.5"/>
+  <rect x="280" y="18" width="100" height="94" rx="8" fill="#e9f7f1" stroke="#00875f" stroke-width="1.5"/>
+  <text x="330" y="70" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="15" fill="#00875f">iSWAP</text>
+
+  <circle cx="330" cy="35" r="4" fill="#00875f"/>
+  <circle cx="330" cy="90" r="4" fill="#00875f"/>
+</svg>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#57606a;text-align:center;margin-top:12px">DenseSVSimulator(2).run_circuit([('x', 1), ('iswap', 0, 1)])</p>
+</div>
 
 Each Trotterized pulse slice's `Rxx`/`Ryy` rotation is built from `pauli_rotation_ops` directly (not `trotter_evolve_ops`, since the coefficient varies per slice with the pulse envelope).
 
 ![One Trotterized pulse slice](assets/germanium_iswap_validation/germanium_iswap_trotter_slice.png)
+
+<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px">
+<thead><tr>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">N slices</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Gate count</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Infidelity vs. iSWAP</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;min-width:160px">&minus;log&#8321;&#8320;(infidelity)</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">4</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">73</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8.2 &times; 10&#8315;&#8308;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:34%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">145</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.9 &times; 10&#8315;&#8309;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:52%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">16</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">289</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.0 &times; 10&#8315;&#8311;</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:78%"></div></div></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">32</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">577</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0;font-style:italic;color:#57606a">&lt; 5 &times; 10&#8315;&#8313; (print floor)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:95%"></div></div></td></tr>
+<tr><td style="padding:9px 10px">64</td><td style="padding:9px 10px">1153</td><td style="padding:9px 10px;font-style:italic;color:#57606a">&lt; 5 &times; 10&#8315;&#8313; (print floor)</td><td style="padding:9px 10px"><div style="background:#eef0f2;border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#0086a8,#00875f);border-radius:4px;width:97%"></div></div></td></tr>
+</tbody>
+</table>
 
 **Notable derived fact:** X⊗X, Y⊗Y, and Z⊗Z always pairwise commute (simultaneously diagonal in the Bell basis). Since this operating point has `J∥=0` by construction, the Trotter decomposition here is *exact* at any slice count -- fidelity is already >0.999 at just 4 slices, saturating to 1.0 by 32. The small residual is pure quadrature error from approximating the smooth envelope with piecewise-constant steps, not Trotter truncation error.
 
 ![Pulse envelope and population dynamics](assets/germanium_iswap_validation/germanium_iswap_pulse_dynamics.png)
 
 ## SPAM noise: the paper's own exact channel
+
+<div style="background:#ffffff;border:1px solid #d7dbe0;border-radius:12px;padding:28px 24px 22px;overflow-x:auto">
+<svg viewBox="0 0 620 130" width="100%" style="max-width:620px;display:block;margin:0 auto">
+  <text x="10" y="40" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q0</text>
+  <text x="10" y="95" font-family="IBM Plex Mono, monospace" font-size="13" fill="#57606a">q1</text>
+  <line x1="50" y1="35" x2="600" y2="35" stroke="#8891a0" stroke-width="1.5"/>
+  <line x1="50" y1="90" x2="600" y2="90" stroke="#8891a0" stroke-width="1.5"/>
+
+  <line x1="120" y1="18" x2="120" y2="108" stroke="#b3261e" stroke-width="1.2" opacity="0.55"/>
+  <rect x="80" y="18" width="80" height="90" rx="8" fill="none" stroke="#b3261e" stroke-width="1.3" stroke-dasharray="3 3" opacity="0.75"/>
+  <text x="120" y="65" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="12" fill="#b3261e">D&#7605;</text>
+  <text x="120" y="132" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#57606a">prep</text>
+
+  <line x1="340" y1="35" x2="340" y2="90" stroke="#00875f" stroke-width="1.5"/>
+  <rect x="290" y="18" width="100" height="90" rx="8" fill="#e9f7f1" stroke="#00875f" stroke-width="1.5"/>
+  <text x="340" y="68" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="14" fill="#00875f">iSWAP</text>
+
+  <line x1="520" y1="18" x2="520" y2="108" stroke="#b3261e" stroke-width="1.2" opacity="0.55"/>
+  <rect x="480" y="18" width="80" height="90" rx="8" fill="none" stroke="#b3261e" stroke-width="1.3" stroke-dasharray="3 3" opacity="0.75"/>
+  <text x="520" y="65" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="12" fill="#b3261e">D&#7605;</text>
+  <text x="520" y="132" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#57606a">measure</text>
+</svg>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#57606a;text-align:center;margin-top:12px">D<sub>p</sub>(&rho;) = (1&minus;p)&rho; + (p/4)&middot;I&#8324;&nbsp;&nbsp;&mdash;&nbsp;&nbsp;paper's own global 2-qubit channel, not dense_evolution's per-qubit NoiseModel</p>
+</div>
+
+<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:20px">
+<thead><tr>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">p (source)</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">uhlmann_fidelity</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Exact composition (hand-derived)</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Paper's own approximation</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.2258 (from &#10216;diag(P<sub>SPAM</sub>)&#10217;=0.69)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6996</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6996</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">0.6900</td></tr>
+<tr><td style="padding:9px 10px">0.2100 (as stated in text)</td><td style="padding:9px 10px">0.7181</td><td style="padding:9px 10px">0.7181</td><td style="padding:9px 10px">0.7098</td></tr>
+</tbody>
+</table>
 
 `dense_evolution.circuits.registry.NoiseModel`'s built-in `'depolarizing'` model is a **per-qubit local** channel -- physically different from the paper's own **global 2-qubit** depolarizing model, `D_p(ρ) = (1-p)ρ + (p/4)I₄` (Section XVIII.C). Reusing `NoiseModel` here would silently model different physics, so this experiment implements the paper's exact channel by hand and scores it with `dense_evolution.uhlmann_fidelity` -- verified to match a hand-derived exact sequential-composition formula to machine precision, and to differ, as expected, from the paper's own explicitly-labeled "back-of-envelope" approximation (which composes two independent survival probabilities rather than the true channel composition).
 
