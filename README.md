@@ -70,15 +70,11 @@ Each entry below is a short summary. Full method, data tables, and every image a
 
 **What:** find the critical field strength of the transverse-field Ising model by sweeping its order parameter. **What we find:** the original claim (g=1.309) didn't hold up — three independent methods (exact Lanczos diagonalization, a genuinely variational VQE, and free-fermion diagonalization) agree the real critical point is **g=0.860**. **Why:** the original ansatz's two parameters were provably inert (couldn't respond to g at all), so its "transition" was a trigonometric artifact, not physics.
 
-[![Quantum Ising Phase Scan and Susceptibility](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_transizione_ising.png)
-
 ---
 
 ### [2. Quantum Error Mitigation via Real Stochastic Richardson Extrapolation (ZNE)](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#2-quantum-error-mitigation-via-real-stochastic-richardson-extrapolation-zne)
 
 **What:** test whether simple 2-point zero-noise extrapolation recovers the true noiseless energy of a noisy Bloch-state measurement. **What we find:** the original "-4.2467 eV, target reconstructed" claim was a mislabeling of its own output; the real ideal energy is -4.2200 eV, and repeated trials show the 2-point extrapolation carries a real, statistically robust bias (0.05-0.12 eV) that a quadratic fit through more noise points removes. **Why:** a straight line through 2 points structurally can't see the curvature of E(noise level).
-
-[![Stochastic Zero-Noise Extrapolation Results](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_transizione_noisy.png)
 
 ---
 
@@ -96,15 +92,11 @@ A closed-form formula for this same ansatz's energy — no circuit simulation ne
 
 **What:** map how a 12-qubit entangled chain's coherence decays under localized dephasing, using JAX-batched parallel execution. **What we find:** two real bugs were caught and fixed along the way (a batch-column mismatch, a qubit-indexing mismatch); with both fixed, 11 of 12 nodes show identical residual coherence (43.88%) and only the last node differs (62.05%) — a verified empirical fact without a fully proven mechanism yet.
 
-[![True Quantum Defect Mapping Graph](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/mappa_difetti_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/mappa_difetti_silicio.png)
-
 ---
 
 ### [5. Rigorous 1D Crystalline Lattice Dispersion](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#5-rigorous-1d-crystalline-lattice-dispersion)
 
 Resolves the exact tight-binding dispersion $E(k) = -2t\cos(k)$ for a 1D chain via Jordan-Wigner fermionization — an honest, exact statevector baseline (no artificial scaling factors) that later sections build on.
-
-[![Rigorous Quantum Tight-Binding Dispersion](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/bande_silicio_ibrido.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/bande_silicio_ibrido.png)
 
 ---
 
@@ -112,23 +104,17 @@ Resolves the exact tight-binding dispersion $E(k) = -2t\cos(k)$ for a 1D chain v
 
 **What:** compute exact quantum gradients via the Parameter-Shift Rule instead of finite differences. **What we find:** the original shared-parameter shift trick was wrong (could flip the gradient's sign); fixed via a proper chain rule over every individual gate parameter, verified to $\sim10^{-9}$ against finite differences — at the cost of far more circuit evaluations (73,500, batched into one JAX macro-cycle).
 
-[![Exact Parameter-Shift Rule Gradients](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_jax_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_jax_gradient.png)
-
 ---
 
 ### [7. Strained Silicon Bandstructure Engineering (3,500-Point Sweep)](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#7-strained-silicon-bandstructure-engineering-3500-point-sweep)
 
 Models how 5% tensile strain contracts the tight-binding hopping energy per Harrison's law, across a 3,500-point k-sweep: hopping shrinks from the unstrained ±4.2200 eV to **±3.8277 eV**.
 
-[![Strained Silicon Next-Gen Bandstructure](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_nuovo_silicio.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/confronto_nuovo_silicio.png)
-
 ---
 
 ### [8. Quantum Lattice Thermodynamics: Phonon Scattering & Decoherence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#8-quantum-lattice-thermodynamics-phonon-scattering-decoherence)
 
 **Corrected 2026-08-10:** the original version never actually simulated decoherence — it was a classical scalar approximation wearing a quantum simulator's clothes. This version applies a genuine per-site dephasing Kraus channel driven by real Bose-Einstein phonon occupancy. Result: fidelity decays smoothly from **0.9167 to 0.8197** across the temperature sweep.
-
-[![Quantum Lattice Thermodynamics: real Kraus-channel dephasing](docs/assets/manufacturing_thermodynamics/validazione_fabbricazione.png)](docs/assets/manufacturing_thermodynamics/validazione_fabbricazione.png)
 
 ---
 
@@ -140,13 +126,9 @@ Maps a silicon-dimer bond's Born-Oppenheimer potential energy curve with a fixed
 
 Optimizing the ansatz's angle reveals a structural fact: the energy minimum's location doesn't depend on the bond length R at all. Using the true optimum instead of a guess deepens the binding well from -0.302 eV to **-0.4615 eV**.
 
-[![Adam-Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata.png)
-
 #### [9c. Per-Bond Optimized PEC — 5 Independent Givens Angles](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#9c-per-bond-optimized-pec-5-independent-givens-angles)
 
 Letting each of the 5 bonds optimize its own angle (instead of one shared angle) deepens the minimum further, to **-0.6685 eV** — the angles settle on an evenly-spaced pattern, not a uniform value.
-
-[![Per-Bond Optimized Silicon Dimer PEC](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/curva_potenziale_silicio_ottimizzata_per_legame.png)
 
 #### [9d. Closed Form: the Optimizer Rediscovers the Tight-Binding Ground State](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#9d-closed-form-the-optimizer-rediscovers-the-tight-binding-ground-state)
 
@@ -156,13 +138,9 @@ Derives *why* 9c's pattern appears: the ansatz is unconstrained enough that the 
 
 Tests where a single shared angle actually loses to per-bond optimization under irregular geometries. It's not "any distortion is worse" — specifically, two mutated bonds at opposite ends of the chain cost far more (deficit 0.500) than the uniform baseline (0.169).
 
-[![Extreme/Irregular Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_extreme_geometries.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.1.0/vqe_extreme_geometries.png)
-
 #### [9f. Deeper Ansatz (12 Parameters) + a Genuine Minimum-Energy Conformational Search](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#9f-deeper-ansatz-12-parameters-a-genuine-minimum-energy-conformational-search)
 
 The same benchmark at 12 parameters shows the pattern isn't fully stable across ansatz depth. A genuine joint geometry+angle search (not hand-picked scenarios) finds distinct, physically reasonable minima from different starting points.
-
-[![12-Parameter Extreme-Geometry Benchmark](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/vqe_extreme_geometries_deep.png)
 
 ---
 
@@ -207,23 +185,17 @@ A dependency-free test suite checks 5 exact physical/mathematical identities (PE
 
 **What:** does correcting each individual gate's shifted energy with ZNE, before combining via the chain rule, stabilize the resulting VQE gradient? **What we find:** it helps substantially away from a gradient zero-crossing (roughly 2x lower RMSE), but *hurts* right at one — there's little real bias left to correct there, so ZNE's own variance cost dominates instead.
 
-[![ZNE-Before-PSR Gradient Stabilization Study](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_stabilized_psr_gradient.png)
-
 ---
 
 ### [13. Adaptive ZNE-Before-PSR via Predictive Healing — An Honest Negative Result](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#13-adaptive-zne-before-psr-via-predictive-healing-an-honest-negative-result)
 
 Tries to fix Section 12's zero-crossing problem by attenuating the ZNE correction using a measured confidence signal (SEM). **It doesn't work:** no calibration explored ever beats both the naive and static versions — because SEM tracks shot count, not the thing that actually determines whether correction helps (the size of the real bias being corrected).
 
-[![Adaptive ZNE-Before-PSR: Negative Result](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.2.0/zne_adaptive_psr_gradient.png)
-
 ---
 
 ### [14. A Second Adaptive-ZNE Attempt via the Correction Term's Own SNR — Hypothesis Rejected](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#14-a-second-adaptive-zne-attempt-via-the-correction-terms-own-snr-hypothesis-rejected)
 
 A more principled confidence signal (the correction term's own signal-to-noise ratio) is rejected too, with a more interesting failure mode: it beats the static correction at one $\theta$ but makes the exact zero-crossing case *worse* — the two quantities (noise-scale SNR vs. gate-shift cancellation) turn out to be causally unrelated.
-
-[![SNR-Adaptive ZNE-Before-PSR: Hypothesis Rejected](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.3.0/zne_snr_adaptive_psr_gradient.png)
 
 ---
 
@@ -243,23 +215,17 @@ Runs the density-matrix (Uhlmann-fidelity) form of ZNE across a 16-point noise s
 
 A "kicked Ising" forward/backward circuit with amplitude-damping noise injected at every layer recovers return fidelity from **0.7769 → 0.9965** via Zero-Noise Extrapolation — a noiseless self-check (exact fidelity 1.0) gates the noisy results before they're trusted.
 
-[![Loschmidt echo: raw vs. ZNE-corrected return fidelity](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/loschmidt_echo_zne.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/loschmidt_echo_zne.png)
-
 ---
 
 ### [18. Topological Mott Isolator: VQE Ground-State Optimization](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#18-topological-mott-isolator-vqe-ground-state-optimization)
 
 Gradient-based VQE optimization of a Topological Mott Isolator ansatz, checked against exact diagonalization at every point of a 12-point Mott-repulsion sweep. The variational bound is respected everywhere (no violations); the gap grows with repulsion strength $U$ — an honest ansatz-expressivity limit, not under-training (multi-start restarts converge to the same plateau).
 
-[![Topological Mott Isolator: optimization vs. exact diagonalization](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design.png)
-
 ---
 
 ### [19. GaAs Parameters via DFT and Dielectric Screening](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#19-gaas-parameters-via-dft-and-dielectric-screening)
 
 Grounds Section 18's arbitrary-unit sweep in real chemistry: a converged, stability-confirmed PBE/STO-3G calculation on GaAs gives a screened on-site repulsion $U/t = 0.376$ — deep in the weakly-correlated regime expected for a conventional semiconductor, not a Mott insulator.
-
-[![GaAs: exact vs. VQE-optimized ground-state energy](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.4.0/vqe_tmi_material_design_gaas.png)
 
 ---
 
@@ -291,15 +257,11 @@ Full write-up: **[docs/photonic_predictive_zne.md](https://tatopenn-cell.github.
 
 A six-part investigation into the 7-qubit Steane code: (1) native encoding, syndrome table, and correction to fidelity 1.0, plus a noise-sweep threshold later re-verified against a fixed noise-model bug; (2-3) a JAX-differentiable adversarial noise search that found no real blind spot; (4) an independent STIM cross-validation that caught the real library bug above; (5) a real bridge to IBM's Eagle hardware calibration data (encoded-state fidelity 0.8828); (6) an erasure-aware decoder that achieves **zero failures** on every double-heralded-erasure shot, exactly confirming the textbook d-1 erasure-correction bound.
 
-[![Steane logical vs. physical error rate under real depolarizing noise](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.25.0/steane_logical_vs_physical_error_rate.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.25.0/steane_logical_vs_physical_error_rate.png)
-
 ---
 
 ### 24. Resilient Operational Topologies: the Split Has a Closed-Form Cause
 
 **What's being tested:** a simple 3-qubit circuit made of 3 gates (one CX, plus X and Z) can be run in 6 different orders. **What we find:** those 6 orders split into two groups of 3 — one group gives basically the same result no matter which order you pick ("resilient" to noise), the other group gives a clearly different result depending on order. **Why:** it comes down to one single fact — whether X fires before or after CX. CX only flips its target if its control qubit is already 1, so doing X first changes what CX does; doing X after doesn't. That ordering choice, not the noise itself, is what decides the outcome — and it holds up identically across all three topology labels tested and all five noise channels `NoiseModel` implements.
-
-[![Resilient Operational Topologies: max JS distance per permutation pair, all 5 noise channels](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.26.0/resilient_operational_topologies.png)
 
 Full method, the per-channel numbers table, and the step-by-step derivation are on the [docs site](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#24-resilient-operational-topologies-the-split-has-a-closed-form-cause). Produced by `scripts/resilient_operational_topologies.py` → `data/resilient_operational_topologies.csv`, `data/resilient_operational_topologies_summary.csv`.
 
@@ -308,8 +270,6 @@ Full method, the per-channel numbers table, and the step-by-step derivation are 
 ### 25. JSD-Predictive ZNE on Oscillating Noise: a Confound, Not a New Win
 
 **What's being tested:** does the library's JSD-informed ZNE nudge (built for photon-loss noise, Experiment 22) also help on oscillating, non-monotonic depolarizing noise? **What we find:** an early draft claimed an 87% win rate — but it compared a 3-point JSD method against a 5-point classic fit, not the same data for both. Re-tested fairly (same noise scales, 6 independent seeds, paired significance test) at both 3-vs-3 and a from-scratch 5-vs-5 generalization, the JSD nudge itself shows **no real effect** (0/11 and 1/11 significant, the latter a floating-point-noise artifact). **Why the original test looked so good anyway:** on oscillating noise, a 5-point least-squares fit is genuinely much worse than a 3-point one (confirmed, p<0.05 in 9/11 configurations) — a real, separate effect about how many noise-scale points to use, with nothing to do with JSD.
-
-[![JSD-predictive ZNE vs. classic ZNE, oscillating depolarizing noise: fair 3v3, original 5v3 design, and fair 5v5](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.27.0/jsd_zne_oscillating_noise.png)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/releases/download/v2.27.0/jsd_zne_oscillating_noise.png)
 
 Full method, all three comparisons, and the 5-point generalization's own correctness verification are on the [docs site](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#25-jsd-predictive-zne-on-oscillating-noise-a-confound-not-a-new-win). Produced by `scripts/jsd_zne_oscillating_noise.py` → `data/jsd_zne_oscillating_noise.csv`.
 
