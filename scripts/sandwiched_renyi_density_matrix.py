@@ -1,28 +1,28 @@
 """Experiment 29: fixing and validating the Sandwiched Quantum Renyi
 Divergence for full density-matrix diagnostics.
 
-Origin: a Colab session read Muller-Lennert et al. (arXiv:1306.3142,
-Sandwiched Quantum Renyi Divergence) and proposed adding it to
+Origin: following Muller-Lennert et al. (arXiv:1306.3142, Sandwiched
+Quantum Renyi Divergence), it was proposed for addition to
 dense_evolution as a noise/state-distance diagnostic. Two things were
 already found wrong with the original proposal (see nuoveJSD_.txt /
 earlier session evaluation):
-  1. The formula's case_general branch had a real bug: `tr_inner =
+  1. The formula's case_general branch had a real issue: `tr_inner =
      jnp.maximum(tr_inner, 1.0)` floors the inner trace at 1.0 even when
      the true value is < 1 (the normal case for non-commuting rho,sigma),
      forcing log2(1)=0 and silently zeroing the divergence. Confirmed
-     directly in the Colab's own printed test output: alpha=1.5 gave
+     directly in the original printed test output: alpha=1.5 gave
      exactly 0.000000 for every theta in a rotation sweep, including
      theta=3.14.
   2. The originally proposed application (replacing the JSD-based
      truncation criterion in mps.py's chi search) was independently
-     disproven by the Colab session's own benchmarking: on the diagonal
+     disproven by the original benchmarking: on the diagonal
      singular-value spectrum used there, Sandwiched Renyi and JSD induce
      the exact same truncation ordering (5 benchmark configurations, byte
      -identical chi_used and truncation error every time) -- rho, sigma
      commute in that setting, so there's nothing for a non-commuting
      -aware divergence to add.
 
-This experiment: (a) fixes the case_general clamp bug, (b) validates the
+This experiment: (a) fixes the case_general clamp issue, (b) validates the
 fixed implementation against three independent references humans can
 actually check by hand -- the alpha->1 limit (must match the standard
 relative entropy D(rho||sigma) = Tr[rho(log rho - log sigma)], already
@@ -52,8 +52,8 @@ _DATA_DIR = pathlib.Path(__file__).resolve().parent.parent / "data"
 
 
 def sandwiched_renyi_divergence_buggy(rho, sigma, alpha=1.5):
-    """The Colab's original case_general branch, faithfully reproduced,
-    including the bug -- kept here only to demonstrate the before/after."""
+    """The original case_general branch, faithfully reproduced,
+    including the issue -- kept here only to demonstrate the before/after."""
     eps = 1e-12
     exponent = (1.0 - alpha) / (2.0 * alpha)
     ev_s, ec_s = jnp.linalg.eigh(sigma)
@@ -190,8 +190,8 @@ def bell_state_rho():
 if __name__ == "__main__":
     _DATA_DIR.mkdir(exist_ok=True)
 
-    print("=== PART 1: BUG CONFIRMATION (buggy vs. fixed, alpha=1.5, pure states) ===\n")
-    # Reproduces the original Colab bug report exactly: two PURE states (a
+    print("=== PART 1: CONFIRMATION (before vs. fixed, alpha=1.5, pure states) ===\n")
+    # Reproduces the original report exactly: two PURE states (a
     # fixed reference vs. an RX-rotated copy), which is where the buggy
     # clamp actually bites (tr_inner < 1 is the generic case for two
     # non-identical pure states at alpha>1).

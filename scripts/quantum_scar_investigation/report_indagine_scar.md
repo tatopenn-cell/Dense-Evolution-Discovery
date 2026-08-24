@@ -4,7 +4,7 @@ Report della sessione di verifica su `frustrazione_quantistica.py` (griglie Isin
 
 ## 1. Punto di partenza
 
-Lo script originale (`frustrazione_quantistica.py`, esportato da Colab) conteneva due risultati:
+Lo script originale (`frustrazione_quantistica.py`) conteneva due risultati:
 
 1. **Escape da barren plateau via rumore**: su griglie Ising frustrate 3x3 (9 qubit) e 4x4 (16 qubit), il modulo `healing.py` (Phi-Trigger) rileva la stasi del gradiente durante l'ottimizzazione VQE e inietta rumore di Kraus depolarizzante (via `NoiseModel`) per uscirne. Risultato: energia finale -9.9716 (target -10.0) su 9 qubit, -23.9652 (target -24.0) su 16 qubit.
 2. **Presunta "cicatrice quantistica" (quantum many-body scar)**: su una griglia 4x4, partendo dallo stato di Néel, una configurazione di segni "frustrata alternata" mostrava oscillazioni di energia persistenti per 120 passi Trotter, mentre una configurazione "omogenea" si smorzava — interpretato nello script come evidenza di scarring (fenomeno osservato per la prima volta nel 2017, atomi di Rydberg, modello PXP).

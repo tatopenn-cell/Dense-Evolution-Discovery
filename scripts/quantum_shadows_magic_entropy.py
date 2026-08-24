@@ -1,10 +1,10 @@
-"""Experiment 31: fixing a real bug in the Colab's Classical Shadows
+"""Experiment 31: fixing a real issue in the Classical Shadows
 proposal, then using shadows to estimate magic entropy from randomized
 measurements instead of the exact state.
 
-Origin: a prior Colab session (paper test/varianze.txt, following Huang,
-Kueng, Preskill 2020, "Predicting Many Properties of a Quantum System from
-Very Few Measurements") proposed a dense_evolution/circuits/shadows.py
+Origin: following Huang, Kueng, Preskill 2020, "Predicting Many Properties
+of a Quantum System from Very Few Measurements" (paper test/varianze.txt),
+it was proposed to add a dense_evolution/circuits/shadows.py
 module with a ClassicalShadow class and predict_renyi_entropy. The purity
 estimator at its core computes the U-statistic cross-trace between
 independent shadow snapshots as
@@ -14,8 +14,8 @@ sum_jk A_i[j,k]*A_m[j,k], not Tr(A_i @ A_m) = sum_jk A_i[j,k]*A_m[k,j].
 Verified directly (see purity_bug_verification below): on two Hermitian
 2x2 test matrices with complex off-diagonal entries, the buggy contraction
 gives 45.0 while the true Tr(A@B) is 21.0. The bug is silent whenever
-every snapshot happens to be real-valued (a Z-basis-only demo, which is
-why the Colab's own Bell-state S2=1.000000 output never exposed it), but
+every snapshot happens to be real-valued (a Z-basis-only case, which is
+why an earlier Bell-state S2=1.000000 check never exposed it), but
 is wrong in general whenever X/Y-basis snapshots (complex entries) are
 mixed in, which is the normal case for a real random-Pauli protocol.
 
@@ -81,7 +81,7 @@ def sample_shadow_snapshots(psi, n_snapshots, seed):
 
 
 def purity_bug_verification():
-    """Directly reproduces the Colab's einsum bug on two fixed Hermitian
+    """Directly reproduces the original einsum error on two fixed Hermitian
     test matrices, independent of any measurement simulation."""
     a = jnp.array([[1.0 + 0j, 2.0 + 3j], [2.0 - 3j, 4.0 + 0j]], dtype=jnp.complex128)
     b = jnp.array([[5.0 + 0j, 1.0 - 1j], [1.0 + 1j, 2.0 + 0j]], dtype=jnp.complex128)
@@ -418,7 +418,7 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(1, 4, figsize=(23, 5))
 
     df_purity = pd.DataFrame(rows_purity)
-    axes[0].plot(df_purity["n_snapshots"], df_purity["purity_buggy"], marker="s", label="buggy einsum (Colab)", color="#888888")
+    axes[0].plot(df_purity["n_snapshots"], df_purity["purity_buggy"], marker="s", label="original (uncorrected) einsum", color="#888888")
     axes[0].plot(df_purity["n_snapshots"], df_purity["purity_fixed"], marker="o", label="fixed einsum", color="#00e5ff")
     axes[0].axhline(1.0, color="#ff7f0e", linestyle="--", label="exact Tr[rho^2] = 1 (pure state)")
     axes[0].set_xscale("log")

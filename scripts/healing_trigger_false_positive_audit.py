@@ -1,11 +1,11 @@
 """Experiment 27: the shipped Phi-Trigger fires on ~90% of ordinary noisy
 data -- a MAD-adaptive replacement fixes it without losing recall.
 
-Origin: while validating the Colab's "Stratonovich projection" healing
+Origin: while validating the "Stratonovich projection" healing
 claim (Experiment 26), the production Phi-Trigger's own replacement rate
 looked suspiciously high (~85-90% of ALL steps replaced, not just the
 deliberately corrupted ones) regardless of which correction method was
-used. This experiment isolates and fixes that -- a real, separate bug
+used. This experiment isolates and fixes that -- a real, separate issue
 from Experiment 26's original question.
 
 Method: characterize dense_evolution.mitigation.healing.evaluate_phi_trigger
