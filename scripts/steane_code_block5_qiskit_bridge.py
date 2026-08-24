@@ -48,7 +48,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, r'C:\Users\Admin\Desktop\Dense-Evolution-main\Dense-Evolution-main')
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from dense_evolution.interop.qiskit_pennylane import _require_qiskit
