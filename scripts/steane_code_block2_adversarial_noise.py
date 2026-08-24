@@ -117,7 +117,6 @@ import matplotlib.pyplot as plt
 import jax
 import jax.numpy as jnp
 
-sys.path.insert(0, r'C:\Users\Admin\Desktop\Dense-Evolution-main\Dense-Evolution-main')
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import steane_code_block1 as block1
 

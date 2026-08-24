@@ -66,13 +66,11 @@ proposes a single-qubit correction) with realistic multi-qubit error
 events.
 """
 import pathlib
-import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, r'C:\Users\Admin\Desktop\Dense-Evolution-main\Dense-Evolution-main')
 from dense_evolution import DenseSVSimulator
 from dense_evolution.observables import pauli_expectation
 from dense_evolution.registry import NoiseModel
