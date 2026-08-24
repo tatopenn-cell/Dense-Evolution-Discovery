@@ -1,14 +1,14 @@
 # Sandwiched Quantum Rényi Divergence for Density-Matrix Diagnostics
 
-A Colab session read Müller-Lennert et al. ("On quantum Rényi entropies: a new generalization and some applications", arXiv:1306.3142) and proposed adding the Sandwiched Quantum Rényi Divergence to `dense_evolution` as a noise/state-distance diagnostic. Two problems were already found with the original proposal in an earlier evaluation pass: a real implementation bug, and a disproven original use case (replacing the JSD-based truncation criterion in `mps.py`'s bond-dimension search -- the Colab's own benchmarking showed Rényi and JSD induce the exact same truncation ordering on that diagonal singular-value spectrum, since `rho` and `sigma` commute there and there's nothing for a non-commuting-aware divergence to add).
+Following Müller-Lennert et al. ("On quantum Rényi entropies: a new generalization and some applications", arXiv:1306.3142), the Sandwiched Quantum Rényi Divergence was proposed for addition to `dense_evolution` as a noise/state-distance diagnostic. Two problems were already found with the original proposal in an earlier evaluation pass: a real implementation issue, and a disproven original use case (replacing the JSD-based truncation criterion in `mps.py`'s bond-dimension search -- the original benchmarking showed Rényi and JSD induce the exact same truncation ordering on that diagonal singular-value spectrum, since `rho` and `sigma` commute there and there's nothing for a non-commuting-aware divergence to add).
 
 This page fixes and validates the divergence itself for the case where it *does* have something to add: full density-matrix diagnostics, where states genuinely don't commute.
 
-## Bug 1: the clamp that zeroed the signal
+## Issue 1: the clamp that zeroed the signal
 
 The formula (Definition 13 of the paper): `D_α(ρ‖σ) := 1/(α−1) · log Tr[(σ^e ρ σ^e)^α]`, `e = (1-α)/(2α)`.
 
-The original code computed the inner trace correctly, then clamped it: `tr_inner = jnp.maximum(tr_inner, 1.0)`. Since a sub-1 trace is the *normal* case for non-commuting states, this silently forced `log2(1) = 0` for the majority of real inputs -- confirmed directly in the Colab's own printed output: `alpha=1.5` gave exactly `0.000000` for every rotation angle in a sweep, including a large rotation where a real divergence should have been substantial.
+The original code computed the inner trace correctly, then clamped it: `tr_inner = jnp.maximum(tr_inner, 1.0)`. Since a sub-1 trace is the *normal* case for non-commuting states, this silently forced `log2(1) = 0` for the majority of real inputs -- confirmed directly in the original printed output: `alpha=1.5` gave exactly `0.000000` for every rotation angle in a sweep, including a large rotation where a real divergence should have been substantial.
 
 **Fix:** floor at a small numerical epsilon (to avoid `log2(0)`), not at 1.0.
 

@@ -1,13 +1,13 @@
 """Stratonovich-inspired healing vs. the shipped median fallback: does
 replacing the correction step change anything, once tested honestly?
 
-Origin: a Google Colab session read Hu & Sverak's "Regularity of a
-stochastically perturbed Euler-Arnold equation" (arXiv:1510.05279) against
-`ia_utils.vector_healing.enhanced_dense_healing_hybrid` and proposed
+Origin: following Hu & Sverak's "Regularity of a stochastically perturbed
+Euler-Arnold equation" (arXiv:1510.05279), a variant of
+`ia_utils.vector_healing.enhanced_dense_healing_hybrid` was proposed,
 swapping the median fallback for a "Stratonovich projection" (local-mean
 baseline + a drift term along the recent finite-difference velocity
-direction, damped by a friction coefficient nu). The single-seed Colab demo
-(seed=42, one corruption pattern) reported a large win: cosine phase
+direction, damped by a friction coefficient nu). The single-seed original
+test (seed=42, one corruption pattern) reported a large win: cosine phase
 alignment -0.16 -> +0.98. That single anecdote is not evidence -- this
 script is the actual controlled test.
 
@@ -15,8 +15,8 @@ IMPORTANT CAVEAT ON THE PHYSICS CLAIM: nothing here computes an actual
 Lie-group metric tensor or a rigorous Stratonovich stochastic integral --
 the "geodesic projection" is a heuristic (local mean + finite-difference
 velocity direction, linearly damped). The paper is real and its formalism
-is real; this script does not implement it, it implements the Colab's
-own hand-rolled approximation of it. Treat the arXiv citation as inspiration
+is real; this script does not implement it, it implements a hand-rolled
+approximation of it. Treat the arXiv citation as inspiration
 for the functional form, not as a proof this is "correct".
 
 Method (controlled ablation, not a rewrite of the whole algorithm): the
@@ -28,12 +28,12 @@ window, in the shipped code). This script holds (1) fixed -- the exact
 production Phi-Trigger, unmodified -- and swaps only (2): median vs.
 Stratonovich-style projection. That isolates the actual claim ("the
 replacement is better", not "the trigger is better") instead of
-conflating the two, which the single-seed Colab demo did not do cleanly.
+conflating the two, which the single-seed original test did not do cleanly.
 
 4 corruption scenarios (single spike, NaN string, scattered multi-spike,
 combined spike+NaN) x 40 seeds each = 160 trials, scored against the
 known-clean ideal trajectory each corruption was applied to (trend + IID
-Gaussian noise, matching the Colab's own synthetic setup) on two metrics:
+Gaussian noise, matching the original synthetic setup) on two metrics:
 L2 reconstruction error and flattened cosine phase alignment. A paired
 Wilcoxon signed-rank test on both reports whether any observed edge
 survives multi-seed testing, not just seed=42.
@@ -60,7 +60,7 @@ _IMAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
 N_STEPS = 50
 DIM = 128
 N_SEEDS = 40
-NU = 0.05  # friction coefficient, same value the Colab notebook used
+NU = 0.05  # friction coefficient, same value the original proposal used
 
 
 def _clean_trajectory(seed):
@@ -106,7 +106,7 @@ def _median_correction(window, prev1, prev2, state_A, nu):
 
 def _stratonovich_correction(window, prev1, prev2, state_A, nu):
     """Local-mean baseline + damped drift along the recent finite-difference
-    velocity direction -- the Colab's hand-rolled approximation of a
+    velocity direction -- a hand-rolled approximation of a
     Stratonovich-style projection. Not a rigorous SDE solve; see module
     docstring."""
     norm_A = np.linalg.norm(state_A)
@@ -122,7 +122,7 @@ def online_healing(vettori, correction_fn, radius_baseline=None, nu=NU):
     """Reimplements `enhanced_dense_healing_hybrid`'s loop with the exact
     production Phi-Trigger, but a pluggable correction step -- see module
     docstring for why this (not calling the shipped function directly) is
-    the correct ablation for testing the Colab's actual claim."""
+    the correct ablation for testing the original claim."""
     vettori = np.asarray(vettori, dtype=float)
     n, hidden_dim = vettori.shape
     processed = np.copy(vettori)
@@ -178,7 +178,7 @@ SCENARIOS = ("single_spike", "nan_string", "scattered_outliers", "combined")
 def forced_healing(vettori, correction_fn, corrupt_indices, radius_baseline=None, nu=NU):
     """Same sequential-window machinery as online_healing, but correction
     fires exactly at the known-corrupted indices, bypassing the Phi-Trigger
-    entirely -- this is what the original Colab's own controlled test
+    entirely -- this is what the original controlled test
     (healing_mediana_only / healing_stratonovich_only) actually did."""
     vettori = np.asarray(vettori, dtype=float)
     n, hidden_dim = vettori.shape
@@ -231,7 +231,7 @@ def run_all():
                 "any_nan_median": bool(np.isnan(healed_median).any()),
                 "any_nan_strato": bool(np.isnan(healed_strato).any()),
                 # forced test: restricted to exactly the corrupted rows,
-                # bypassing the Phi-Trigger -- matches the Colab's own setup
+                # bypassing the Phi-Trigger -- matches the original setup
                 "l2_forced_median": l2_error(forced_median[idx_arr], clean[idx_arr]),
                 "l2_forced_strato": l2_error(forced_strato[idx_arr], clean[idx_arr]),
                 "cos_forced_median": cosine_alignment(forced_median[idx_arr], clean[idx_arr]),

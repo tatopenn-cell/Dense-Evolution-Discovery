@@ -3,7 +3,7 @@
 diagnostic.
 
 Origin: Experiment 29 fixed the Sandwiched Quantum Renyi Divergence, but a
-separate Colab proposal -- a "Quantum Ruzsa Divergence" built from a
+separate proposal -- a "Quantum Ruzsa Divergence" built from a
 pairwise convolution rho boxtimes sigma parametrized by s,t with
 s^2+t^2=1 mod d -- turned out to have no valid solution for qubits (d=2).
 Confirmed by reading both the original Ruzsa paper (arXiv:2401.14385) and

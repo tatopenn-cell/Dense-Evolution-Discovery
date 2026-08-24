@@ -1,6 +1,6 @@
 # Stratonovich-Projection Vector Healing
 
-A Google Colab session read Hu & Šverák's "Regularity of a stochastically perturbed Euler-Arnold equation" (arXiv:1510.05279) against `ia_utils.vector_healing.enhanced_dense_healing_hybrid` and proposed replacing the median-fallback correction step with a "Stratonovich projection" (local-mean baseline plus a damped drift term along the recent finite-difference velocity direction). A single-seed demo (seed=42, one spike corruption) reported a dramatic win: cosine phase alignment going from -0.16 to +0.98.
+Following Hu & Šverák's "Regularity of a stochastically perturbed Euler-Arnold equation" (arXiv:1510.05279), a variant of `ia_utils.vector_healing.enhanced_dense_healing_hybrid` was proposed, replacing the median-fallback correction step with a "Stratonovich projection" (local-mean baseline plus a damped drift term along the recent finite-difference velocity direction). A single-seed test (seed=42, one spike corruption) reported a dramatic win: cosine phase alignment going from -0.16 to +0.98.
 
 This page is the actual controlled test of that claim.
 
@@ -10,13 +10,13 @@ The paper is real (a genuine result in stochastic differential geometry on Lie g
 
 ## Method
 
-Holding the real production Phi-Trigger (`dense_evolution.mitigation.healing.evaluate_phi_trigger`) fixed and swapping only the correction step isolates the actual claim ("the replacement is better") from a separate question ("the trigger is better"), which the single-seed Colab demo conflated.
+Holding the real production Phi-Trigger (`dense_evolution.mitigation.healing.evaluate_phi_trigger`) fixed and swapping only the correction step isolates the actual claim ("the replacement is better") from a separate question ("the trigger is better"), which the single-seed original test conflated.
 
 4 corruption scenarios (single spike, NaN string, scattered outliers, spike+NaN combined) x 40 seeds each, scored against the known-clean ideal trajectory (trend + IID Gaussian noise) on two metrics: L2 reconstruction error and flattened cosine phase alignment.
 
 ## Results
 
-Restricted to exactly the corrupted indices (the Colab's own comparison design, bypassing the trigger):
+Restricted to exactly the corrupted indices (the original comparison design, bypassing the trigger):
 
 | Scenario | L2 error: median → Stratonovich | Win rate | Wilcoxon p |
 |---|---|---|---|

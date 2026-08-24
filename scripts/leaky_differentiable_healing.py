@@ -1,12 +1,12 @@
-"""Experiment 28: is the Colab's "Leaky-Switch" differentiable healing
+"""Experiment 28: is the "Leaky-Switch" differentiable healing design
 (dinamicsHEal.txt, final block) actually differentiable as claimed, and
 how does its healing quality compare to the shipped numpy healers?
 
-Origin: same Colab session as Experiments 26/27. Claims a JAX/XLA
+Origin: same proposal line as Experiments 26/27. Claims a JAX/XLA
 rewrite of the healing filter (jax.lax.scan, sigmoid soft-trigger with a
 "leaky" floor instead of a hard branch) removes "dead gradients" so the
 healing step can sit inside a differentiable training loop (e.g. a VQE
-loss) without blocking backprop. The Colab's own test was a single 4x8
+loss) without blocking backprop. The original test was a single 4x8
 toy gradient check on one seed -- not a real differentiability audit
 across many inputs, and it never checked healing QUALITY at all (only
 that gradients existed).
@@ -49,7 +49,7 @@ N_SEEDS = 40
 
 
 def make_leaky_healer(leaky_epsilon=1e-4):
-    """Faithful port of the Colab's leaky_healing_hu_sverak_jax, with the
+    """Faithful port of leaky_healing_hu_sverak_jax, with the
     leaky floor exposed as a parameter for the ablation test."""
 
     def leaky_healing(vettori, radius=16):

@@ -3,7 +3,7 @@
 Diagnostica "da manuale" delle quantum many-body scar: spettro completo +
 entropia di entanglement per autostato, su un reticolo ridotto (3x4 = 12
 qubit, dimensione 4096) dove la diagonalizzazione esatta e' fattibile in
-RAM/tempo ragionevoli su Colab gratuito (a 16 qubit, 65536x65536, servirebbero
+RAM/tempo ragionevoli su hardware consumer (a 16 qubit, 65536x65536, servirebbero
 decine di GB e ore di calcolo con un solver denso: non fattibile qui).
 
 Stessa regola di costruzione dei segni frustrati dello script originale
