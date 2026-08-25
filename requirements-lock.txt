@@ -1,0 +1,23 @@
+# Reproducibility lockfile -- NOT what CI installs day-to-day.
+#
+# requirements-ci.txt intentionally carries no version pins: it's a
+# research log, and letting each run pick up current releases is how
+# regressions in dense-evolution itself get caught early. This file pins
+# the exact versions the cross-validation suite was last verified against,
+# for anyone who needs to reproduce a specific run byte-for-byte (e.g.
+# tracking down whether a result changed because of the experiment or
+# because an upstream dependency did).
+#
+# Usage: pip install -r requirements-lock.txt
+#
+# Regenerate by re-running the suite in a fresh venv with requirements-ci.txt
+# and re-freezing these exact package names -- don't hand-edit versions.
+
+dense-evolution==8.1.67
+pennylane==0.45.1
+pytest==9.1.0
+numpy==2.5.2
+jax==0.11.1
+jaxlib==0.11.1
+pandas==3.0.3
+matplotlib==3.11.1
