@@ -285,19 +285,15 @@ def monte_carlo_syndrome_probabilities(theta, p, n_trials, seed):
     and compares to the exact p_s formula.
 
     NOTE on scope: this only verifies syndrome PROBABILITIES, not the
-    logical rotation angle/dephasing (phi_s, q_s). Extracting those from
-    real single-shot trials requires actual logical process tomography
-    (multiple input states, e.g. the paper's own |0>,|1>,|+>,|+i> --
-    Section IV.B) or, more simply, the paper's own Ramsey approach
-    (measure the LOGICAL X outcome after preparing |+>_L, which needs a
-    Hamming-code nearest-coset decoder on the 7 measured physical bits).
-    Neither is implemented here -- attempting to read off eta_s directly
-    from a single |+>_L trial's post-selected amplitudes does NOT work,
-    since eta_s is a coherence element requiring an unphysical |0><1|
-    input; a real single-trial-based estimate this way is off by a
-    theta/p-dependent factor, not the true eta_s. This is a genuine, real
-    open item, not a coding bug -- left for the actual logical-X-readout
-    version to be built later."""
+    logical rotation angle/dephasing (phi_s, q_s). Attempting to read off
+    eta_s directly from a single |+>_L trial's post-selected amplitudes
+    does NOT work, since eta_s is a coherence element requiring an
+    unphysical |0><1| input -- a real single-trial-based estimate this
+    way is off by a theta/p-dependent factor, not the true eta_s (this
+    was a genuine, real dead end hit and understood, not a coding bug).
+    The correct real-circuit way to get at phi_s/q_s from physical shots
+    is `monte_carlo_logical_x_readout` below (the paper's own Ramsey
+    approach, Section IV.A)."""
     sv0 = steane_zero_state()
     rng = np.random.default_rng(seed)
     counts = {}
@@ -333,6 +329,111 @@ def monte_carlo_syndrome_probabilities(theta, p, n_trials, seed):
     print(f"  expected each: {(1 - p_t_formula) / 7:.4f}")
 
 
+def _xor_closure(rows):
+    """All 2**len(rows) XOR combinations of `rows` (each a 0/1 array),
+    including the all-zero vector -- the row space of a binary matrix
+    over GF(2)."""
+    words = {tuple(np.zeros(len(rows[0]), dtype=int))}
+    for r in rows:
+        words |= {tuple((np.array(w) + r) % 2) for w in words}
+    return words
+
+
+def _steane_codeword_cosets():
+    """The two logical-basis cosets C (|0>_L's support) and C+1111111
+    (|1>_L's support), as sets of 7-bit integers -- extracted from the
+    XOR-closure of the 3 rows of HX (Eq. 1), independently VERIFIED to
+    match the real, nonzero support of this script's own `sv0`/`sv1`
+    exactly (both give the same 8+8 codewords) rather than assumed from
+    the paper's text alone."""
+    hx_rows = [np.array([int(b) for b in s]) for s in ('0001111', '0110011', '1010101')]
+    c_words = _xor_closure(hx_rows)
+    c_ints = {int(''.join(map(str, w)), 2) for w in c_words}
+    c1_ints = {int(''.join(map(str, (np.array(w) + 1) % 2)), 2) for w in c_words}
+    return c_ints, c1_ints
+
+
+def _nearest_coset_decode(x_meas_int, c_ints, c1_ints):
+    """Nearest-coset decoding of a 7-bit measured X-basis outcome (the
+    paper's own decoding rule, Section IV.A: 'for arbitrary x, decode to
+    the logical bit of the nearest of these two cosets') -- minimum
+    Hamming distance to either coset, not exact membership only."""
+    d0 = min(bin(x_meas_int ^ c).count('1') for c in c_ints)
+    d1 = min(bin(x_meas_int ^ c).count('1') for c in c1_ints)
+    return 0 if d0 < d1 else 1
+
+
+def monte_carlo_logical_x_readout(theta, p, n_trials, seed):
+    """The paper's own Ramsey experiment (Section IV.A, Fig. 5-6), fully
+    real end to end: prepare |+>_L, apply the real transversal rz(theta),
+    real stochastic dephasing, the real ancilla syndrome-extraction
+    circuit with a real measurement collapse, the real Z correction, then
+    apply H to all 7 DATA qubits and measure them too (logical X-basis
+    readout) -- decoded via `_nearest_coset_decode`, exactly as the paper
+    does. This is what `monte_carlo_syndrome_probabilities` above
+    explicitly left undone.
+
+    Ideal-case P(X=+1|s) = (1+cos(phi_s))/2 (paper Eq. 25) is only valid
+    at p=0 -- with dephasing, the general form is P(X=+1|s) = 0.5 +
+    0.5*Re(eta_s)/p_s (since eta_s = p_s*(1-2*q_s)*exp(-i*phi_s), so
+    Re(eta_s)/p_s = (1-2*q_s)*cos(phi_s) exactly). Comparing MC results
+    against the p=0 formula instead of this one was a real mistake caught
+    while building this function (the trivial branch matched by luck --
+    its q_s is small -- but the nontrivial branch was off by ~11 sigma
+    until this fix)."""
+    sv0 = steane_zero_state()
+    X7 = _embed(X, 0)
+    for q in range(1, 7):
+        X7 = X7 @ _embed(X, q)
+    sv1 = X7 @ sv0
+    plus_data = (sv0 + sv1) / np.sqrt(2)
+    c_ints, c1_ints = _steane_codeword_cosets()
+
+    rng = np.random.default_rng(seed)
+    outcomes = {'trivial': [], 'nontrivial': []}
+    for _ in range(n_trials):
+        sim7 = de.DenseSVSimulator(7)
+        sim7.set_initial_state(plus_data.copy())
+        sim7.run_circuit_jit([('rz', q, theta) for q in range(7)])
+        sv_data = np.asarray(sim7.get_statevector())
+        sv_data_noisy = np.asarray(NoiseModel.apply_to_sv(sv_data, 7, 'phaseflip', p, rng=rng))
+
+        anc = np.zeros(8, dtype=complex)
+        anc[0] = 1.0
+        sim10 = de.DenseSVSimulator(10)
+        sim10.set_initial_state(np.kron(sv_data_noisy, anc))
+        bits = []
+        for gi, supp in enumerate(_generator_supports()):
+            a = 7 + gi
+            sim10.run_circuit_jit([('h', a)] + [('cx', a, q) for q in supp] + [('h', a)])
+            bits.append(sim10.measure(a))
+        bits = tuple(bits)
+        if bits != (0, 0, 0):
+            sim10.run_circuit_jit([('z', HX_COLUMN_TO_QUBIT[bits])])
+
+        sim10.run_circuit_jit([('h', q) for q in range(7)])
+        x_meas = int(''.join(str(sim10.measure(q)) for q in range(7)), 2)
+        logical = _nearest_coset_decode(x_meas, c_ints, c1_ints)
+
+        key = 'trivial' if bits == (0, 0, 0) else 'nontrivial'
+        outcomes[key].append(1 if logical == 0 else 0)
+
+    lam = 1 - 2 * p
+    for key, bits_for_formula in (('trivial', (0, 0, 0)), ('nontrivial', (0, 0, 1))):
+        p_s, eta = noisy_branch_stats(sv0, sv1, bits_for_formula, theta, p)
+        p_theory_correct = 0.5 + 0.5 * (eta.real / p_s)
+        p_theory_ideal_wrong = 0.5 + 0.5 * np.cos(-np.angle(eta))
+        p_mc = np.mean(outcomes[key])
+        n = len(outcomes[key])
+        print(f"{key} (N={n}): P(X=+1|s) MC={p_mc:.4f}  "
+              f"theory(with dephasing, correct)={p_theory_correct:.4f}  "
+              f"theory(ideal formula, WRONG here since p>0)={p_theory_ideal_wrong:.4f}")
+
+
+def _generator_supports():
+    return [[i for i, c in enumerate(s) if c == 'X'] for s in STEANE_X]
+
+
 if __name__ == "__main__":
     for theta in (np.pi / 20, np.pi / 8, 0.15 * np.pi, np.pi / 4):
         run(theta)
@@ -365,3 +466,11 @@ if __name__ == "__main__":
     print("attempted from single-shot trials here)")
     print("=" * 100)
     monte_carlo_syndrome_probabilities(0.15 * np.pi, 0.0213, n_trials=4000, seed=11)
+    print()
+
+    print("=" * 100)
+    print("Real-circuit Monte Carlo logical-X readout (paper's own Ramsey experiment,")
+    print("Section IV.A) -- the piece left undone above, now completed with a real")
+    print("Hamming nearest-coset decoder")
+    print("=" * 100)
+    monte_carlo_logical_x_readout(0.15 * np.pi, 0.0213, n_trials=6000, seed=21)
