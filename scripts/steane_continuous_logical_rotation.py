@@ -28,6 +28,7 @@ import jax.numpy as jnp
 
 import dense_evolution as de
 from dense_evolution.noise.coherent_attack import apply_rz_all
+from dense_evolution.registry import NoiseModel
 
 FREE_QUBITS = [0, 1, 3]
 DERIVED_QUBITS = {2: [0, 1], 4: [0, 3], 5: [1, 3], 6: [0, 1, 3]}
@@ -191,6 +192,147 @@ def run_with_dephasing(theta, p):
           f"p_s measured={p_n:.6f}  phi_s={phi_n:.6f}  q_s={q_n:.6f}")
 
 
+NONTRIVIAL_SYNDROMES = [(a, b, c) for a in (0, 1) for b in (0, 1) for c in (0, 1) if (a, b, c) != (0, 0, 0)]
+
+
+def check_all_nontrivial_syndromes_agree(theta, p):
+    """The paper claims (Eq. 15, 'identical for all nontrivial syndromes
+    by symmetry') that eta_n and p_n don't depend on WHICH of the 7
+    nontrivial syndromes occurred, only that it's nontrivial. This was
+    only spot-checked on one syndrome, (0,0,1), when the dephasing case
+    was first added -- here all 7 are checked explicitly."""
+    sv0 = steane_zero_state()
+    X7 = _embed(X, 0)
+    for q in range(1, 7):
+        X7 = X7 @ _embed(X, q)
+    sv1 = X7 @ sv0
+    print(f"theta={theta:.6f}, p={p * 100:.2f}%: checking all 7 nontrivial syndromes agree")
+    results = [noisy_branch_stats(sv0, sv1, bits, theta, p) for bits in NONTRIVIAL_SYNDROMES]
+    p_vals = [r[0] for r in results]
+    eta_vals = [r[1] for r in results]
+    print(f"  p_s range: [{min(p_vals):.6f}, {max(p_vals):.6f}]  "
+          f"(all equal to 1e-9: {np.ptp(p_vals) < 1e-9})")
+    print(f"  eta range (max pairwise abs diff): {max(abs(a - b) for a in eta_vals for b in eta_vals):.2e}")
+
+
+def two_round_step(rho, bits, theta, p):
+    P, C = projector_for_syndrome(bits), correction_for_syndrome(bits)
+    rho_after_channel = apply_dephasing_rotation_channel(rho, theta, p)
+    return C @ P @ rho_after_channel @ P.conj().T @ C.conj().T
+
+
+def two_round_class_channel(rho_in, class1, class2, theta, p):
+    """Aggregates over all syndromes in each class (trivial='t', a single
+    syndrome; nontrivial='n', summed over all 7), matching how the paper
+    groups its two-round data into 4 classes (Fig. 13): round 1 with
+    angle +theta, round 2 with angle -theta (the paper's own cancellation
+    test)."""
+    s1_list = [(0, 0, 0)] if class1 == 't' else NONTRIVIAL_SYNDROMES
+    s2_list = [(0, 0, 0)] if class2 == 't' else NONTRIVIAL_SYNDROMES
+    total = np.zeros((2 ** 7, 2 ** 7), dtype=complex)
+    for s1 in s1_list:
+        after_round1 = two_round_step(rho_in, s1, theta, p)
+        for s2 in s2_list:
+            total += two_round_step(after_round1, s2, -theta, p)
+    return total
+
+
+def run_two_round(theta, p):
+    """Paper Section IV.C / Fig. 13: apply +theta, syndrome-extract and
+    correct, then -theta, syndrome-extract and correct again -- expect
+    the trivial-trivial branch to show the LEAST logical rotation (angles
+    should cancel) and the LOWEST dephasing, matching Fig. 13's reported
+    finding qualitatively (this project does not have the paper's real
+    hardware data to match numerically, only its own theoretical model,
+    so only the qualitative ordering is checked, not exact values)."""
+    sv0 = steane_zero_state()
+    X7 = _embed(X, 0)
+    for q in range(1, 7):
+        X7 = X7 @ _embed(X, q)
+    sv1 = X7 @ sv0
+
+    print(f"Two-round protocol: theta={theta:.6f}, p={p * 100:.2f}%")
+    results = {}
+    for c1 in ("t", "n"):
+        for c2 in ("t", "n"):
+            rho_01 = np.outer(sv0, sv1.conj())
+            branch_01 = two_round_class_channel(rho_01, c1, c2, theta, p)
+            eta = np.vdot(sv0, branch_01 @ sv1)
+
+            rho_00 = np.outer(sv0, sv0.conj())
+            branch_00 = two_round_class_channel(rho_00, c1, c2, theta, p)
+            p_s = np.trace(branch_00).real
+
+            phi = -np.angle(eta) if abs(eta) > 1e-12 else 0.0
+            q_dephasing = 0.5 * (1 - abs(eta) / p_s) if p_s > 1e-12 else None
+            results[(c1, c2)] = (p_s, phi, q_dephasing)
+            print(f"  {c1}-{c2}: p_s={p_s:.6f}  phi={phi:.6f}  q={q_dephasing:.6f}")
+
+    tt_q = results[("t", "t")][2]
+    nn_q = results[("n", "n")][2]
+    print(f"  trivial-trivial has lowest dephasing (matches paper Fig. 13): {tt_q < nn_q}")
+    print(f"  trivial-trivial phi near zero (cancellation): {abs(results[('t','t')][1]) < 0.01}")
+
+
+def monte_carlo_syndrome_probabilities(theta, p, n_trials, seed):
+    """Real circuit-level Monte Carlo check (not exact linear algebra like
+    everything above): builds an actual 10-qubit circuit (7 data + 3
+    ancilla, one ancilla per X-stabilizer generator), applies real 'rz'
+    gates, real NoiseModel.apply_to_sv('phaseflip', p) stochastic
+    dephasing, a real H-CNOT-H ancilla circuit per generator, and a real
+    DenseSVSimulator.measure() projective collapse per ancilla qubit --
+    then tabulates the empirical syndrome distribution over many trials
+    and compares to the exact p_s formula.
+
+    NOTE on scope: this only verifies syndrome PROBABILITIES, not the
+    logical rotation angle/dephasing (phi_s, q_s). Extracting those from
+    real single-shot trials requires actual logical process tomography
+    (multiple input states, e.g. the paper's own |0>,|1>,|+>,|+i> --
+    Section IV.B) or, more simply, the paper's own Ramsey approach
+    (measure the LOGICAL X outcome after preparing |+>_L, which needs a
+    Hamming-code nearest-coset decoder on the 7 measured physical bits).
+    Neither is implemented here -- attempting to read off eta_s directly
+    from a single |+>_L trial's post-selected amplitudes does NOT work,
+    since eta_s is a coherence element requiring an unphysical |0><1|
+    input; a real single-trial-based estimate this way is off by a
+    theta/p-dependent factor, not the true eta_s. This is a genuine, real
+    open item, not a coding bug -- left for the actual logical-X-readout
+    version to be built later."""
+    sv0 = steane_zero_state()
+    rng = np.random.default_rng(seed)
+    counts = {}
+    for _ in range(n_trials):
+        sim7 = de.DenseSVSimulator(7)
+        sim7.set_initial_state(sv0.copy())
+        sim7.run_circuit_jit([('rz', q, theta) for q in range(7)])
+        sv_data = np.asarray(sim7.get_statevector())
+        sv_data_noisy = np.asarray(NoiseModel.apply_to_sv(sv_data, 7, 'phaseflip', p, rng=rng))
+
+        anc = np.zeros(8, dtype=complex)
+        anc[0] = 1.0
+        sim10 = de.DenseSVSimulator(10)
+        sim10.set_initial_state(np.kron(sv_data_noisy, anc))
+        bits = []
+        for gi, gate_str in enumerate(STEANE_X):
+            support = [i for i, c in enumerate(gate_str) if c == 'X']
+            a = 7 + gi
+            sim10.run_circuit_jit([('h', a)] + [('cx', a, q) for q in support] + [('h', a)])
+            bits.append(sim10.measure(a))
+        counts[tuple(bits)] = counts.get(tuple(bits), 0) + 1
+
+    lam = 1 - 2 * p
+    p_t_formula = 1 / 8 + (7 / 32) * lam ** 4 * (3 + np.cos(4 * theta))
+    p_t_mc = counts.get((0, 0, 0), 0) / n_trials
+    p_n_mc = sum(v for k, v in counts.items() if k != (0, 0, 0)) / n_trials
+
+    print(f"Real-circuit Monte Carlo (n_trials={n_trials}), theta={theta:.6f}, p={p * 100:.2f}%")
+    print(f"  p_trivial:    MC={p_t_mc:.4f}  exact={p_t_formula:.4f}")
+    print(f"  p_nontrivial (aggregate): MC={p_n_mc:.4f}  exact={1 - p_t_formula:.4f}")
+    print(f"  per-syndrome nontrivial counts: "
+          f"{ {k: round(v / n_trials, 4) for k, v in counts.items() if k != (0, 0, 0)} }")
+    print(f"  expected each: {(1 - p_t_formula) / 7:.4f}")
+
+
 if __name__ == "__main__":
     for theta in (np.pi / 20, np.pi / 8, 0.15 * np.pi, np.pi / 4):
         run(theta)
@@ -204,3 +346,22 @@ if __name__ == "__main__":
     for p in (0.0213, 0.0262):
         run_with_dephasing(0.15 * np.pi, p)
         print()
+
+    print("=" * 100)
+    print("All 7 nontrivial syndromes checked (not just 1) under dephasing")
+    print("=" * 100)
+    check_all_nontrivial_syndromes_agree(0.15 * np.pi, 0.0213)
+    print()
+
+    print("=" * 100)
+    print("Two-round protocol (+theta then -theta)")
+    print("=" * 100)
+    run_two_round(0.15 * np.pi, 0.0213)
+    print()
+
+    print("=" * 100)
+    print("Real-circuit Monte Carlo verification of syndrome probabilities")
+    print("(scope: probabilities only -- see docstring for why phi_s/q_s aren't")
+    print("attempted from single-shot trials here)")
+    print("=" * 100)
+    monte_carlo_syndrome_probabilities(0.15 * np.pi, 0.0213, n_trials=4000, seed=11)
