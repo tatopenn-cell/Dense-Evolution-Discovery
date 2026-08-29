@@ -73,3 +73,4 @@ nav:
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
+    - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md

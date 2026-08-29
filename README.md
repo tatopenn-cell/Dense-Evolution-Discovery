@@ -25,13 +25,14 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Chunk: Real Multi-Device and Disk-Backed Simulation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/chunk_distributed_disk_experiment/)** -- runs the same GHZ circuit for real across 8 simulated devices (LaRose 2018) and against real files on disk (Pednault et al. 2019, arXiv:1910.09534), confirming both give the exact same result as a plain simulator.
 - **[Cosmic-Ray Burst Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cosmic_ray_burst_validation/)** -- reproduces real measured cosmic-ray-induced error-burst dynamics (arXiv:2104.05219) with `continuous_dissipative_evolve`, the first real-data validation of the dissipative (density-matrix) counterpart to the Trotter-pulse utility below.
 - **[Germanium Baseband iSWAP Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)** -- reproduces a real 4-day-old IBM experimental result (arXiv:2608.16716) via dense_evolution's Trotter engine, and answers the paper's own explicit "left to follow-up work" call for randomized benchmarking.
-- **[Kullback-Leibler Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)** -- healing.py's docstring flags an honest gap (a scalar log-ratio, not a real distributional KL); this builds the real, paper-checked thing and confirms it's a genuinely different signal, not a rescaling.
 
 <details>
-<summary>🔬 Click to expand 14 more algorithmic audits &amp; negative results</summary>
+<summary>🔬 Click to expand 15 more algorithmic audits &amp; negative results</summary>
 
+- **[Kullback-Leibler Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kullback_leibler_divergence/)** -- healing.py's docstring flags an honest gap (a scalar log-ratio, not a real distributional KL); this builds the real, paper-checked thing and confirms it's a genuinely different signal, not a rescaling.
 - **[Sandwiched Renyi Divergence](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — a proposed noise-diagnostic metric had two real bugs, both fixed and validated against independent references.
 - **[Quantum Ruzsa Key Unitary & Magic Entropy](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_ruzsa_magic_entropy/)** — the qubit "Ruzsa divergence" doesn't actually exist in either source paper; the real object (3-fold self-convolution magic entropy) works as a noise diagnostic instead.
 - **[Classical Shadows: Magic Entropy Estimation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quantum_shadows_magic_entropy/)** — a corrected shadow-based purity estimator, used to estimate magic entropy from measurement snapshots, converging to the exact value.
