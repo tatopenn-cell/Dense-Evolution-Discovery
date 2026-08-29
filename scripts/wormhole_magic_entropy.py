@@ -402,13 +402,25 @@ if __name__ == "__main__":
     _sanity_check_coupling_unitary(n_majorana, n_side, n_full, use_klein_fix=True)
 
     print("\nStep 4: full WITP protocol (Eqs 1-11) -- fidelity/SRE vs t_R scan")
-    g_star = 1.83 * np.pi  # paper's own reported optimum, Sec. 4
-    beta = 1.0             # one of the paper's representative temperatures
-    t_scr = 1.0            # scrambling time -- NOT the paper's per-beta
-                            # optimized value (that requires a disorder-
-                            # averaged fidelity search the paper doesn't
-                            # give a closed form for); checked below via
-                            # p_success that this choice isn't pathological.
+    # The paper reports beta/t_scr/t_R in units of J^-1 (e.g. "beta in
+    # {0.5,1.0,2.0,4.0} J^-1", "t_R~1-2 J^-1"), but exp(-i*t*E) needs the
+    # ACTUAL time multiplying the actual (O(J)-scale) energy eigenvalues --
+    # found and fixed during self-review: an earlier version of this script
+    # used beta/t_scr as bare numbers directly (i.e. as if already actual
+    # time/inverse-temperature), which is J-times colder/slower than the
+    # paper's own stated convention actually means. Converting explicitly
+    # here (dividing the "_units" quantities by J) instead of leaving that
+    # implicit.
+    g_star = 1.83 * np.pi     # paper's own reported optimum, Sec. 4 (dimensionless)
+    beta_units = 1.0          # one of the paper's representative temperatures, in J^-1
+    beta = beta_units / J
+    t_scr_units = 1.0         # scrambling time, in J^-1 -- NOT the paper's
+                               # per-beta optimized value (that requires a
+                               # disorder-averaged fidelity search the paper
+                               # doesn't give a closed form for); checked
+                               # below via p_success that this choice isn't
+                               # pathological.
+    t_scr = t_scr_units / J
     t_max = t_scr + 6.0 / J
     t_R_values = np.linspace(0.0, t_max, 28)  # paper's own N_tR=28 grid size
 
@@ -426,8 +438,9 @@ if __name__ == "__main__":
         sres.append(sre)
     fidelities = np.array(fidelities)
     sres = np.array(sres)
-    print(f"  beta={beta} J^-1, g={g_star/np.pi:.3f}*pi, t_scr={t_scr} J^-1, "
-          f"{len(t_R_values)} t_R points in [0, {t_max:.3f}] J^-1")
+    print(f"  beta={beta_units:.3f} J^-1 (actual={beta:.4f}), g={g_star/np.pi:.3f}*pi, "
+          f"t_scr={t_scr_units:.3f} J^-1 (actual={t_scr:.4f}), "
+          f"{len(t_R_values)} t_R points in [0, {t_max*J:.3f}] J^-1")
     print(f"  p_success (message-insertion projector, Eq. 7): {p_success:.4f}")
     print(f"  fidelity: min={fidelities.min():.4f} max={fidelities.max():.4f} "
           f"(classical limit 0.25, expect above it if the wormhole helps)")
