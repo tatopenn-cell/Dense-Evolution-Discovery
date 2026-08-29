@@ -1,4 +1,4 @@
-# Chunk: Real Multi-Device and Disk-Backed Simulation
+# Chunk: Multi-Device and Disk-Backed Simulation
 
 !!! note
     The implementation lives in the main library:
