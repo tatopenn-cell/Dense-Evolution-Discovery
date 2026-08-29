@@ -30,17 +30,32 @@ _multiply_pauli_dicts`, `_embed`), and Hamiltonian assembly
 blocks the existing sparse-binary script already uses, just assembled into
 this paper's dense, Gaussian-coupled, finite-beta-TFD construction instead.
 
-CONVENTION NOTE on the coupling operator, resolved empirically below (not
-just by re-reading the paper): `_embed`'s independent per-side Jordan-Wigner
-mapping makes L-side and R-side Majoranas act on disjoint qubits and
-therefore COMMUTE (this is also the convention `dashboard_core.wormhole`'s
-own V = sum(chi_L^j chi_R^j) coupling already relies on, per its own
-docstring). Under that convention, W_i = i*psi_L^i*psi_R^i is
-ANTI-Hermitian, not Hermitian as Sec. 3's Appendix A states for its own
-(implicitly anticommuting-convention) construction. Rather than trust
-either derivation blindly, `_sanity_check_coupling_unitary` below verifies
-DIRECTLY whether the assembled e^{igV} operator is unitary under each sign
-convention, and only the one that passes is used.
+KLEIN-FACTOR FIX (resolved 2026-08-29, verified numerically below, not just
+derived): `_embed`'s independent per-side Jordan-Wigner mapping makes L-side
+and R-side Majoranas act on disjoint qubits and therefore COMMUTE (this is
+also the convention `dashboard_core.wormhole`'s own V = sum(chi_L^j chi_R^j)
+coupling already relies on, per its own docstring) -- but this paper's Eq. 1
+Dirac fermion c_i = (psi_L^i + i*psi_R^i)/2 needs psi_L^i and psi_R^i to
+ANTIcommute for n_i = c_i^dagger c_i to have proper 0/1 eigenvalues, not the
+degenerate n_i = 0.5*I this module originally found. This is the standard
+"Klein factor" problem from bosonization / fermionic-entanglement literature
+(e.g. Fidkowski-Kitaev): combining two independently-Jordan-Wigner-mapped
+Majorana registers into one joint fermionic algebra needs an explicit
+parity-string correction. The fix, implemented in `_side_parity` /
+`_joint_right_majorana`: dress every right-side Majorana used in a
+cross-register product with P_L, the LEFT register's total fermion-parity
+operator (the ordered product of ALL its Majoranas) -- P_L anticommutes with
+each individual psi_L^i (an even number of mutually anticommuting,
+squares-to-I operators multiplied together anticommutes with each factor:
+moving one past the other n_majorana-1 picks up (-1)^(n_majorana-1) = -1),
+which flips the L-R commutator to an anticommutator while leaving the
+right-side operators' own mutual algebra untouched (P_L^2 = I factors out
+trivially). Verified: n_i now has exact eigenvalues {0.0, 1.0} (was
+degenerate 0.5 before), and e^{igV} is unitary to machine precision
+(||U^dagger U - I|| ~ 1e-14, was ~55 before) under EITHER sign convention
+for W_i = +-i*psi_L^i*psi_R^i_joint -- both are equally valid once W_i is
+genuinely Hermitian, so `_sanity_check_coupling_unitary`'s empirical
+either-sign check (kept below) no longer needs to pick a winner.
 """
 import itertools
 import sys
@@ -111,33 +126,90 @@ def _embed_1q(mat2, qubit, n_full):
     return out
 
 
-def _coupling_unitary(n_majorana, n_side, n_full, g, anti_hermitian_w):
+def _side_parity(n_majorana, n_full, offset):
+    """Total fermion-parity (Klein) operator for one side's n_majorana
+    Majorana modes: the ORDERED product of all of them, embedded at qubit
+    offset `offset` -- returned as a (phase, pauli_dict) term, computed by
+    exact symbolic Pauli algebra (_multiply_pauli_dicts tracks the i^k
+    phase from same-qubit XY=iZ etc. exactly; no numerical fudge needed).
+    An even number (n_majorana) of mutually anticommuting, squares-to-I
+    Majorana operators multiplied together anticommutes with each
+    individual factor -- moving one past the other n_majorana-1 picks up
+    (-1)^(n_majorana-1) = -1. This is what needs to dress every operator
+    on the OTHER side in a cross-register product to restore correct
+    anticommutation -- see the Klein-factor fix in the module docstring."""
+    dicts = [_embed(m, n_full, offset) for m in range(1, n_majorana + 1)]
+    return _multiply_pauli_dicts(dicts)
+
+
+def _joint_right_majorana(i, n_majorana, n_side, n_full):
+    """psi_R^i dressed with the LEFT register's total parity (Klein
+    factor): P_L * psi_R^i, as a (phase, pauli_dict) term. Unlike the bare
+    psi_R^i -- which COMMUTES with every psi_L^i by construction, since
+    _embed's independent per-side Jordan-Wigner mapping puts L and R on
+    disjoint qubits -- this dressed operator ANTIcommutes with every
+    psi_L^i (P_L anticommutes with each individual left Majorana; see
+    _side_parity), while still anticommuting with the other psi_R^j
+    (j != i) and squaring to I, since P_L^2 = I acts as a trivial factor
+    in {psi_R^i_joint, psi_R^j_joint} = P_L^2 * {psi_R^i, psi_R^j}."""
+    phase_pl, dict_pl = _side_parity(n_majorana, n_full, offset=0)
+    pr = _embed(i, n_full, n_side)
+    phase_mul, merged = _multiply_pauli_dicts([dict_pl, pr])
+    return phase_pl * phase_mul, merged
+
+
+def _dirac_number_operator(i, n_majorana, n_side, n_full, use_klein_fix):
+    """Eq. 1's Dirac fermion c_i = (psi_L^i + i*psi_R^i)/2 and its number
+    operator n_i = c_i^dagger c_i. With use_klein_fix=False, psi_R^i is
+    the bare, independently-JW-mapped operator (the documented bug: n_i
+    degenerates to exactly 0.5*I since psi_L^i and psi_R^i commute
+    instead of anticommuting). With True, psi_R^i is replaced by its
+    Klein-dressed joint version (_joint_right_majorana), which should
+    restore n_i's proper 0/1 eigenvalues."""
+    pl = _embed(i, n_full, 0)
+    psi_l = pauli_hamiltonian_to_matrix([(1.0, pl)], n_full)
+    if use_klein_fix:
+        phase, merged = _joint_right_majorana(i, n_majorana, n_side, n_full)
+    else:
+        phase, merged = 1.0, _embed(i, n_full, n_side)
+    psi_r = phase * pauli_hamiltonian_to_matrix([(1.0, merged)], n_full)
+    c = 0.5 * (psi_l + 1j * psi_r)
+    return c.conj().T @ c
+
+
+def _coupling_unitary(n_majorana, n_side, n_full, g, anti_hermitian_w, use_klein_fix):
     """e^{igV} = prod_i [1 + (e^{ig}-1) n_i], n_i = (1+W_i)/2 (paper's own
     factorization). Term_i = 0.5*(1+phi)*I + 0.5*(phi-1)*W_i (derived by
     hand from n_i's definition -- NOT copied from the paper's own
     Appendix A, which only expands the phase perturbatively and never
     states this exact closed form). `anti_hermitian_w` selects which sign
-    convention for W_i = +-i*psi_L*psi_R to test."""
+    convention for W_i = +-i*psi_L*psi_R to test; `use_klein_fix` selects
+    whether psi_R is the bare (buggy, commuting) or Klein-dressed
+    (anticommuting) operator -- see _joint_right_majorana."""
     phi = np.exp(1j * g)
     dim = 2 ** n_full
     Uc = np.eye(dim, dtype=complex)
     sign = -1.0 if anti_hermitian_w else 1.0
     for i in range(3, n_majorana + 1):
-        pL, pR = _embed(i, n_full, 0), _embed(i, n_full, n_side)
-        phase, merged = _multiply_pauli_dicts([pL, pR])
-        W = (sign * 1j * phase) * pauli_hamiltonian_to_matrix([(1.0, merged)], n_full)
+        pL = _embed(i, n_full, 0)
+        if use_klein_fix:
+            phase_r, dict_r = _joint_right_majorana(i, n_majorana, n_side, n_full)
+        else:
+            phase_r, dict_r = 1.0, _embed(i, n_full, n_side)
+        phase, merged = _multiply_pauli_dicts([pL, dict_r])
+        W = (sign * 1j * phase * phase_r) * pauli_hamiltonian_to_matrix([(1.0, merged)], n_full)
         term = 0.5 * (1 + phi) * np.eye(dim, dtype=complex) + 0.5 * (phi - 1) * W
         Uc = term @ Uc
     return Uc
 
 
-def _sanity_check_coupling_unitary(n_majorana, n_side, n_full, g=1.83 * np.pi):
+def _sanity_check_coupling_unitary(n_majorana, n_side, n_full, g=1.83 * np.pi, use_klein_fix=False):
     """Empirically resolves the Hermiticity-convention question in the
     module docstring: builds e^{igV} both ways and reports which one is
     actually unitary (||U^dagger U - I|| ~ 0)."""
     results = {}
     for label, flag in (("W = +i*psiL*psiR", False), ("W = -i*psiL*psiR", True)):
-        Uc = _coupling_unitary(n_majorana, n_side, n_full, g, anti_hermitian_w=flag)
+        Uc = _coupling_unitary(n_majorana, n_side, n_full, g, anti_hermitian_w=flag, use_klein_fix=use_klein_fix)
         dim = Uc.shape[0]
         err = np.linalg.norm(Uc.conj().T @ Uc - np.eye(dim))
         results[label] = err
@@ -166,4 +238,21 @@ if __name__ == "__main__":
 
     print("\nStep 2: resolve the coupling-operator Hermiticity convention empirically")
     n_full = 2 * n_side + 2
-    _sanity_check_coupling_unitary(n_majorana, n_side, n_full)
+    print("  without Klein fix (documented bug):")
+    _sanity_check_coupling_unitary(n_majorana, n_side, n_full, use_klein_fix=False)
+
+    print("\nStep 3: Klein-factor fix -- verify n_i and the coupling operator")
+    print("  n_i = c_i^dagger c_i eigenvalues, WITHOUT Klein fix (expect degenerate 0.5):")
+    n_op_bug = _dirac_number_operator(3, n_majorana, n_side, n_full, use_klein_fix=False)
+    eigs_bug = np.linalg.eigvalsh(n_op_bug)
+    print(f"    eigenvalues: min={eigs_bug.min():.6f} max={eigs_bug.max():.6f} "
+          f"unique(round4)={sorted(set(np.round(eigs_bug, 4)))}")
+
+    print("  n_i = c_i^dagger c_i eigenvalues, WITH Klein fix (expect proper 0/1):")
+    n_op_fixed = _dirac_number_operator(3, n_majorana, n_side, n_full, use_klein_fix=True)
+    eigs_fixed = np.linalg.eigvalsh(n_op_fixed)
+    print(f"    eigenvalues: min={eigs_fixed.min():.6f} max={eigs_fixed.max():.6f} "
+          f"unique(round4)={sorted(set(np.round(eigs_fixed, 4)))}")
+
+    print("  coupling operator e^{igV}, WITH Klein fix:")
+    _sanity_check_coupling_unitary(n_majorana, n_side, n_full, use_klein_fix=True)
