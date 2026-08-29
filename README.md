@@ -25,7 +25,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
-- **[Chunk: Real Multi-Device and Disk-Backed Simulation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/chunk_distributed_disk_experiment/)** -- runs the same GHZ circuit for real across 8 simulated devices (LaRose 2018) and against real files on disk (Pednault et al. 2019, arXiv:1910.09534), confirming both give the exact same result as a plain simulator.
+- **[Chunk: Multi-Device and Disk-Backed Simulation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/chunk_distributed_disk_experiment/)** -- runs the same GHZ circuit for real across 8 simulated devices (LaRose 2018) and against real files on disk (Pednault et al. 2019, arXiv:1910.09534), confirming both give the exact same result as a plain simulator.
 - **[Cosmic-Ray Burst Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cosmic_ray_burst_validation/)** -- reproduces real measured cosmic-ray-induced error-burst dynamics (arXiv:2104.05219) with `continuous_dissipative_evolve`, the first real-data validation of the dissipative (density-matrix) counterpart to the Trotter-pulse utility below.
 - **[Germanium Baseband iSWAP Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)** -- reproduces a real 4-day-old IBM experimental result (arXiv:2608.16716) via dense_evolution's Trotter engine, and answers the paper's own explicit "left to follow-up work" call for randomized benchmarking.
 
@@ -83,7 +83,7 @@ Each entry below is a short summary. Full method, data tables, and every image a
 
 ---
 
-### [2. Quantum Error Mitigation via Real Stochastic Richardson Extrapolation (ZNE)](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#2-quantum-error-mitigation-via-real-stochastic-richardson-extrapolation-zne)
+### [2. Quantum Error Mitigation via Stochastic Richardson Extrapolation (ZNE)](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#2-quantum-error-mitigation-via-real-stochastic-richardson-extrapolation-zne)
 
 **What:** test whether simple 2-point zero-noise extrapolation recovers the true noiseless energy of a noisy Bloch-state measurement. **What we find:** the original "-4.2467 eV, target reconstructed" claim was a mislabeling of its own output; the real ideal energy is -4.2200 eV, and repeated trials show the 2-point extrapolation carries a real, statistically robust bias (0.05-0.12 eV) that a quadratic fit through more noise points removes. **Why:** a straight line through 2 points structurally can't see the curvature of E(noise level).
 
@@ -210,7 +210,7 @@ A more principled confidence signal (the correction term's own signal-to-noise r
 
 ---
 
-### [15. Sophia Reflection: A Real ZNE Trajectory, Not an Invented One](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#15-sophia-reflection-a-real-zne-trajectory-not-an-invented-one)
+### [15. Sophia Reflection: ZNE Trajectory](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#15-sophia-reflection-zne-trajectory)
 
 Runs the density-matrix (Uhlmann-fidelity) form of ZNE across a 16-point noise sweep on a Bell state — all 16 points improve fidelity, peaking around p≈0.21. Closes the loop from an August 2025 personal notebook that modeled subjective experience as invented Hilbert-space vectors, using real measured data instead. See [`SOPHIA_REFLECTION.md`](SOPHIA_REFLECTION.md).
 
