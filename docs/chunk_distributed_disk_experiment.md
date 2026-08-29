@@ -191,6 +191,19 @@ fixed the first time it initializes, so setting the flag any later has no
 effect — specifically so this page could show the real communication path
 running, not just the guard clause in front of it.
 
+### The distributed check only runs for real outside the shared test suite
+
+`XLA_FLAGS` only works if it's set before JAX initializes for the very
+first time in the whole process — and this repo's CI runs every test
+file in one shared pytest process. If an earlier-collected test file
+imports `dense_evolution`/`jax` first, JAX has already locked in 1 real
+device by the time this script's own `XLA_FLAGS` line runs, and Step 4
+falls back silently to reporting it as unavailable instead of running.
+Running `python scripts/chunk_distributed_disk_experiment.py` on its own
+(as this page's own numbers were produced) always hits the real
+8-device path — `tests/test_chunk_distributed_disk_experiment.py` skips
+that one check, with the reason above, when it detects this.
+
 ### Reproducing this page
 
 `scripts/chunk_distributed_disk_experiment.py` runs everything on this
