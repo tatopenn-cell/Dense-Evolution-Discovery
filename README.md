@@ -366,6 +366,14 @@ Full write-up: **[docs/zne_healing_sigma_provenance.md](https://tatopenn-cell.gi
 
 ---
 
+### 36. Central Charge from Entanglement Entropy: Calabrese-Cardy Confirmed
+
+Tests whether the critical transverse-field Ising model's ground-state entanglement entropy follows the Calabrese-Cardy open-chain CFT prediction and recovers the known Ising central charge c=1/2. Two independent validations: (1) dense_evolution.partial_trace/on_neumann_entropy cross-checked against a completely independent free-fermion (Jordan-Wigner + Bogoliubov-de Gennes) method via Peschel's formula, self-tested against brute-force ED to ~1e-15 before trusting at N=12 -- both methods agree to ~1e-10. (2) A real methodological pitfall found and fixed: fitting at ising_exact_verification.py's finite-size susceptibility-peak g*=0.86 gives an almost perfectly clean fit (R^2=0.999997) to a WRONG answer (c=0.98, ~2x theory) -- the true self-dual CFT point is g=1.0, where the fit gives c=0.565, much closer to 0.5 (residual gap a plausible finite-size correction at N=12). An off-critical negative control (g=1.8) correctly shows near-zero extracted c and a worse fit. Confirmed, not a confound -- unlike Experiment 35.
+
+Full write-up: **[docs/central_charge_calabrese_cardy.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/central_charge_calabrese_cardy/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
