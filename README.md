@@ -358,6 +358,14 @@ Full write-up: **[docs/cosmic_ray_burst_validation.md](https://tatopenn-cell.git
 
 ---
 
+### 35. ZNE Healing-Branch Sigma Provenance: a Confound, Not a New Win
+
+Tests whether `dense_evolution.zero_noise_extrapolation`'s healing-adapted branch (`sigma_at_base_noise`) actually uses real information, by feeding it the genuine empirical standard deviation of the noisy trial ensemble at the base noise scale across 45 configurations (3 noise channels x 3 noise levels x 5 seeds). Looks like a real win at first (88.9% win rate) -- but a permutation-test negative control (the same sigma values, randomly shuffled across runs) performs statistically identically (86.7% win rate), the same confound signature as Experiment 25. The branch's coefficient perturbation mildly regularizes the Richardson extrapolation regardless of what drives it, not because of real information in the sigma signal -- meaning `calculate_advanced_sigma`'s undefined input provenance was never the real blocker.
+
+Full write-up: **[docs/zne_healing_sigma_provenance.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/zne_healing_sigma_provenance/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
