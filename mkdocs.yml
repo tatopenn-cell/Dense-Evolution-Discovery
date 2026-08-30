@@ -67,6 +67,7 @@ nav:
     - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md
     - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
     - "ZNE Healing-Branch Sigma Provenance: a Confound": zne_healing_sigma_provenance.md
+    - Central Charge (Calabrese-Cardy): central_charge_calabrese_cardy.md
   - Other Investigations:
     - Harrison / VHD Tight-Binding: harrison_tight_binding.md
     - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
