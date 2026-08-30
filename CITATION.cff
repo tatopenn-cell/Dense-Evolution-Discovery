@@ -15,7 +15,7 @@ authors:
 repository-code: "https://github.com/tatopenn-cell/Dense-Evolution-Discovery"
 url: "https://github.com/tatopenn-cell/Dense-Evolution-Discovery"
 license: "MIT"
-version: "2.20.0"
+version: "2.21.0"
 doi: "10.5281/zenodo.21855620"
 identifiers:
   - type: doi
