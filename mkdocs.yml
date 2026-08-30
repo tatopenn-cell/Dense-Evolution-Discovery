@@ -55,7 +55,6 @@ plugins:
 
 nav:
   - Home: index.md
-  - Mind Map: mindmap.md
   - Repository:
     - Architecture & Ecosystem: repository_architecture.md
   - Density-Matrix Diagnostics:
