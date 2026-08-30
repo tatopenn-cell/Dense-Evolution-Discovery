@@ -2,6 +2,10 @@
   <img src="docs/assets/banner.svg" alt="Dense Evolution Discovery — Empirical studies & quantum error mitigation research" width="900">
 </p>
 
+<p align="center">
+  <a href="https://tatopenn-cell.github.io/Dense-Evolution-Discovery/mindmap/"><strong>🧠 New here? Start with the interactive Mind Map</strong></a> — click any script to see what it does.
+</p>
+
 # 🔬 Dense Evolution Discovery — Quantum Simulation Experiments and Robustness Studies
 
 [![Cross-Validation CI](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/actions/workflows/ci.yml/badge.svg)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/actions/workflows/ci.yml)
