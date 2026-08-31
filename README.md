@@ -25,6 +25,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 
 ## 🆕 Latest Results (start here)
 
+- **[Public Benchmark: Dense-Evolution MPS vs QuSpin vs ITensor](notebooks/dense_evolution_mps_benchmark.ipynb)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tatopenn-cell/Dense-Evolution-Discovery/blob/main/notebooks/dense_evolution_mps_benchmark.ipynb) -- correctness cross-checked against QuSpin exact diagonalization at N=12 (all four methods agreeing), then a real N=100 TFIM Trotter-circuit comparison against ITensor (the standard mature MPS library). Independently re-run and confirmed on two platforms (Windows + Colab/Linux): z0 agrees to within 3% across all three independent runs, with a real, documented, benign cross-platform SVD-cutoff rounding difference found and explained -- not glossed over.
 - **[Chunk: Multi-Device and Disk-Backed Simulation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/chunk_distributed_disk_experiment/)** -- runs the same GHZ circuit for real across 8 simulated devices (LaRose 2018) and against real files on disk (Pednault et al. 2019, arXiv:1910.09534), confirming both give the exact same result as a plain simulator.
 - **[Cosmic-Ray Burst Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cosmic_ray_burst_validation/)** -- reproduces real measured cosmic-ray-induced error-burst dynamics (arXiv:2104.05219) with `continuous_dissipative_evolve`, the first real-data validation of the dissipative (density-matrix) counterpart to the Trotter-pulse utility below.
 - **[Germanium Baseband iSWAP Validation](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/germanium_iswap_validation/)** -- reproduces a real 4-day-old IBM experimental result (arXiv:2608.16716) via dense_evolution's Trotter engine, and answers the paper's own explicit "left to follow-up work" call for randomized benchmarking.
@@ -57,6 +58,7 @@ This repository contains a rigorous empirical study, raw datasets, and quantum e
 ```
 Dense-Evolution-Discovery/
 ├── scripts/     # 17 production scripts (see below) -- tracked in git
+├── notebooks/   # public Colab-ready benchmark/example notebooks -- tracked in git
 ├── tests/       # pytest suite, run by CI on every push
 ├── data/        # CSV outputs -- NOT tracked (.gitignore); populated by running scripts/tests
 ├── images/      # PNG outputs -- NOT tracked (.gitignore); populated by running scripts/tests
