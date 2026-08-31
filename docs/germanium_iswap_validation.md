@@ -1,5 +1,7 @@
 # Germanium Baseband iSWAP: Validating a 4-Day-Old Experimental Result
 
+**In plain terms**: a paper published just days before this experiment demonstrated a new, fast two-qubit gate on a real quantum chip made from germanium. This page reproduces their result inside Dense-Evolution's own simulator, as a fast real-world check that the simulator's time-dependent pulse engine gets the physics right.
+
 arXiv:[2608.16716](https://arxiv.org/abs/2608.16716) (Massai et al., IBM Research Europe -- Zurich, 17-18 Aug 2026) demonstrates a real single-pulse baseband iSWAP gate (56 ns) in strained-germanium hole spin qubits, by orienting the magnetic field so the exchange interaction's longitudinal component `J∥` and Zeeman detuning `E_Δg` both vanish, leaving a pure transverse `J⊥` coupling. This experiment reproduces their result with `dense_evolution.circuits.trotter`, applied for the first time to a genuinely time-dependent pulse (previously only exercised against static Hamiltonians), and extends the analysis with four follow-up checks.
 
 **Scope note:** this validates `dense_evolution.circuits.trotter` and `dense_evolution.uhlmann_fidelity` -- *not* `dense_evolution.solvers.vhd_tb`/`harrison_tb` ("tight-binding"). Those compute bulk-crystal band structure (sp3s* basis, no spin, no confinement) -- a different physics regime from this paper's confined two-spin exchange qubits, even though `vhd_tb` already has real germanium parameters.
