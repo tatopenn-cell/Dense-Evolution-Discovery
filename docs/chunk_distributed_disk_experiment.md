@@ -9,6 +9,8 @@
     devices, and the disk-overflow path actually run against real files —
     not just demonstrated up to the point where they would run.
 
+**In plain terms**: simulating more qubits needs exponentially more memory, until a normal simulator runs out of RAM. `Chunk` is Dense-Evolution's answer -- splitting the simulation across multiple devices, or spilling to disk when it doesn't fit in memory at all. This page actually runs both of those paths for real (multiple real devices, real files on disk), not just up to the point where they'd theoretically work.
+
 ## Why a normal simulator isn't enough
 
 A statevector simulator has to hold one complex number for every possible

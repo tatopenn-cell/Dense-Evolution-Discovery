@@ -9,6 +9,8 @@
     this repo adds on top: real parameter scans, run against the
     published package, not the implementation itself.
 
+**In plain terms**: a 2026 experiment claimed to demonstrate a scaled-down analog of a "traversable wormhole" using a real IBM quantum chip, by teleporting information through a chaotic quantum system in a very specific way. This page reproduces that protocol in exact simulation (something the original hardware experiment couldn't do) and runs several additional checks the original paper never published -- finding the core effect is real, but doesn't generalize as reliably as the paper claims.
+
 Real reproduction of the Gao-Jafferis-Wall traversable-wormhole
 teleportation protocol on a chaotic binary sparse Sachdev-Ye-Kitaev (SYK)
 model, following **arXiv:2604.10090**, "Quantum simulation of

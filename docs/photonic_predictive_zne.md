@@ -8,6 +8,8 @@
     log for how that function was designed, validated, and honestly
     compared against postselection before being promoted there.
 
+**In plain terms**: photonic (light-based) quantum computers lose photons as errors, and a common error-mitigation trick called Zero-Noise Extrapolation (ZNE) tries to guess the noise-free answer by extrapolating from several deliberately-noisier runs. A recent paper found this trick doesn't actually help with photon loss. This page builds a working density-matrix version of ZNE for this case, and honestly compares it against the simpler alternative -- just throwing away runs where a photon was lost.
+
 Does zero-noise extrapolation actually help with photon loss in photonic
 quantum computing? Mills & Mezher, "Mitigating photon loss in linear
 optical quantum circuits" (**arXiv:2405.02278**), found that plain scalar

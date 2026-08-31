@@ -1,5 +1,7 @@
 # Quantum Ruzsa Key Unitary -> Magic Entropy as a Noise Diagnostic
 
+**In plain terms**: "magic" is a technical measure of how much a quantum state resists being simulated efficiently on a classical computer -- more magic means harder to fake classically. A paper proposed a new way to measure it, but this page finds that the proposed formula doesn't actually exist for qubits as originally described -- and builds the real object from a companion paper instead, which does work as a genuine, usable diagnostic.
+
 A "Quantum Ruzsa Divergence" for `dense_evolution` was proposed as a pairwise convolution `rho \boxtimes sigma` parametrized by `s,t` with `s^2+t^2 = 1 mod d`, following Bu, Gu, Jaffe (arXiv:2401.14385). That equation has **no solution for qubits** (`d=2` -- confirmed by reading the paper directly). The companion paper (arXiv:2306.09292, "Stabilizer testing and magic entropy") does not patch this gap with a qubit-specific pairwise formula; it replaces the pairwise convolution with a structurally different object entirely.
 
 ## What the paper actually defines (Def. 7-8, p.6)

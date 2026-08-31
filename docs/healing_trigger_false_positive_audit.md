@@ -1,5 +1,7 @@
 # Healing Trigger False-Positive Audit
 
+**In plain terms**: the data-correction ("healing") pipeline first has to decide *when* to kick in -- a "trigger" that watches for signs of corrupted data. This page measures how often that trigger fires on data that was never actually corrupted in the first place (a false alarm), and builds a better trigger that fires far less often on clean data while still catching real problems.
+
 While validating [Stratonovich-Projection Vector Healing](stratonovich_vector_healing.md), the production Phi-Trigger's replacement rate looked suspiciously constant across every corruption scenario, regardless of correction method. `enhanced_dense_healing_hybrid`'s own docstring already flagged that its trigger "also fires on structurally noisy-but-valid data" -- but never measured how often. This page measures it directly.
 
 ## What we find

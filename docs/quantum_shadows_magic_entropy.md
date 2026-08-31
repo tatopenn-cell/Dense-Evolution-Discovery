@@ -1,5 +1,7 @@
 # Classical Shadows: a Purity-Estimator Correction, and Shadow-Estimated Magic Entropy
 
+**In plain terms**: "classical shadows" is a technique for estimating properties of a quantum state from a small number of random measurements, instead of needing to fully reconstruct the state (which gets exponentially expensive as qubit count grows). This page finds and fixes a real bug in that estimator, then uses the fixed version for something genuinely new: estimating a state's "magic" -- a measure of how hard it is to fake on a classical computer -- from measurement data alone, instead of the exact state.
+
 Following Huang, Kueng, Preskill 2020, "Predicting Many Properties of a Quantum System from Very Few Measurements," `dense_evolution/circuits/shadows.py` implements a `ClassicalShadow` class and `predict_renyi_entropy`. Checking the purity estimator against the real paper turned up a correction, and also a genuine, well-supported extension worth building: using the same shadow machinery to estimate Experiment 30's magic entropy from measurement snapshots instead of the exact state.
 
 ## A correction: a missing transpose
@@ -77,7 +79,7 @@ Fitted: `std(n) ≈ 11.75 / n^0.546` — the exponent lands at `0.546`, close to
 
 ## Status
 
-`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. Two of the three original blockers are now closed (robustness, sample-complexity guidance). One remains open: the API shape needs its own design (measurement snapshots in, not a density matrix — unlike every other function in `dense_evolution.mitigation`).
+`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. Two of the three original blockers are now closed (robustness, sample-complexity guidance). One remains open: the API shape needs its own design (measurement snapshots in, not a density matrix -- unlike every other function in `dense_evolution.mitigation`).
 
 ## Reproduce
 

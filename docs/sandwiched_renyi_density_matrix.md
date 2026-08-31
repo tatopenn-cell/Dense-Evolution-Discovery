@@ -1,5 +1,7 @@
 # Sandwiched Quantum Rényi Divergence for Density-Matrix Diagnostics
 
+**In plain terms**: when comparing two quantum states -- or checking how noisy one has become versus an ideal target -- you need a mathematical notion of "distance" between them. This page fixes two real bugs in a proposed distance measure (the Sandwiched Rényi Divergence) and finds the one case where it's actually useful: comparing states that don't share a "basis", where simpler distance measures can't tell the difference.
+
 Following Müller-Lennert et al. ("On quantum Rényi entropies: a new generalization and some applications", arXiv:1306.3142), the Sandwiched Quantum Rényi Divergence was proposed for addition to `dense_evolution` as a noise/state-distance diagnostic. Two problems were already found with the original proposal in an earlier evaluation pass: a real implementation issue, and a disproven original use case (replacing the JSD-based truncation criterion in `mps.py`'s bond-dimension search -- the original benchmarking showed Rényi and JSD induce the exact same truncation ordering on that diagonal singular-value spectrum, since `rho` and `sigma` commute there and there's nothing for a non-commuting-aware divergence to add).
 
 This page fixes and validates the divergence itself for the case where it *does* have something to add: full density-matrix diagnostics, where states genuinely don't commute.
