@@ -1,5 +1,11 @@
 # Central Charge from Entanglement Entropy: Calabrese-Cardy Confirmed, With a Real Lesson About "Critical"
 
+**In plain terms**: every quantum critical point has a number attached to it, called the central charge, that tells you what "universality class" it belongs to -- the Ising model's is exactly 1/2. This experiment checks whether Dense-Evolution can actually recover that known number from a real simulated ground state, by fitting how entanglement grows with subsystem size. It also caught a real trap: fitting at a point that *looks* critical (a very clean straight-line fit) but isn't the true critical point gives an extremely convincing wrong answer -- the plot below shows exactly how deceptive that can be.
+
+![Entanglement entropy vs. ln[(2N/pi)*sin(pi*L/N)] at three values of g -- the true critical point (g=1.0), a finite-size point that looks equally clean but is wrong (g=0.86), and an off-critical negative control (g=1.8)](assets/central_charge_calabrese_cardy/central_charge_fit.svg)
+
+All three fits look like clean straight lines by eye -- but only the blue one (g=1.0) is fit at the actual critical point. The red line (g=0.86) has an *even higher* R² (0.999997 vs 0.999924) while extracting a central charge nearly double the correct value. High fit quality alone does not mean the extracted physics is right.
+
 Tests whether the critical transverse-field Ising model's ground-state entanglement entropy really follows the open-chain CFT prediction (Calabrese & Cardy, J. Stat. Mech. 2004, P06002; Tong SS4.4.3 "c is for Cardy"):
 
     S(L) = (c/6) * ln[ (2N/pi) * sin(pi*L/N) ] + const
