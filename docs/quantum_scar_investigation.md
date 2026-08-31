@@ -1,5 +1,7 @@
 # Indagine su una possibile "quantum many-body scar" in Dense Evolution
 
+**In parole semplici**: nel 2017 sono state osservate per la prima volta le "quantum many-body scars" -- stati quantistici speciali che rifiutano di raggiungere l'equilibrio termico come farebbe la maggior parte dei sistemi quantistici. Un risultato preliminare sembrava aver trovato lo stesso fenomeno in un modello diverso, simulato qui con Dense-Evolution. Questa pagina verifica rigorosamente se è vero, confrontandolo anche con un caso dove le scar esistono davvero.
+
 Report della sessione di verifica su `frustrazione_quantistica.py` (griglie Ising frustrate 3x3/4x4 simulate con Dense Evolution) e sul confronto con il modello PXP. Script e dati sorgente: [`scripts/quantum_scar_investigation/`](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/tree/main/scripts/quantum_scar_investigation).
 
 ## 1. Punto di partenza

@@ -6,6 +6,8 @@
     [`vhd_tb.py`](https://tatopenn-cell.github.io/Dense-Evolution/api/vhd_tb/).
     This page is the full experimental validation record.
 
+**In plain terms**: "tight-binding" is a simplified way to predict a material's electronic band structure (which determines whether it's a conductor, insulator, or semiconductor, and how big its energy gap is) using just a handful of parameters instead of a full quantum-chemistry calculation. This page checks two competing parameter recipes against real, measured band gaps for gallium arsenide, silicon, and germanium, to see which one is actually trustworthy.
+
 Knowledge base and experiment log for Walter A. Harrison's empirical
 tight-binding method and its Vogl-Hjalmarson-Dow material-specific fix,
 run against real GaAs, Si, and Ge and checked directly against

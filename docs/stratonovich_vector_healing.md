@@ -1,5 +1,7 @@
 # Stratonovich-Projection Vector Healing
 
+**In plain terms**: a proposal for a fancier way to patch corrupted or missing data points in a time series (borrowing ideas from a physics paper about randomness on curved spaces) reported a dramatic improvement on one single test run. This page repeats that test properly -- many random trials instead of one -- to check whether the improvement is real or just luck.
+
 Following Hu & Šverák's "Regularity of a stochastically perturbed Euler-Arnold equation" (arXiv:1510.05279), a variant of `ia_utils.vector_healing.enhanced_dense_healing_hybrid` was proposed, replacing the median-fallback correction step with a "Stratonovich projection" (local-mean baseline plus a damped drift term along the recent finite-difference velocity direction). A single-seed test (seed=42, one spike corruption) reported a dramatic win: cosine phase alignment going from -0.16 to +0.98.
 
 This page is the actual controlled test of that claim.

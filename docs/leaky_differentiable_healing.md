@@ -1,5 +1,7 @@
 # Leaky-Switch Differentiable Healing
 
+**In plain terms**: to use the data-correction ("healing") step inside a training loop that needs gradients, someone proposed a smoothed, differentiable rewrite of it. This page checks two separate things: does it actually produce usable gradients (yes), and does it correct data as well as the version already shipped (no -- clearly worse).
+
 The same proposal line behind [Stratonovich-Projection Vector Healing](stratonovich_vector_healing.md) and the [Healing Trigger False-Positive Audit](healing_trigger_false_positive_audit.md) also suggested a JAX/XLA rewrite of the healing filter using `jax.lax.scan` and a sigmoid "soft trigger" (blending the raw and healed values continuously) instead of a hard if/else branch, plus a small "leaky" floor (`trigger_activation * (1 - 1e-4)`) specifically meant to prevent the sigmoid from fully saturating and killing the gradient -- intended for use cases where healing sits inside a differentiable training loop (e.g. a VQE loss). The original validation was a single 4x8 toy gradient check on one seed, and never checked healing quality at all, only that a gradient existed.
 
 This page asks two separate questions.
