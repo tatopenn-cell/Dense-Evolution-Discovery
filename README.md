@@ -384,6 +384,14 @@ Full write-up: **[docs/negative_time_group_delay.md](https://tatopenn-cell.githu
 
 ---
 
+### 38. VQE + Zero-Noise Extrapolation + Autodiff, Without a Dense Hamiltonian
+
+The "killer example": a differentiable VQE on a real molecule (H10, 12 qubits) combining `PauliSumOperator` (a new matrix-free Pauli-sum Hamiltonian wrapper, promoted to Dense-Evolution alongside `pauli_sum_matvec_jax`/`pauli_sum_expectation_jax`), `jax.grad` autodiff, and Zero-Noise Extrapolation in one JAX-traced pipeline -- something the textbook dense-Hamiltonian VQE recipe structurally cannot do past ~14 qubits, since the Hamiltonian matrix (not the statevector) is what runs out of memory first. VQE converges to -4.72 Ha (exact: -5.07 Ha, expected gap for a shallow ansatz); ZNE cuts the noisy-measurement error from 0.113 Ha to 0.034 Ha (3.3x). Along the way, a real bug was caught and fixed: an early version's noise evaluation used a single stochastic sample per noise scale and got bit-identical "noisy" energies at 1x/2x/3x noise by coincidence -- fixed by averaging 40 trajectories per scale.
+
+Full write-up: **[docs/vqe_pauli_sum_zne_autodiff.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/vqe_pauli_sum_zne_autodiff/)**. Try it in Colab: **[notebooks/vqe_pauli_sum_zne_autodiff.ipynb](https://colab.research.google.com/github/tatopenn-cell/Dense-Evolution-Discovery/blob/main/notebooks/vqe_pauli_sum_zne_autodiff.ipynb)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
