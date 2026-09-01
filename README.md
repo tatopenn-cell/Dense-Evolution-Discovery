@@ -392,6 +392,14 @@ Full write-up: **[docs/vqe_pauli_sum_zne_autodiff.md](https://tatopenn-cell.gith
 
 ---
 
+### 39. The Hubbard Square: Mott Localization and d-Wave Pairing (Arovas et al.)
+
+Reproduces Arovas, Bandyopadhyay & Zhu, "The Hubbard Model" (arXiv:2103.12097) Table 2's N=4 periodic-ring row: the small-`U/t` perturbative ground-state energy formula (matched to `2.7e-07` relative at `U/t=0.05`, deep in the expansion's regime) and the predicted `x^2-y^2` (B1g/d-wave) ground-state orbital symmetry, confirmed via the real pairing-correlator sign pattern (positive on axis neighbors, negative on the diagonal, at `U=4.0`). The periodic Jordan-Wigner wraparound bond -- the one place a naive implementation could plausibly need an extra fermion-parity correction -- checked to `0.00e+00` against an independent brute-force fermionic construction before being trusted. Entanglement entropy and double occupancy both decrease monotonically with `U` (1.349->0.795 bits, 0.183->0.011), the real Mott-localization signature. A genuinely reusable function came out of this: `hubbard_hamiltonian_pauli_terms`, promoted to Dense-Evolution's `dense_evolution.physics.fermions`.
+
+Full write-up: **[docs/hubbard_square_arovas.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/hubbard_square_arovas/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash

@@ -74,6 +74,7 @@ nav:
     - Photonic Predictive ZNE: photonic_predictive_zne.md
     - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
     - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
+    - "Hubbard Square (Mott Localization, d-Wave Pairing)": hubbard_square_arovas.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
