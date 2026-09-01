@@ -374,6 +374,14 @@ Full write-up: **[docs/central_charge_calabrese_cardy.md](https://tatopenn-cell.
 
 ---
 
+### 37. Negative Time: Reproducing the Weak-Value Theory Behind a Real Toronto Experiment
+
+Reproduces the closed-form weak-value theory (Thompson et al., arXiv:2310.00432) behind a real experimental result (Angulo et al., arXiv:2409.03680, University of Toronto): a transmitted photon's average atomic excitation time can be *negative*, and equals the group delay. Three independent validations: (1) narrow-band self-test converges to the paper's exact on-resonance limit -tau0/Gamma (0.03% off at sigma=100); (2) qualitative reproduction of the paper's Fig. 2 crossover shape (narrow pulses stay negative, broad pulses cross to positive at higher optical depth); (3) an external check against a real published number not produced by this repo -- the paper's own stated theoretical ratio tau_T/tau_bar_0=0.45 for rms=10ns/OD=4, matched here to 0.399 (11% off, same sign and order of magnitude). Formula re-verified against a clean `pdftotext -raw` extraction after a first-pass layout extraction garbled the key equations badly enough to risk a wrong numerical prefactor.
+
+Full write-up: **[docs/negative_time_group_delay.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/negative_time_group_delay/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
