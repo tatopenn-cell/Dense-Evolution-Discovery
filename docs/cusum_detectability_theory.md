@@ -126,17 +126,20 @@ for pt in candidate_points:
     real_latency = ...  # real cusum_detector(reference="fixed"), same real local window as its reference
 ```
 
-```
-pt= 40  local_MAD=2.86  predicted_ARL=2.00  real_latency=1
-pt=120  local_MAD=5.39  predicted_ARL=4.27  real_latency=1
-pt=200  local_MAD=3.37  predicted_ARL=2.42  real_latency=1
-pt=280  local_MAD=9.26  predicted_ARL=9.15  real_latency=2
-pt=360  local_MAD=4.42  predicted_ARL=3.34  real_latency=3
-pt=440  local_MAD=6.78  predicted_ARL=5.80  real_latency=3
-pt=520  local_MAD=7.07  predicted_ARL=6.14  real_latency=2
+Preregistered before running (7 points, spacing 80 objects, `k=0.5, h=5.0`, real
+`+10m` injection, never adjusted after seeing results) -- the full, auditable table:
 
-7/7: real latency < predicted mean ARL
-```
+| point | real local MAD | shift (sigma) | predicted ARL | real observed latency | latency / predicted |
+|---:|---:|---:|---:|---:|---:|
+| 40  | 2.86 | 3.50 | 2.00 | 1 | 0.50 |
+| 120 | 5.39 | 1.86 | 4.27 | 1 | 0.23 |
+| 200 | 3.37 | 2.96 | 2.42 | 1 | 0.41 |
+| 280 | 9.26 | 1.08 | 9.15 | 2 | 0.22 |
+| 360 | 4.42 | 2.26 | 3.34 | 3 | 0.90 |
+| 440 | 6.78 | 1.48 | 5.80 | 3 | 0.52 |
+| 520 | 7.07 | 1.41 | 6.14 | 2 | 0.33 |
+
+**7/7: real latency < predicted mean ARL.**
 
 A first attempt at this got the comparison wrong and was caught before trusting it:
 `cusum_detector(reference="fixed")` always locks its reference to the array's own FIRST
@@ -155,6 +158,18 @@ approximated by the theory's iid-Gaussian assumption, so real threshold crossing
 both directions, happen faster than the idealized model predicts. No new formula is
 proposed here to correct this -- per the explicit scope of this validation, the point was
 to check the existing theory against real data, not to keep adding math.
+
+**What this reframes `detectability_report()` as**: not an oracle that predicts a real
+detection latency exactly, but a *pre-flight* estimate -- "under these statistical
+assumptions, the detector should have this detectability; now measure how far the real
+signal deviates from that model." That framing is the honest, defensible one a real
+deployment could use it for. A natural follow-on this suggests -- explicitly **not**
+built here, closing this experiment rather than continuing to add theory -- is pairing
+`INSUFFICIENT_SNR`-style guidance with a *confidence* signal keyed off exactly this kind
+of real-vs-theoretical deviation (e.g. "this channel's real threshold-crossing rate ran
+Nx faster than the iid-Gaussian model predicts, treat the ARL prediction as optimistic"),
+not just a bare `shift < 3 sigma` check. Left as a noted direction, not a next
+implementation task.
 
 ---
 
