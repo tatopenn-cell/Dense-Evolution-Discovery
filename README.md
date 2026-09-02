@@ -408,6 +408,14 @@ Full write-up: **[docs/agent_indirect_prompt_injection.md](https://tatopenn-cell
 
 ---
 
+### 41. Dense-Armor on Real IMU Sensor Data (UCI HAR)
+
+First test of Dense-Armor's runtime detectors on a real physical sensor (an actual accelerometer, not a simulation or software latency signal): real 3-axis accelerometer telemetry from a Samsung Galaxy S II worn by a real volunteer (UCI HAR, Anguita et al. 2013), sampled at a real 50 Hz. Two real mistakes caught and fixed before trusting the reconstructed signal -- windows sharing a (subject, activity) label turned out to be non-adjacent recording bouts in one case, and a single real recording seam (a 0.081 jump where every other boundary was exactly 0.0) hid inside what looked like one clean contiguous run in another, found only by checking every boundary rather than a spot-check. On a verified-clean 38.4s real "standing still" recording: **5.2% baseline false-positive rate** (higher than synthetic gaussian noise's ~1.3% -- real postural micro-sway isn't gaussian), **100%** of an injected transient glitch caught, **50%** of a sustained bias-drift injection caught within 1s, and a real `STANDING -> WALKING` transition flags **64%** of the first second -- the opposite of Experiment 40's LLM-latency finding (there, legitimate changes were rarely over-flagged): real gait is a large, genuinely oscillatory signal change, not a subtle one.
+
+Full write-up: **[docs/imu_sensor_validation.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/imu_sensor_validation/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
