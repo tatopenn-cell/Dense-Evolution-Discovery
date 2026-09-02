@@ -168,3 +168,23 @@ datasets) is that a filter earns library-code status after a SECOND real case sh
 still helps, not from one experiment alone. Re-running the analysis after this extraction
 reproduces byte-identical output to the version committed with the original experiment --
 verified directly, not assumed.
+
+**Update: a second real case found a real gap in the function, then confirmed it after
+fixing it.** Applied naively to real IMU data (Experiment 41's UCI HAR dataset, gating
+accelerometer-magnitude analysis by gyroscope magnitude), the original function was
+WRONG -- it always differentiated the reference signal, correct for LeRobot's
+position-like leader command, but wrong for a gyroscope, which is already a rate. Fixed
+with an explicit `already_rate` parameter (`False` for position-like references,
+`True` to threshold an already-rate-like reference directly) rather than silently
+patched -- see `stable_frame_filter.py`'s own docstring for the full account. Re-validated
+both real cases through the corrected, unified function:
+- LeRobot (`already_rate=False`): still byte-identical to the original committed result.
+- Real UCI HAR WALKING segment (`already_rate=True`, subject 17, gyroscope magnitude
+  gating accelerometer magnitude): a real, modest, honestly-reported effect --
+  accelerometer-magnitude std drops from 0.208 (full signal) to 0.169 (gated-stable
+  subset, -19%), physically sensible (less real device rotation, less incidental
+  translational-acceleration variance) but not dramatic. See
+  `validate_stable_frame_filter_second_case.py` for the frozen, reproducible numbers.
+
+Two independent real physical domains now correctly handled by one function -- the bar
+this project sets before considering a Discovery helper for promotion to `dense-armor`.

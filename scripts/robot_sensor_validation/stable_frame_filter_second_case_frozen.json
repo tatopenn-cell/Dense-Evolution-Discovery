@@ -1,0 +1,16 @@
+{
+  "subject": 17,
+  "walking_range": [
+    3348,
+    3364
+  ],
+  "n_samples": 1152,
+  "vel_threshold": 0.4545180159450285,
+  "n_stable": 288,
+  "acc_mag_all_std": 0.20764205848819595,
+  "acc_mag_all_mean": 1.0492334216581154,
+  "acc_mag_stable_std": 0.16880115387595307,
+  "acc_mag_stable_mean": 1.1163797080805213,
+  "acc_mag_unstable_std": 0.21444157703925537,
+  "acc_mag_unstable_mean": 1.0268513261839802
+}
