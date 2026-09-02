@@ -31,5 +31,10 @@ Desktop.ini
 # scripts/robot_sensor_validation/run_lidar_validation.py's docstring)
 /scripts/robot_sensor_validation/lidar_data/
 
+# Raw LeRobot SO-101 dataset (370KB, public download, not
+# redistributed here -- see scripts/robot_sensor_validation/
+# run_lerobot_calibration_regime_analysis.py's docstring)
+/scripts/robot_sensor_validation/lerobot_data/
+
 # mkdocs build output
 /site/

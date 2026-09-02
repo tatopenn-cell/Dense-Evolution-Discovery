@@ -78,6 +78,7 @@ nav:
     - "Indirect Prompt Injection vs. Dense-Armor": agent_indirect_prompt_injection.md
     - "Dense-Armor on Real IMU Sensor Data": imu_sensor_validation.md
     - "Dense-Armor on Real Lidar Sensor Data": lidar_sensor_validation.md
+    - "Dense-Armor on Real Robot-Arm Data (LeRobot)": lerobot_calibration_regime_detection.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
