@@ -75,6 +75,7 @@ nav:
     - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
     - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
     - "Hubbard Square (Mott Localization, d-Wave Pairing)": hubbard_square_arovas.md
+    - "Indirect Prompt Injection vs. Dense-Armor": agent_indirect_prompt_injection.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
