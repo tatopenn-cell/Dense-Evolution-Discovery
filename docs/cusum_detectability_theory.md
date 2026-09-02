@@ -112,6 +112,50 @@ This reproduces Experiment 42's own ad hoc "1.29 sigma" finding -- but now as a 
 function's output, computable *before* running a benchmark, from a detector's real local
 noise level and a candidate shift size.
 
+## Step 6. Does the theory predict a real, already-measured case?
+
+Monte Carlo is not the same question as "does this predict reality." Reused Experiment
+42's own committed lidar data (no new collection) at 7 real, independent points spread
+through the real 631-object driving session, each with its own real local noise level
+and the same real +10m telemetry-layer injection:
+
+```python
+for pt in candidate_points:
+    mad = ...  # real local MAD at this real point, no injection
+    predicted = detectability_report(mad, k=0.5, h=5.0, candidate_shift=10.0)["detection_arl"]
+    real_latency = ...  # real cusum_detector(reference="fixed"), same real local window as its reference
+```
+
+```
+pt= 40  local_MAD=2.86  predicted_ARL=2.00  real_latency=1
+pt=120  local_MAD=5.39  predicted_ARL=4.27  real_latency=1
+pt=200  local_MAD=3.37  predicted_ARL=2.42  real_latency=1
+pt=280  local_MAD=9.26  predicted_ARL=9.15  real_latency=2
+pt=360  local_MAD=4.42  predicted_ARL=3.34  real_latency=3
+pt=440  local_MAD=6.78  predicted_ARL=5.80  real_latency=3
+pt=520  local_MAD=7.07  predicted_ARL=6.14  real_latency=2
+
+7/7: real latency < predicted mean ARL
+```
+
+A first attempt at this got the comparison wrong and was caught before trusting it:
+`cusum_detector(reference="fixed")` always locks its reference to the array's own FIRST
+`span` samples, not a window near the injection point -- comparing a prediction built
+from a *local* pre-injection window against a detector run whose real fixed reference
+was the *start of the whole session* was an apples-to-oranges mismatch. Fixed by slicing
+the real array so the detector's own reference window literally *is* the same real local
+window the noise estimate came from.
+
+**Honest, consistent result**: in all 7 real, independent cases, the real observed
+detection latency was lower than the theory's predicted mean -- not scattered around it,
+consistently below. This is the same direction as Step 4's own null-case finding (real
+false alarms happen sooner than theory predicts too) -- one coherent explanation, not two
+separate mysteries: real lidar range data across mixed object classes is not well
+approximated by the theory's iid-Gaussian assumption, so real threshold crossings, in
+both directions, happen faster than the idealized model predicts. No new formula is
+proposed here to correct this -- per the explicit scope of this validation, the point was
+to check the existing theory against real data, not to keep adding math.
+
 ---
 
 ## Details
@@ -132,7 +176,10 @@ not this formula alone.
 
 **Reproducing this**: `python scripts/cusum_detectability_theory/validate_arl_theory.py`
 regenerates `arl_theory_validation_frozen.json` (no download needed, pure simulation);
-`pytest tests/test_cusum_arl_theory.py` reads the already-frozen file.
+`python scripts/cusum_detectability_theory/validate_against_real_lidar.py` regenerates
+`real_lidar_arl_validation_frozen.json` (reuses Experiment 42's own committed data, no
+download needed either); `pytest tests/test_cusum_arl_theory.py tests/test_cusum_arl_real_lidar_validation.py`
+reads the already-frozen files.
 
 **Paper indexed**: Reynolds (1975) is now in quantumrag's `statistica_controllo_processo`
 collection, alongside Page (1954, already dense-armor's own citation) -- the first
