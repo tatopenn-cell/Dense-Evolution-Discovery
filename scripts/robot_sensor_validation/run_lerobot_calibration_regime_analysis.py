@@ -75,6 +75,7 @@ the causal window itself adapts. This is disclosed, not hidden.
 """
 import json
 import pathlib
+import sys
 
 import numpy as np
 from huggingface_hub import hf_hub_download
@@ -82,6 +83,10 @@ from huggingface_hub import hf_hub_download
 from dense_armor.utility.arbiter import classify_segments
 
 _THIS_DIR = pathlib.Path(__file__).resolve().parent
+if str(_THIS_DIR) not in sys.path:
+    sys.path.insert(0, str(_THIS_DIR))
+from stable_frame_filter import velocity_gated_stable_mask  # noqa: E402
+
 _DATA_ROOT = _THIS_DIR / "lerobot_data"
 
 _REPO_ID = "lerobot/svla_so101_pickplace"
@@ -105,8 +110,7 @@ def _episode_stable_diff(df, episode_index: int, joint: int = JOINT):
     action = np.stack(sub["action"].values)
     state = np.stack(sub["observation.state"].values)
     diff = action - state
-    vel = np.abs(np.diff(action, axis=0, prepend=action[:1]))
-    stable_mask = np.all(vel < VEL_THRESHOLD, axis=1)
+    stable_mask = velocity_gated_stable_mask(action, vel_threshold=VEL_THRESHOLD)
     return diff[stable_mask, joint], int(stable_mask.sum())
 
 

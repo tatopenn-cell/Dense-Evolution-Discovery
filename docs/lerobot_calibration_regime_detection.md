@@ -157,3 +157,14 @@ experiment; see the maintainer's own notes for the decision on next steps.
 re-downloads the dataset (~370KB, gitignored `lerobot_data/`) and regenerates
 `lerobot_calibration_regime_frozen.json`; `pytest tests/test_lerobot_calibration_regime.py`
 reads the already-frozen file, no download needed.
+
+**The velocity-gated stable-frame filter is now a shared, tested helper**
+(`scripts/robot_sensor_validation/stable_frame_filter.py`,
+`velocity_gated_stable_mask`) -- extracted here so a future experiment can reuse it
+without copy-pasting, but deliberately kept in Discovery, not promoted to `dense-armor`'s
+own `utility/` package yet: this project's own rule (see how `one_sided_upper_filter` was
+promoted only after proving itself, with a real ablation, on two independent real
+datasets) is that a filter earns library-code status after a SECOND real case shows it
+still helps, not from one experiment alone. Re-running the analysis after this extraction
+reproduces byte-identical output to the version committed with the original experiment --
+verified directly, not assumed.
