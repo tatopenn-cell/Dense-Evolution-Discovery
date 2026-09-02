@@ -193,11 +193,11 @@ this project sets before considering a Discovery helper for promotion to `dense-
 (`dense_armor.utility.stable_frame_filter`) after clearing that bar. The spike/regime
 labeling gap below is unrelated to this filter and remains open.
 
-## Addendum: three candidate fixes for the spike/regime labeling gap, all tested on real
+## Addendum: seven candidate fixes for the spike/regime labeling gap, all tested on real
 ## data and rejected
 
 Step 4 above left one real, disclosed gap: a genuine, sustained pose transition lasting
-only 5-6 frames at 30Hz sometimes gets labeled `spike` instead of `regime`. Three
+only 5-6 frames at 30Hz sometimes gets labeled `spike` instead of `regime`. Seven
 candidate fixes were tried directly against the real data already collected (episodes 0
 and 22, then the full 50-episode dataset) -- none worked. Reported honestly rather than
 silently abandoned, per this project's own discipline.
@@ -250,13 +250,90 @@ discriminate on here -- it rules out sensor noise as the cause and confirms the 
 open question is purely one of duration classification, which is exactly what
 `spike_run_max` already (unsuccessfully, per fix #1) tries to solve.
 
-**Where this leaves the experiment**: still not solved, and no longer actively pursued
-here. Three independent, real-data-tested candidate fixes are now ruled out for the
-specific reasons above, narrowing what a future fix would need to be (a genuinely
-different short-duration regime-vs-spike criterion, not a threshold tweak on the
-existing run-length or net-displacement signals) -- but none has been found or tested.
+**4. Phase-space curvature (Menger curvature via Pythagorean triangle sides)** -- the
+idea: embed the signal as `(diff[t], d(diff)/dt)` and compute, for every three
+consecutive points, the curvature of the triangle they form (`κ = 4*Area /
+(side1*side2*side3)`, sides via Euclidean/Pythagorean distance). Noise that loops back to
+its starting value has to turn sharply somewhere (high curvature); a real transition
+moving toward a new state should be smoother (low curvature).
+
+- On the two hand-inspected episodes, mixed: episode 22 supported the hypothesis clearly
+  (spike median curvature 0.98 vs regime median 0.00), episode 0 did not (spike median
+  0.30 vs regime median 0.43, the wrong direction) -- the same overfitting warning sign as
+  fix #2.
+- Aggregated per run (mean/max/median curvature within each run) across all 50 episodes,
+  every statistic overlapped heavily between `spike` and `regime`: e.g. run-mean median
+  1.056 (spike) vs 0.920 (regime), run-max median 2.106 (spike) vs 2.292 (regime) --
+  no usable separation.
+
+**5. Distributional divergence (Jensen-Shannon, dynamic binning)** -- the idea: compare
+the empirical distributions of the `clean` run right before an event and right after it;
+a real regime change should look like two different distributions, noise should not.
+Implemented with dynamically-sized histogram bins (adapted to each window's sample count)
+and `scipy.spatial.distance.jensenshannon`.
+
+- Across all 50 episodes (149 runs with usable neighbor windows), `spike` median JSD =
+  0.871, `regime` median JSD = 1.000 (saturated at the maximum) -- heavy overlap; at every
+  threshold tried (0.3 to 0.9), 46-92% of spikes still exceeded it.
+- Root cause: with very few samples per window (often <10, sometimes 1), even a small
+  positional difference saturates JSD to its maximum almost every time -- the same
+  underlying problem as fix #2, dressed differently.
+
+**6. Velocity sign-changes (a sample-efficient stand-in for "resonance")** -- true
+frequency-domain analysis (FFT, resonant-mode detection) needs many oscillation cycles to
+resolve a frequency; these events are 5-6 samples long, nowhere near enough -- computing
+one anyway would have reported noise dressed as physics, so it was not attempted. Instead
+counted zero-crossings of the discrete velocity `d(diff)/dt` within each event, as a
+sample-efficient proxy for "oscillates and reverts" (spike) vs "moves monotonically to a
+new state" (regime).
+
+- Across all 50 episodes: `spike` runs had a *higher* median sign-change count than
+  `regime` runs (1.00 vs 0.00), which is the expected direction, but the overlap was
+  total -- at threshold "0 sign changes", 46% of spikes and 58% of regimes both qualify;
+  at threshold "<=1", 80% vs 84%. No usable separation.
+
+**7. `pressure_valve` (an existing, more mature library detector, not a from-scratch
+attempt)** -- before writing any more one-off code, checked whether `dense_armor.utility`
+already had something better. It does: `robust_filters.py`'s `pressure_valve` combines
+four classical robust estimators (Chauvenet, Tukey, Hampel, sigma-clipping) via a
+minimum-variance (BLUE) weighting, with an adaptive threshold that widens near genuine
+distribution shifts via the module's own `_jensen_shannon` -- which, unlike the
+hand-rolled version in fix #5, already uses adaptive bin counts *and* Laplace smoothing
+specifically to avoid the saturation problem fix #5 ran into (documented in its own
+docstring, verified independently before this addendum was written).
+
+Applied directly to the same real event windows (episodes 0 and 22): it does not solve
+this problem either, but for a different, clarifying reason -- it answers a different
+question than the one asked here. `pressure_valve` measures how much a point deviates
+from its local neighborhood, not whether that deviation persists afterward. The clearest
+counter-example: episode 22's run[70:74], a run fix #2 had already confirmed to be a pure
+transient (net displacement 0.109, returns almost exactly to its pre-event value), got
+the *highest* `pressione` (12.58) of every event checked -- higher than every confirmed
+real `regime` transition (1.69-3.18). Duration/persistence and instantaneous deviation
+magnitude are simply not the same signal.
+
+**Where this leaves the experiment, in plain terms**: the signal being analyzed (one
+joint's leader-follower offset, 30 samples/second) sometimes jumps to a new level and
+*stays* there (a real, lasting pose-dependent calibration change), and sometimes jumps and
+*reverts* within the same handful of samples (a real but brief motor movement, not
+sensor noise -- fix #3 already ruled that out). Both can last exactly 5-6 samples, so
+duration alone cannot tell them apart, and unambiguously telling them apart requires
+seeing what happens *after* the event -- which is exactly the information a short window
+doesn't have yet. Seven independent, real-data-tested approaches to finding some other
+early signature in the shape of this one signal (run-length, endpoint displacement,
+phase-space curvature, distributional divergence -- twice, oscillation pattern,
+neighborhood-deviation magnitude) all failed to generalize past the 2 examples they were
+first tried on. That is not a proof that no signature exists, but seven independent
+failures on the same question is real evidence that whatever would solve this is
+probably not "a cleverer function of this same signal" -- it would more likely need
+substantially more real episodes (50 was not enough to validate even the fixes that
+looked clean on 2 examples), or genuine external information this dataset does not
+provide (e.g., ground-truth timestamps for when the human operator's intent actually
+changed). Neither has been attempted. Not pursued further here.
+
 Reproducing the numbers above: `scripts/robot_sensor_validation/lerobot_calibration_regime_frozen.json`
 has the frozen per-run labels and medians used for the net-displacement analysis; the
-kinematic-feasibility check reads `observation.state` directly from the same cached
-parquet (`scripts/robot_sensor_validation/lerobot_data/`, gitignored) and is not
-frozen to a JSON file since it recomputes cheaply from data already on disk.
+kinematic-feasibility, curvature, JSD, sign-change, and `pressure_valve` checks all read
+`observation.state`/the stable-frame diff directly from the same cached parquet
+(`scripts/robot_sensor_validation/lerobot_data/`, gitignored) and are not frozen to a
+JSON file since they recompute cheaply from data already on disk.
