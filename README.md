@@ -400,6 +400,14 @@ Full write-up: **[docs/hubbard_square_arovas.md](https://tatopenn-cell.github.io
 
 ---
 
+### 40. Indirect Prompt Injection Beats Dense-Armor's Runtime Drift Detector
+
+Tests whether Dense-Armor 1.1.12's new runtime detectors (`cusum_detector`, `one_sided_upper_filter` -- validated for latency drift/glitch detection on a real Qwen2 1.8B agent) also catch a real security attack, not just a timing anomaly: an indirect prompt injection (Greshake et al. 2023, arXiv:2302.12173) planted inside a `lookup` tool's returned definition, standing in for a poisoned RAG document. A two-step real agent loop (Qwen2 1.8B via Ollama) lets the model see the poisoned tool result and act on it. Result: **10/10 exposures became real compromises** (the model called an unlisted, off-limits `send_data` tool exactly as the injected text instructed, verified directly, not inferred) -- and **0/10 of those compromised steps were flagged** by any of 4 detector configurations built on the library's own latency-based statistics. Preregistered expectation, not a surprise: a content-blind timing detector has no way to see that the *wrong* tool got called in a *normal* amount of time. Honest conclusion: Dense-Armor's validated strength is runtime behavioral-drift/glitch monitoring, not semantic security -- a real, measured boundary for any product positioning built on this stack.
+
+Full write-up: **[docs/agent_indirect_prompt_injection.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/agent_indirect_prompt_injection/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash

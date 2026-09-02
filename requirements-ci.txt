@@ -1,4 +1,5 @@
 dense-evolution
+dense-armor
 pennylane
 pytest
 numpy
