@@ -1,0 +1,59 @@
+{
+  "span": 30,
+  "shift": 10.0,
+  "k": 0.5,
+  "h": 5.0,
+  "rows": [
+    {
+      "point": 40,
+      "local_mad": 2.8575323000907895,
+      "shift_in_sigma": 3.4995229974066366,
+      "predicted_arl": 2.0000869585470737,
+      "real_latency": 1
+    },
+    {
+      "point": 120,
+      "local_mad": 5.385771688270569,
+      "shift_in_sigma": 1.8567441359942072,
+      "predicted_arl": 4.273075918705284,
+      "real_latency": 1
+    },
+    {
+      "point": 200,
+      "local_mad": 3.3733760785102844,
+      "shift_in_sigma": 2.964389314225557,
+      "predicted_arl": 2.419711019059688,
+      "real_latency": 1
+    },
+    {
+      "point": 280,
+      "local_mad": 9.260037953281403,
+      "shift_in_sigma": 1.0799091807670598,
+      "predicted_arl": 9.14707182531629,
+      "real_latency": 2
+    },
+    {
+      "point": 360,
+      "local_mad": 4.422035594558715,
+      "shift_in_sigma": 2.2614019688816915,
+      "predicted_arl": 3.3394621523217136,
+      "real_latency": 3
+    },
+    {
+      "point": 440,
+      "local_mad": 6.7779590845584865,
+      "shift_in_sigma": 1.4753703696414975,
+      "predicted_arl": 5.796133907243862,
+      "real_latency": 3
+    },
+    {
+      "point": 520,
+      "local_mad": 7.0693579459190365,
+      "shift_in_sigma": 1.4145556182754546,
+      "predicted_arl": 6.144288198980594,
+      "real_latency": 2
+    }
+  ],
+  "n_below": 7,
+  "n_total": 7
+}
