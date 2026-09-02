@@ -188,3 +188,75 @@ both real cases through the corrected, unified function:
 
 Two independent real physical domains now correctly handled by one function -- the bar
 this project sets before considering a Discovery helper for promotion to `dense-armor`.
+
+**Update: promoted.** `velocity_gated_stable_mask` shipped in `dense-armor` v1.1.13
+(`dense_armor.utility.stable_frame_filter`) after clearing that bar. The spike/regime
+labeling gap below is unrelated to this filter and remains open.
+
+## Addendum: three candidate fixes for the spike/regime labeling gap, all tested on real
+## data and rejected
+
+Step 4 above left one real, disclosed gap: a genuine, sustained pose transition lasting
+only 5-6 frames at 30Hz sometimes gets labeled `spike` instead of `regime`. Three
+candidate fixes were tried directly against the real data already collected (episodes 0
+and 22, then the full 50-episode dataset) -- none worked. Reported honestly rather than
+silently abandoned, per this project's own discipline.
+
+**1. Raising `spike_run_max`** (already documented above in Details) -- tested at 2, 5, 8,
+12; made labeling worse, not better, because raising the run-length threshold moves the
+spike/regime boundary the wrong way for transitions that are already short.
+
+**2. Net-displacement (does the signal return to its pre-event value, or settle at a new
+one?)** -- the idea: compare the `clean` run's median right before an event to the
+`clean` run's median right after it. A real, sustained transition should leave a lasting
+net displacement; noise that just perturbs and reverts should not.
+
+- On the two hand-inspected episodes, a fixed absolute threshold (~0.3) cleanly recovered
+  both previously-flagged mislabeled `spike` runs (net displacement 2.01 and 4.43) without
+  breaking any of the five correctly-labeled short spikes (net displacement all <0.11).
+- Tested against all 50 episodes (207 non-`clean` runs, not just the 2 inspected by
+  eye), the same fixed threshold did **not** generalize: 66/101 (65%) of `spike`-labeled
+  runs exceeded it, which would mean two-thirds of all detected spikes are actually
+  mislabeled real transitions -- implausible, and a clear sign of overfitting to 2
+  examples.
+- Normalizing by the local MAD scale (the same robust scale `classify_segments` computes
+  internally, via `_robust_center_scale`) did not fix this: `spike` runs' normalized net
+  displacement has median z=2.72 (n=66) against `regime` runs' median z=15.83 (n=54), but
+  the distributions overlap too much for a workable threshold -- even at z=3.0 (the same
+  `n_sigmas` the arbiter itself uses), 48% of spikes would still flip.
+- Honest interpretation: in a continuously-moving arm signal at 30Hz, a `clean` run
+  adjacent to a `spike` is often still mid-motion, not a true resting plateau -- so
+  "returns to baseline" is not a reliable signature here.
+
+**3. Kinematic feasibility (a Lagrangian-inspired, dynamics-free check)** -- the idea:
+use only the actuator's *kinematic* upper limits (no mass, inertia, or torque model
+needed) to test whether the follower's implied motion during an event is physically
+achievable, or whether it looks like a sensor/encoder artifact. The Feetech STS3215
+datasheet publishes a speed rating but not a fixed acceleration limit (acceleration on
+these bus servos is a software-configured trapezoidal-profile register, not a hardware
+constant, and the specific driver configuration used to record this dataset is unknown)
+-- so a datasheet number would have been fabricated. Used instead a real, conservative
+empirical ceiling: the largest `observation.state` acceleration this exact system ever
+produced across all 50 episodes' full (not just stable-filtered) frames, joint 2:
+2662.5 units/s².
+
+Checked whether any `spike`- or `regime`-labeled event's implied follower acceleration
+exceeds that ceiling: **0/101 spikes and 0/106 regimes do** (spike median 484.1,
+regime median 403.4, both comfortably under the ceiling). This is not a failed test --
+it is a real, clarifying negative result: every labeled event, `spike` or `regime`
+alike, is physically genuine servo motion, not an artifact. The spike/regime ambiguity
+was never a real-vs-fake-data problem, so a physical-plausibility filter has nothing to
+discriminate on here -- it rules out sensor noise as the cause and confirms the actual
+open question is purely one of duration classification, which is exactly what
+`spike_run_max` already (unsuccessfully, per fix #1) tries to solve.
+
+**Where this leaves the experiment**: still not solved, and no longer actively pursued
+here. Three independent, real-data-tested candidate fixes are now ruled out for the
+specific reasons above, narrowing what a future fix would need to be (a genuinely
+different short-duration regime-vs-spike criterion, not a threshold tweak on the
+existing run-length or net-displacement signals) -- but none has been found or tested.
+Reproducing the numbers above: `scripts/robot_sensor_validation/lerobot_calibration_regime_frozen.json`
+has the frozen per-run labels and medians used for the net-displacement analysis; the
+kinematic-feasibility check reads `observation.state` directly from the same cached
+parquet (`scripts/robot_sensor_validation/lerobot_data/`, gitignored) and is not
+frozen to a JSON file since it recomputes cheaply from data already on disk.
