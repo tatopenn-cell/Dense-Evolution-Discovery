@@ -1,0 +1,89 @@
+{
+  "k": 0.5,
+  "h": 5.0,
+  "ideal_vs_theory": [
+    {
+      "mu": 0.5,
+      "delta": 0.0,
+      "theory_corrected": 38.019556,
+      "theory_uncorrected": 25.0,
+      "empirical": 38.27766666666667,
+      "n": 3000,
+      "rel_err_pct": 0.6788892186606993
+    },
+    {
+      "mu": 1.0,
+      "delta": 0.5,
+      "theory_corrected": 10.336199235393469,
+      "theory_uncorrected": 8.013475893998171,
+      "empirical": 10.261,
+      "n": 3000,
+      "rel_err_pct": 0.7275327582306128
+    },
+    {
+      "mu": 1.5,
+      "delta": 1.0,
+      "theory_corrected": 5.666002204197237,
+      "theory_uncorrected": 4.500022699964881,
+      "empirical": 5.775666666666667,
+      "n": 3000,
+      "rel_err_pct": 1.9354821709775107
+    }
+  ],
+  "real_cusum_vs_theory": [
+    {
+      "mu": 0.0,
+      "theory": 469.11118205819747,
+      "empirical": 276.8450549450549,
+      "n_flagged": 910,
+      "rel_err_pct": 40.98519380194399
+    },
+    {
+      "mu": 0.5,
+      "theory": 38.0068149714867,
+      "empirical": 47.77928870292887,
+      "n_flagged": 956,
+      "rel_err_pct": 25.71242483426627
+    },
+    {
+      "mu": 1.0,
+      "theory": 10.33619478544663,
+      "empirical": 10.657,
+      "n_flagged": 1000,
+      "rel_err_pct": 3.103707130259045
+    },
+    {
+      "mu": 1.5,
+      "theory": 5.666002199206044,
+      "empirical": 5.162,
+      "n_flagged": 1000,
+      "rel_err_pct": 8.895199498451808
+    }
+  ],
+  "span_sensitivity": [
+    {
+      "span": 40,
+      "theory": 469.11118205819747,
+      "empirical": 215.55760368663596,
+      "rel_err_pct": 54.04978352021161
+    },
+    {
+      "span": 100,
+      "theory": 469.11118205819747,
+      "empirical": 300.33259423503324,
+      "rel_err_pct": 35.97837661482683
+    },
+    {
+      "span": 300,
+      "theory": 469.11118205819747,
+      "empirical": 348.3101265822785,
+      "rel_err_pct": 25.751050091347537
+    },
+    {
+      "span": 1000,
+      "theory": 469.11118205819747,
+      "empirical": 400.6701244813278,
+      "rel_err_pct": 14.589517409623157
+    }
+  ]
+}

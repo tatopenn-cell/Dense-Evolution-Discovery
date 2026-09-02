@@ -432,6 +432,14 @@ Full write-up: **[docs/lerobot_calibration_regime_detection.md](https://tatopenn
 
 ---
 
+### 44. Predicting CUSUM Detectability From Real Statistical Theory
+
+Turns Experiment 42's one-off "1.29 sigma, below the 3.0 threshold" explanation into a general, reusable prediction, grounded in real theory rather than an ad hoc after-the-fact ratio: Reynolds (1975), *Technometrics* 17(1), 65-71 -- fetched and read directly, indexed into quantumrag's first non-physics collection -- derives a closed-form Brownian-motion/Wald-type CUSUM ARL approximation (building on Page 1954, already `cusum_detector`'s own citation), with Siegmund's (1985) boundary correction. Two more recent (2022-2026) CUSUM papers were checked and explicitly rejected as citations: their formulas describe algorithmically different variants (kernel/MMD-based, adaptive limits), not dense-armor's simple linear CUSUM. Verified in three stages: the corrected formula matches a direct simulation of the exact idealized model to <2% (the uncorrected textbook formula is off by ~20%, confirming Reynolds' own 1975 finding); the real, installed `cusum_detector(reference="fixed")` matches theory reasonably well for post-shift detection delay (3-26% error) but the real false-alarm rate is underestimated by theory by ~41% at a 40-sample reference window -- and that gap shrinks monotonically to 15% as the window grows to 1000 samples, confirming finite-sample noise (not a flaw) as the real cause. The resulting `detectability_report()` function reproduces Experiment 42's own ad hoc ratio directly, now computable before running any benchmark.
+
+Full write-up: **[docs/cusum_detectability_theory.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cusum_detectability_theory/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
