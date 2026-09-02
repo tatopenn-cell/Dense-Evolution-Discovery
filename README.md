@@ -424,6 +424,14 @@ Full write-up: **[docs/lidar_sensor_validation.md](https://tatopenn-cell.github.
 
 ---
 
+### 43. Dense-Armor on Real Teleoperated-Robot-Arm Data (LeRobot)
+
+Looked for an actual, currently-open need instead of a hypothetical one: `huggingface/lerobot` (27k stars) has two real open feature requests from the same author -- #3758 (detect leader/follower calibration offset) and #3760 (per-episode outlier flagging), both already with a working PR in flight, so not redundantly re-solved here. Both compute one static aggregate number; this experiment checks for structure neither can see. Two hypotheses tested directly and rejected first: a within-episode drift trend (correlation with frame index averages 0.07, real -- not present, episodes too short), and a naive raw-signal transient flag (a real spike exists but is fully explained by ordinary control-loop lag during fast leader motion, confirmed against real leader velocity -- would false-positive on every fast motion; the issue's own author had already anticipated and filtered out this exact confound). What survived, using the SAME stable-frame filter #3758 already proposes: real SO-101 arm data (`lerobot/svla_so101_pickplace`) shows one joint's calibration offset visiting several distinct real levels (~0.6 -> ~-1.5 -> ~-3.8 -> ~0.6) within a SINGLE episode as the arm moves through real task poses -- consistent with configuration-dependent joint calibration error, a real documented phenomenon (Lu, He, Julius & Wen, arXiv:2510.19962). `classify_segments` flags every real transition boundary, but -- reported honestly, not spun -- the spike-vs-regime labeling isn't always the intuitive choice at 30Hz with short pose-hold durations. A real, non-redundant finding, not yet a finished contribution.
+
+Full write-up: **[docs/lerobot_calibration_regime_detection.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/lerobot_calibration_regime_detection/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
