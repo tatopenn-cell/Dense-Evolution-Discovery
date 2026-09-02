@@ -123,6 +123,19 @@ short `spike`-labeled runs rather than one clean `regime` label.
 
 ## Details
 
+**Tried the cheap fix first, it made things worse**: before considering any new code, the
+obvious cheap fix for the spike-vs-regime labeling above was tried directly --
+`spike_run_max` (the run-length threshold separating the two labels) at 2, 5, 8, and 12.
+Raising it did **not** help; it made every borderline transition MORE likely to be
+labeled `spike`, not less (a run only becomes `regime` once its length exceeds
+`spike_run_max`, so raising the threshold moves the boundary the wrong way for these
+already-short, ~5-6-frame real transitions). No tested value produced better regime
+labeling than the library default (2) already gives. This is a genuine, honestly
+documented limitation of `classify_segments` for very short-duration real transitions at
+this sample rate -- not a bug to hide, and not (yet) grounds for new library code: per
+this project's own established discipline, a fix only gets promoted after proving itself
+on more than one real case, and no working fix was found here at all.
+
 **Why joint 2**: of the arm's 6 joints, joint 2's per-episode stable-frame median offset
 has by far the largest spread across the 50 episodes (std 0.93) versus the other 5
 (std 0.10-0.20) -- checked directly before focusing the write-up here, not chosen to make
