@@ -21,5 +21,10 @@ Desktop.ini
 /data/
 /images/
 
+# Raw UCI HAR dataset (386MB, public download, not redistributed here --
+# see scripts/robot_sensor_validation/run_imu_validation.py's docstring
+# for the source URL)
+/scripts/robot_sensor_validation/data/
+
 # mkdocs build output
 /site/
