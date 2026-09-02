@@ -26,5 +26,10 @@ Desktop.ini
 # for the source URL)
 /scripts/robot_sensor_validation/data/
 
+# Raw Sydney Urban Objects lidar dataset (273MB extracted, public
+# download, not redistributed here -- see
+# scripts/robot_sensor_validation/run_lidar_validation.py's docstring)
+/scripts/robot_sensor_validation/lidar_data/
+
 # mkdocs build output
 /site/
