@@ -92,7 +92,7 @@ isn't gaussian.
 
 ```python
 # B: a 2-sample IMU glitch injected on top of the SAME real recording
-# C: a sustained +3.0 m/s^2 offset from a fixed point onward (bias/calibration drift)
+# C: a sustained +3.0g offset from a fixed point onward (bias/calibration drift)
 # D: the SAME real STANDING recording, followed by a SEPARATE real WALKING
 #    recording from the same subject -- a genuine behavioral transition
 ```
@@ -115,6 +115,14 @@ only measures that it happens, not whether it's good or bad for a given use case
 ---
 
 ## Details
+
+**Unit correction (found later, during [Experiment 42](lidar_sensor_validation.md)'s
+signal-to-noise analysis)**: the persistent-drift injection was originally documented
+as "+3.0 m/s^2" -- wrong. UCI HAR's raw `total_acc` channel is in units of g (~9.8
+m/s^2), confirmed empirically from the real baseline value at rest (~1.03, unmistakably
+1g, not 1 m/s^2). The detection numbers above were always computed correctly on the real
+data; only the printed physical-unit label was wrong, now corrected to `g` throughout
+this page and the script.
 
 **Why this dataset**: chosen for being real, public, small enough to download in one
 session (61MB), and the closest practical stand-in for real robot IMU telemetry
