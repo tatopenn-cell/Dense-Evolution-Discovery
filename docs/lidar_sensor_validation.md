@@ -100,13 +100,84 @@ D: 6.7% flagged in the 30 objects after the real gap
 `B` reproduces the by-now-consistent pattern: a sharp transient is caught essentially
 every time, on every sensor modality tested so far. `C` is a real, honest negative
 result, and a genuinely different one from Experiment 41's: there, a sustained shift on a
-fixed-rate accelerometer was caught 50% of the time; here, only 3.3%. The real driver is
-range variance -- a car, a pedestrian, and a tree naturally sit at very different real
-distances from the sensor, so a fixed +10m offset is far less distinguishable from
-ordinary real variability than the same kind of shift was on a quiet, low-variance
-accelerometer signal. `D` stays quiet (6.7%) across a genuine real 175-second pause in
-the session -- the detector does not mistake "the vehicle stopped or paused" for an
-anomaly.
+fixed-rate accelerometer was caught 50% of the time; here, only 3.3%. `D` stays quiet
+(6.7%) across a genuine real 175-second pause in the session -- the detector does not
+mistake "the vehicle stopped or paused" for an anomaly. Step 4 below decomposes exactly
+why `C`'s number is so much lower than Experiment 41's, quantitatively rather than by
+guessing.
+
+## Step 4. Why only 3.3%? A quantitative decomposition, not a guess
+
+A first draft of this page guessed the driver was *inter*-class range difference (a car,
+a pedestrian, and a tree naturally sit at different distances). Checked directly instead
+of assumed:
+
+```python
+uniq = np.unique(classes)
+class_means = {c: ranges[classes == c].mean() for c in uniq}
+inter_class_var = sum(counts[c] * (class_means[c] - ranges.mean())**2 for c in uniq) / n
+intra_class_var = sum(counts[c] * ranges[classes == c].var() for c in uniq) / n  # weighted average
+inter_class_var, intra_class_var, inter_class_var / ranges.var()
+```
+
+```
+(7.86, 33.17, 0.192)
+```
+
+Wrong guess: **81% of the real variance is *within* a class** (a pedestrian alone ranges
+from close to far, real std ~4.7m), only 19% comes from *between* classes. The dominant
+real driver is a single class's own natural spread, not which classes get mixed
+together.
+
+The direct, mechanical explanation is simpler and more useful than either guess -- what
+does the detector's own causal reference window actually see at the injection point?
+
+```python
+window = ranges[PERSISTENT_FROM - 30 : PERSISTENT_FROM]
+med, mad = np.median(window), np.median(np.abs(window - med)) * 1.4826
+PERSISTENT_OFFSET / mad
+```
+
+```
+1.29
+```
+
+**The injected +10m offset sits at 1.29 sigma of the real local noise -- structurally
+below the `n_sigmas=3.0` detection threshold.** That gap alone accounts for the 3.3%
+result: most individual points in the shifted region simply never cross the same
+threshold that a 100%-caught transient clears easily. This is the single most direct
+explanation for `C`'s number, more so than any class-composition argument.
+
+An external review (saved in the maintainer's own notes) proposed a specific, testable
+fix before this was run: normalize each object's range against its own class's real
+median first (treat class as an "operating regime"), rather than inventing new detector
+math. Tested directly, not assumed:
+
+```python
+class_medians = {c: np.median(ranges[classes == c]) for c in uniq}
+normalized = ranges - np.array([class_medians[c] for c in classes])
+# same injection, same detector, same threshold, on the normalized signal
+```
+
+| variant | local MAD | offset/MAD (sigma) | detect rate (30 objects) |
+|---|---:|---:|---:|
+| raw range | 7.72m | 1.29 | 3.3% |
+| class-normalized range | 5.88m | 1.70 | 6.7% |
+| Experiment 41 IMU (for scale) | 0.0018g | 1624.1 | 50.0% |
+
+Class normalization **helps but does not close the gap**: local noise drops, detection
+rate doubles -- still nowhere close to IMU's 50%, because most of the real noise is
+intra-class (a real property of the driving scene), not an artifact of comparing
+different classes on one shared scale. The honest conclusion: no new detector math is
+needed (the external review's instinct was right about that), but the real bottleneck
+isn't primarily a normalization problem either -- an irregularly-sampled, per-object real
+lidar signal has intrinsically worse signal-to-noise for a fixed-magnitude drift than a
+fixed-rate physical channel like an accelerometer, independent of which feature
+engineering is applied on top.
+
+Reproducing this: `python scripts/robot_sensor_validation/analyze_lidar_persistent_gap.py`
+(reuses `run_lidar_validation.py`'s dataset loading, no separate download);
+`pytest tests/test_lidar_persistent_gap_analysis.py` reads the frozen result.
 
 ---
 

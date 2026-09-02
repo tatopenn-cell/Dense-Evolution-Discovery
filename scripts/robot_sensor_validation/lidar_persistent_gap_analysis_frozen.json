@@ -1,0 +1,17 @@
+{
+  "n_objects": 631,
+  "inter_class_var": 7.8594659234964555,
+  "intra_class_var": 33.17152516376903,
+  "total_var": 40.873281775868804,
+  "inter_class_var_fraction": 0.19228859494557662,
+  "mad_raw": 7.723062572908401,
+  "ratio_raw": 1.2948231230287877,
+  "detect_rate_raw": 0.03333333333333333,
+  "mad_class_normalized": 5.884269879770279,
+  "ratio_class_normalized": 1.6994461852233058,
+  "detect_rate_class_normalized": 0.06666666666666667,
+  "imu_mad": 0.0018471628794283306,
+  "imu_ratio": 1624.112325670195,
+  "imu_detect_rate": 0.5,
+  "n_sigmas_threshold": 3.0
+}

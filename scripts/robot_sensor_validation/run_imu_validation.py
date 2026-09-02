@@ -69,10 +69,19 @@ after seeing results:
                   fault: simulates a real, known IMU failure mode -- a
                   bit-flip/glitch sample -- not a change to the real
                   sensor recording itself).
-  C. Persistent-- SAME real STANDING base signal, a sustained +3.0 m/s^2
+  C. Persistent-- SAME real STANDING base signal, a sustained +3.0g
                   offset added from a fixed point onward -- simulates
                   accelerometer bias/calibration drift, a real, common
                   MEMS-IMU failure mode (e.g. thermal bias drift).
+                  UNIT CORRECTION (found while cross-comparing against
+                  Experiment 42's lidar signal-to-noise numbers): this
+                  was originally documented as "m/s^2", which was wrong
+                  -- UCI HAR's raw total_acc channel is in units of g
+                  (~9.8 m/s^2), confirmed empirically from the real
+                  baseline value at rest (~1.03, unmistakably 1g, not
+                  1 m/s^2). The detection numbers below were always
+                  computed correctly on the real data; only the printed
+                  physical unit label was wrong, corrected here.
   D. Legit change -- REAL DATA, NO INJECTION: subject 17's real STANDING
                   segment (3237-3265) followed by subject 17's real
                   WALKING segment (3348-3364, a separate, internally
@@ -141,9 +150,9 @@ STRIDE = 64  # 50% overlap
 
 TRANSIENT_AT = 800
 TRANSIENT_WIDTH = 2
-TRANSIENT_MAG = 15.0  # m/s^2 spike
+TRANSIENT_MAG = 15.0  # g (see module docstring's unit correction note)
 PERSISTENT_FROM = 1500
-PERSISTENT_OFFSET = 3.0  # m/s^2 sustained offset
+PERSISTENT_OFFSET = 3.0  # g sustained offset (see module docstring's unit correction note)
 
 
 def _load_channel(name: str) -> np.ndarray:
