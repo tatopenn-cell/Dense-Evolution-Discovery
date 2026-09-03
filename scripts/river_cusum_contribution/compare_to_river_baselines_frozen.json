@@ -1,0 +1,122 @@
+{
+  "0.5": {
+    "CUSUM (this prototype)": {
+      "false_alarm_rate": 0.075,
+      "missed_rate": 0.48,
+      "mean_delay": 152.39423076923077,
+      "median_delay": 123.0,
+      "f1": 0.4240687679083094
+    },
+    "ADWIN (river default)": {
+      "false_alarm_rate": 0.0,
+      "missed_rate": 0.0,
+      "mean_delay": 150.84,
+      "median_delay": 139.0,
+      "f1": 0.8472622478386168
+    },
+    "KSWIN (river default)": {
+      "false_alarm_rate": 0.735,
+      "missed_rate": 0.255,
+      "mean_delay": 122.30201342281879,
+      "median_delay": 44,
+      "f1": 0.3594470046082949
+    },
+    "PageHinkley (river default)": {
+      "false_alarm_rate": 0.405,
+      "missed_rate": 0.005,
+      "mean_delay": 83.76381909547739,
+      "median_delay": 81,
+      "f1": 0.7967806841046277
+    }
+  },
+  "1.0": {
+    "CUSUM (this prototype)": {
+      "false_alarm_rate": 0.075,
+      "missed_rate": 0.0,
+      "mean_delay": 50.005,
+      "median_delay": 39.0,
+      "f1": 0.8347457627118644
+    },
+    "ADWIN (river default)": {
+      "false_alarm_rate": 0.0,
+      "missed_rate": 0.0,
+      "mean_delay": 50.04,
+      "median_delay": 43.0,
+      "f1": 1.0
+    },
+    "KSWIN (river default)": {
+      "false_alarm_rate": 0.735,
+      "missed_rate": 0.03,
+      "mean_delay": 32.355670103092784,
+      "median_delay": 23.0,
+      "f1": 0.526896551724138
+    },
+    "PageHinkley (river default)": {
+      "false_alarm_rate": 0.405,
+      "missed_rate": 0.0,
+      "mean_delay": 40.315,
+      "median_delay": 40.5,
+      "f1": 0.7991967871485944
+    }
+  },
+  "1.5": {
+    "CUSUM (this prototype)": {
+      "false_alarm_rate": 0.075,
+      "missed_rate": 0.0,
+      "mean_delay": 20.205,
+      "median_delay": 19.0,
+      "f1": 0.8421052631578948
+    },
+    "ADWIN (river default)": {
+      "false_alarm_rate": 0.0,
+      "missed_rate": 0.0,
+      "mean_delay": 42.52,
+      "median_delay": 43.0,
+      "f1": 1.0
+    },
+    "KSWIN (river default)": {
+      "false_alarm_rate": 0.735,
+      "missed_rate": 0.005,
+      "mean_delay": 24.603015075376884,
+      "median_delay": 17,
+      "f1": 0.5389876880984953
+    },
+    "PageHinkley (river default)": {
+      "false_alarm_rate": 0.405,
+      "missed_rate": 0.0,
+      "mean_delay": 25.24,
+      "median_delay": 26.0,
+      "f1": 0.8016032064128257
+    }
+  },
+  "2.0": {
+    "CUSUM (this prototype)": {
+      "false_alarm_rate": 0.075,
+      "missed_rate": 0.0,
+      "mean_delay": 12.875,
+      "median_delay": 12.0,
+      "f1": 0.8421052631578948
+    },
+    "ADWIN (river default)": {
+      "false_alarm_rate": 0.0,
+      "missed_rate": 0.0,
+      "mean_delay": 34.52,
+      "median_delay": 43.0,
+      "f1": 1.0
+    },
+    "KSWIN (river default)": {
+      "false_alarm_rate": 0.735,
+      "missed_rate": 0.005,
+      "mean_delay": 22.266331658291456,
+      "median_delay": 15,
+      "f1": 0.5389876880984953
+    },
+    "PageHinkley (river default)": {
+      "false_alarm_rate": 0.405,
+      "missed_rate": 0.0,
+      "mean_delay": 18.49,
+      "median_delay": 19.0,
+      "f1": 0.8016032064128257
+    }
+  }
+}

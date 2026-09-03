@@ -440,6 +440,14 @@ Full write-up: **[docs/cusum_detectability_theory.md](https://tatopenn-cell.gith
 
 ---
 
+### 45. Contributing Streaming Drift Detectors to online-ml/river
+
+Same real-issue-research strategy as Experiment 43, on a much more credible target: `online-ml/river` (thousands of stars) has a maintainer-authored roadmap issue ([#1914](https://github.com/online-ml/river/issues/1914)) explicitly asking for a fixed-reference CUSUM (Page 1954) -- checked first that `river.drift.PageHinkley`'s own "implements the CUSUM control chart" claim wasn't already redundant (it uses a fading mean, a genuinely different scheme), and that nobody had already proposed and been rejected (one old, unrelated closed PR, no CUSUM discussion). Building a river-interface prototype found a real parameter bug: the "textbook" k=0.5/h=5.0 CUSUM tuning gives an 87.5% stream-level false-alarm rate on a practical 1000-sample stream (its average run length under no-change is only ~19-38 samples) -- empirically recalibrated to h=20.0. Immediately generalized: `dense_armor.utility.cusum.cusum_detector` shipped the exact same h=5.0 default, with a 100% false-alarm rate in its own default mode -- fixed there too, shipped in [Dense-Armor v1.1.13](https://github.com/tatopenn-cell/Dense-Armor/pull/12), a real production fix found as a side effect, not the goal. A second real bug was found by stress-testing the evaluation harness itself against trivial `AlwaysFire`/`NeverFire` baselines (prompted by a methodological critique already posted on river's own PR #1963): an `AlwaysFire` dummy scored higher than the real CUSUM detector at one shift size, because false alarms were counted per-STREAM instead of per-sample -- fixed. Honest final comparison (each detector at its own defaults, no tuning in anyone's favor) across CUSUM/EWMA/Shewhart (built here) and ADWIN/KSWIN/PageHinkley (river's own): ADWIN wins on F1 everywhere, but CUSUM beats PageHinkley on F1 for medium/large shifts and EWMA is the fastest detector in the whole comparison at 2-3-sigma shifts (faster than ADWIN itself), each with disclosed weaknesses (CUSUM/EWMA both weak at small 0.5-sigma shifts; Shewhart, included for completeness only, is competitive at 3-sigma but always the slowest). All three prototypes verified against river's own official `check_estimator` test suite -- 13/14 pass, matching PageHinkley/ADWIN/KSWIN exactly (the sole failure is a bug in river 0.26.1's own test harness, confirmed to fail identically on their native detectors). CUSUM proposed on the issue; EWMA/Shewhart held back pending a first response, to avoid posting a second large update before the first gets read.
+
+Full write-up: **[docs/river_drift_detector_contribution.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/river_drift_detector_contribution/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
