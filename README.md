@@ -456,6 +456,14 @@ Full write-up: **[docs/cross_channel_correlation_fault_detection.md](https://tat
 
 ---
 
+### 47. Deadband/Backlash Gating for the LeRobot Spike/Regime Problem
+
+Experiment 43's addendum closed with seven rejected fixes and a conclusion that the signal itself probably doesn't contain what's needed. This tests a genuinely different, physically-grounded idea instead of another function of the same signal: real mechanical backlash/deadband (Lima, Machado & Crisóstomo, *Robotica* 29(2):211-219, 2011, DOI:10.1017/S0263574710000056, checked via WebFetch before citing -- paywalled, not indexed in quantumrag, cited from verified metadata/abstract only) -- a joint briefly resisting motion when the commanded direction reverses, until static friction is overcome. Checked directly first: 5 of 6 real SO-101 joints show real velocity dropping to 16-68% of baseline right after a commanded reversal (joint 5, the gripper, shows the opposite pattern, sensibly -- a different mechanism). `classify_segments`' `spike`-labeled points are enriched inside deadband windows 1.75x, generalized across all 50 real episodes (60.7% of 394 spikes vs. a 34.6% base rate) -- the first result in this whole investigation to hold up past the two hand-inspected episodes on first try. But using it as a *fix*: gating deadband points out of the signal correctly reclassified one of the two specific known-mislabeled runs from Experiment 43 (episode 22's, from `spike` to the correct `regime`) while leaving the other wrong (episode 0's) -- and the aggregate net-displacement ground-truth check across all 50 episodes went from 65.2% to 62.0%, a small net regression, not an improvement. The deadband/spike association is real and worth keeping as its own finding; it does not fix Experiment 43's open gap -- the two problems coexist in the same signal without being the same problem.
+
+Full write-up: **[docs/deadband_gate_spike_regime.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/deadband_gate_spike_regime/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
