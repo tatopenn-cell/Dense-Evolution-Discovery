@@ -464,6 +464,14 @@ Full write-up: **[docs/deadband_gate_spike_regime.md](https://tatopenn-cell.gith
 
 ---
 
+### 48. A Zero-Latency Streaming Port of classify_segments' Causal Deviation Check
+
+First step toward what real robotics adoption of Dense-Armor actually needs: standard building blocks, not more speculative detection ideas. Reading `arbiter.classify_segments`' own implementation line by line (not assumed) found a real constraint before building anything: its spike-vs-regime label looks `radius` points AHEAD of a deviant run's end to decide if it settles or reverts -- that half cannot be zero-latency streaming. Reconsidered what a real robot safety loop actually needs: not "was that a spike or a regime" (an after-the-fact triage question), but "is this point deviant right now" -- exactly `classify_segments`' own per-point `deviante` computation, before the run-length logic. Ported only that half (`StreamingDeviationDetector`, a plain buffer recomputing median/MAD each step, not a more complex two-heap structure -- the window sizes this project uses everywhere, 10-100 points, make the simpler version fast enough on its own). Verified against the real correctness bar (bit-exact match to the batch computation, not "looks similar"): zero mismatches across 4 real LeRobot arm episodes and all 4 scenarios of Dense-Armor's own real agent telemetry -- two independent real domains, the same bar `velocity_gated_stable_mask` was promoted at. Timed at ~18.6kHz sustainable on real hardware, over 180x the 30-100Hz a real robot control loop runs at.
+
+Full write-up: **[docs/streaming_deviation_detector.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/streaming_deviation_detector/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
