@@ -88,6 +88,7 @@ nav:
     - "A Minimal ROS2 Deviation Node": ros2_deviation_node.md
     - "Real-Time Streaming Latency on Real LeRobot Data": realtime_streaming_lerobot.md
     - "A Causal Rate Limiter for Real Motor Commands": rate_limiter_real_joint_commands.md
+    - "A Geometric CBF Filter for Real Robot Commands": geometric_cbf_filter_real_joint_commands.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
