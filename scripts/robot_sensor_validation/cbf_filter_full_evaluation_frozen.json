@@ -1,0 +1,8 @@
+{
+  "n_invariance_trials": 17,
+  "n_invariance_ok": 17,
+  "n_invasiveness_checks": 3186,
+  "n_invasiveness_nonzero": 3,
+  "max_invasiveness_deviation": 0.446664789818378,
+  "median_invasiveness_deviation": 0.0
+}

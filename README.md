@@ -504,6 +504,14 @@ Full write-up: **[docs/rate_limiter_real_joint_commands.md](https://tatopenn-cel
 
 ---
 
+### 54. A Geometric Control Barrier Function Filter for Real Robot Commands
+
+Closes the spatial-safety gap `rate_limited_follower` (kinematic only) leaves open: never let a command drive a joint into a forbidden region, not just bound how fast it changes. Grounded in Ames et al. (2019), "Control Barrier Functions: Theory and Applications" (2019 ECC, arXiv:1903.11199) -- the same theory SAFER-Splat uses, applied to a known geometric obstacle instead of SAFER-Splat's GPU-bound Gaussian-Splatting perception (confirmed unavailable on this machine: no NVIDIA GPU). A real numerical finding along the way: the CBF's continuous-time guarantee needs discrete sub-stepping (20 substeps/sample) to hold in practice -- a single large real step could overshoot the barrier otherwise, confirmed and fixed directly. On real SO-101 joint commands: 17/17 real (joint, obstacle) trials maintain invariance from a safe start, 99.9%+ exact minimal invasiveness (3183/3186 real per-step checks).
+
+Full write-up: **[docs/geometric_cbf_filter_real_joint_commands.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/geometric_cbf_filter_real_joint_commands/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
