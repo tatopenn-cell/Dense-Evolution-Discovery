@@ -41,8 +41,8 @@ for frame in action:
 
 ```
 n=303 real frames, real budget per frame = 33333us (30Hz)
-latency: median=316.9us  std=52.6us  max=742.0us
-headroom (median): 105x
+latency: median=320.2us  std=46.4us  max=516.4us
+headroom (median): 104x
 frames where update() alone exceeded the real 33.3ms budget: 0/303
 ```
 
@@ -68,7 +68,7 @@ real timestamp, exactly like a live subscriber would), over the full real 10.07s
 
 ```
 real recorded duration: 10.07s, wall-clock consumed: 10.07s
-max single-frame drift (processing pushing behind the real target time): 3.91ms
+max single-frame drift (processing pushing behind the real target time): 1.95ms
 ```
 
 Wall-clock consumption matches the real recorded duration to the second; the real
@@ -81,10 +81,10 @@ than assumed from the per-call number alone.
 | quantity | value |
 |---|---|
 | real frame rate (measured from data) | 30.0 Hz (dt=33.33ms) |
-| median real per-call latency (6-channel) | 316.9us |
-| real headroom (median) | 105x |
+| median real per-call latency (6-channel) | 320.2us |
+| real headroom (median) | 104x |
 | real budget violations | 0/303 |
-| real sustained-playback max drift | 3.91ms |
+| real sustained-playback max drift | 1.95ms |
 
 `MultiChannelStreamingDeviationDetector` genuinely keeps up with this real robot's real
 recorded rate, measured directly rather than inferred from an isolated single-channel
@@ -107,6 +107,10 @@ invoked per-step here); or any other real robot's frame rate -- 30Hz is this spe
 dataset's rate, not a universal claim.
 
 **Reproducing this**: `python scripts/dense_armor_streaming/realtime_lerobot_streaming.py`
-(reuses the already-cached real LeRobot parquet, no new download; requires
-`pip install --upgrade dense-armor` first if a stale local version is installed, as it was
-here).
+regenerates `realtime_lerobot_streaming_frozen.json` (reuses the already-cached real LeRobot
+parquet, no new download; requires `pip install --upgrade dense-armor` first if a stale
+local version is installed, as it was here). `pytest tests/test_realtime_lerobot_streaming.py`
+reads the already-frozen file -- no network access needed in CI, matching this repo's own
+convention (see e.g. `tests/test_imu_sensor_validation.py`). Real wall-clock numbers vary
+slightly run to run (system jitter, already documented project-wide) -- the frozen file
+reflects one real, committed run, not a guaranteed-reproducible exact value.

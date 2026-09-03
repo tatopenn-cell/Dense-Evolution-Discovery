@@ -61,8 +61,8 @@ def check_1_per_call_latency(action, real_dt):
     print(f"latency: median={median_us:.1f}us  std={std_us:.1f}us  max={max_us:.1f}us")
     print(f"headroom (median): {real_budget_us / median_us:.0f}x")
     print(f"frames where update() alone exceeded the real 33.3ms budget: {n_over_budget}/{n}")
-    return dict(n=n, median_us=median_us, std_us=std_us, max_us=max_us,
-                real_budget_us=real_budget_us, n_over_budget=n_over_budget)
+    return dict(n=int(n), median_us=float(median_us), std_us=float(std_us), max_us=float(max_us),
+                real_budget_us=float(real_budget_us), n_over_budget=int(n_over_budget))
 
 
 def check_2_sustained_realtime_playback(action, ts):
@@ -89,15 +89,22 @@ def check_2_sustained_realtime_playback(action, ts):
     print("\n=== CHECK 2: sustained real-time playback, real drift ===")
     print(f"real recorded duration: {real_duration_s:.2f}s, wall-clock consumed: {total_wall_s:.2f}s")
     print(f"max single-frame drift (processing pushing behind the real target time): {max_drift_s * 1e3:.2f}ms")
-    return dict(real_duration_s=real_duration_s, wall_s=total_wall_s, max_drift_ms=max_drift_s * 1e3)
+    return dict(real_duration_s=float(real_duration_s), wall_s=float(total_wall_s), max_drift_ms=float(max_drift_s * 1e3))
 
 
 def main():
+    import json
     action, ts = load_episode_0()
     real_dt = float(np.median(np.diff(ts)))
     print(f"Real episode 0: {action.shape[0]} frames, {action.shape[1]} joints, real dt={real_dt*1000:.2f}ms")
     r1 = check_1_per_call_latency(action, real_dt)
     r2 = check_2_sustained_realtime_playback(action, ts)
+
+    out_path = pathlib.Path(__file__).resolve().parent / "realtime_lerobot_streaming_frozen.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(dict(n_frames=int(action.shape[0]), n_joints=int(action.shape[1]), real_dt_ms=float(real_dt * 1000),
+                        check1=r1, check2=r2), f, indent=2)
+    print("Wrote " + str(out_path))
     return r1, r2
 
 
