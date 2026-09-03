@@ -57,9 +57,9 @@ despite the recommendation. A future iteration could add a proper
 
 ## What was actually run, and what wasn't
 
-`import rclpy` fails outright in this environment, so `ros2_deviation_node.py` itself
+`import rclpy` fails outright in this environment, so `joint_deviation_node.py` itself
 cannot even be imported here, let alone run. Split the callback logic into
-`ros2_deviation_logic.py` -- zero rclpy dependency, fully testable on its own -- so at
+`joint_deviation_logic.py` -- zero rclpy dependency, fully testable on its own -- so at
 least the part that CAN be verified here, was:
 
 ```python
@@ -79,21 +79,47 @@ test_matches_direct_detector_call_on_real_lerobot_data: PASSED
 
 Real, executable tests (not mocked, not skipped) -- including feeding all 303 real frames
 of LeRobot episode 0 through `process_joint_positions` and checking every single output
-matches calling `MultiChannelStreamingDeviationDetector` directly. `ros2_deviation_node.py`
+matches calling `MultiChannelStreamingDeviationDetector` directly. `joint_deviation_node.py`
 itself only compiles syntactically (`python -m py_compile`, confirmed) -- the thin rclpy
 wiring layer on top, genuinely untested here.
+
+## Update: a real installable ament_python package, ROS2 parameters, importing from the real library
+
+The first version was a loose script -- not something a real ROS2 user could `ros2 run`.
+Rebuilt as a proper `ament_python` package (`package.xml`/`setup.py`/`setup.cfg`/
+`resource/`), matching `ros2/examples`' own `minimal_publisher` package layout, fetched
+directly before writing anything. Two concrete gaps closed:
+
+- **ROS2 parameters, not hardcoded constructor args.** `declare_parameter`/`get_parameter`'s
+  real signatures were fetched directly from `ros2/rclpy`'s `node.py` and `parameter.py`
+  source (humble branch) before using them -- `n_joints`/`radius`/`ref_mult`/`n_sigmas` are
+  now configurable via a launch file/YAML, the idiomatic ROS2 way, instead of requiring a
+  code change to retarget a different robot.
+- **Imports the real, promoted `MultiChannelStreamingDeviationDetector` from
+  `dense_armor.utility.streaming`** (Dense-Armor's own library, promoted after Experiments
+  48-49), not a local copy -- `dense-armor` is declared as a real pip dependency in
+  `setup.py`'s `install_requires`. Re-verified this actually works: reinstalled Dense-Armor
+  in editable mode from its local repo (reversible, restored to the prior PyPI install
+  afterward) and re-ran the real tests against the promoted library code directly -- same
+  result, all real LeRobot frames match.
+
+Still not colcon-built or run against a live ROS2 system -- that remains the one gap that
+genuinely cannot be closed without installing ROS2 (or Docker), which needs the maintainer's
+explicit go-ahead given the weight of that install.
 
 ## Honest scope
 
 This is real engineering against verified, current sources, not a live-tested ROS2
-integration. Before trusting this in an actual robot pipeline: run it against a real ROS2
-installation (Foxy/Humble/Jazzy), confirm the topic names/QoS settings suit the target
-robot, and consider replacing `UInt8MultiArray` with a proper custom message once the
-package is real enough to warrant one.
+integration. Before trusting this in an actual robot pipeline: `colcon build` it against a
+real ROS2 installation (Foxy/Humble/Jazzy), confirm it actually builds, confirm the topic
+names/QoS settings suit the target robot, and consider replacing `UInt8MultiArray` with a
+proper custom message once the package is real enough to warrant one.
 
 ## Reproducing this
 
-`scripts/dense_armor_streaming/ros2_deviation_logic.py` (the tested, rclpy-free logic),
-`scripts/dense_armor_streaming/ros2_deviation_node.py` (the untested rclpy wiring),
-`scripts/dense_armor_streaming/test_ros2_deviation_logic.py` (the real tests --
-reuses already-cached LeRobot data, no new download).
+`scripts/dense_armor_streaming/ros2_package/` -- a full `ament_python` package:
+`package.xml`, `setup.py`, `setup.cfg`, `resource/dense_armor_ros`,
+`dense_armor_ros/joint_deviation_logic.py` (tested, rclpy-free),
+`dense_armor_ros/joint_deviation_node.py` (untested rclpy wiring, ROS2 parameters),
+`test/test_joint_deviation_logic.py` (the real tests -- reuses already-cached LeRobot data,
+no new download).
