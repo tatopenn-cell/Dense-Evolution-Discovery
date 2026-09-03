@@ -512,6 +512,14 @@ Full write-up: **[docs/geometric_cbf_filter_real_joint_commands.md](https://tato
 
 ---
 
+### 55. A RoboGuard-Inspired Two-Stage LTL Safety Check, With Claude Instead of OpenAI
+
+Builds the "semantic/task-level" safety layer `prog.txt` left unexplored: does an overall behavior violate a rule expressed in plain language, not just a single command. Inspired by RoboGuard (Ravichandran et al., arXiv:2503.07885) with two real, disclosed deviations -- `pip install spot` installs an unrelated PyPI package (a real namespace collision, caught and avoided; the real library needs conda-forge, installed via Docker), and the LLM chain-of-thought step (translating a natural-language rule to LTL) is done directly by Claude instead of RoboGuard's own hard-coded OpenAI dependency, per instruction, for free. Getting real Spot model checking right took three sequential mistakes (mismatched automaton alphabets, a wrong `contains()` direction) caught by testing against hand-verified truth tables in both directions, not trusting the first plausible result. Real result: the real SO-101 trace violates a real translated safety rule at 86/303 points, matching a direct Python cross-check exactly; both directional sanity checks (a deliberately violating trace, a constructed safe trace) pass.
+
+Full write-up: **[docs/roboguard_inspired_ltl_safety_check.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/roboguard_inspired_ltl_safety_check/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
