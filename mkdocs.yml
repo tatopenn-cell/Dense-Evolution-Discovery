@@ -82,6 +82,7 @@ nav:
     - "Predicting CUSUM Detectability From Theory": cusum_detectability_theory.md
     - "Contributing Drift Detectors to river": river_drift_detector_contribution.md
     - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
+    - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
