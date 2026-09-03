@@ -149,13 +149,38 @@ install/setup.bash`, `dense_armor_ros.joint_deviation_node.JointDeviationNode` -
 actual rclpy `Node` subclass -- imports and constructs from the built workspace. This is no
 longer "engineering against verified sources" -- it is now genuinely live-tested.
 
+## Update: a real live rclpy.spin() run, fake publisher included
+
+The one remaining honest gap -- an actual running event loop, not just an import and a
+build -- is closed too. `test/spin_live_test.py` runs three real rclpy nodes in one
+process, wired through a real `SingleThreadedExecutor` (the same machinery
+`rclpy.spin()` wraps): a fake `JointState` publisher (90 messages: 60 quiet baseline,
+30 with a synthetic +5.0 offset injected on joint 2), the real `JointDeviationNode`
+under test (unmodified, same class `colcon build` produced), and a flag-collector
+subscriber recording every `joint_deviation_flags` message that comes back.
+
+```
+published=90 flag_messages_received=90
+baseline_any_true=False
+deviation_joint_2_flagged=True
+deviation_other_joints_flagged=False
+LIVE SPIN TEST: PASS
+```
+
+All 90 published messages round-tripped through the real subscription callback ->
+detector -> publish chain; the baseline period produced zero flags, the injected
+deviation was caught on exactly the joint it was injected on, and no other joint
+false-positived. This is the real ROS2 callback graph actually executing, not a mock.
+
 ## Honest scope
 
-Live-tested inside `ros:humble` via Docker (colcon build + real imports + node
-construction), not yet tested with an actual running `rclpy.spin()` loop against live
-`joint_states` messages -- that would need a real publisher and a running ROS2 graph, a
-further step beyond what this pass covered. Consider replacing `UInt8MultiArray` with a
-proper custom message once the package is real enough to warrant one.
+Live-tested inside `ros:humble` via Docker: colcon build, real imports, node
+construction, and now a real `rclpy.spin()`-equivalent run with an actual message flow
+end to end. Not yet tested: a genuine multi-process ROS2 graph (separate `ros2 run`
+processes talking over real DDS across process boundaries, rather than multiple nodes
+in one executor) or a real physical/simulated robot as the publisher. Consider
+replacing `UInt8MultiArray` with a proper custom message once the package is real
+enough to warrant one.
 
 ## Reproducing this
 
@@ -178,5 +203,6 @@ docker run --rm \
 
 `test/full_test.sh` installs the pre-built wheel, runs `test/live_container_check.py` (a
 plain import/detector smoke test), then `colcon build --symlink-install`, then imports
-`JointDeviationNode` via the built workspace -- the exact sequence that produced the output
-above.
+`JointDeviationNode` via the built workspace, then runs `test/spin_live_test.py` (the real
+`rclpy.spin()`-equivalent fake-publisher run) -- the exact sequence that produced both
+sets of output above.

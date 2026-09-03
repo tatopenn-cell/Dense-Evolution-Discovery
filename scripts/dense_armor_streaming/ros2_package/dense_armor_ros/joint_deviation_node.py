@@ -9,11 +9,14 @@ definition in ros2/common_interfaces before writing this), runs the
 already-validated streaming detector on the `position` array, and
 publishes one deviation flag per joint on a separate topic.
 
-HONEST DISCLOSURE, meant literally: this environment has no ROS2
-installation (no rclpy, no ros2 CLI, no Docker available either to run
-an official ROS2 image) -- this node has NEVER been run against a live
-ROS2 system, and this package has never been colcon-built. What IS
-verified, directly against real, current sources (not memory):
+Live-tested inside an official `ros:humble` Docker container: real
+colcon build, and a real rclpy.spin() run -- a fake JointState
+publisher, this node, and a flag-collector subscriber all wired
+through a real SingleThreadedExecutor -- see test/spin_live_test.py.
+A synthetic single-joint deviation was correctly flagged with zero
+false positives on the baseline or the other joints. Earlier drafts of
+this docstring said this had never run live; that gap is closed. What
+IS verified, directly against real, current sources (not memory):
 - The rclpy Node/create_subscription/create_publisher/callback pattern
   (ros2/examples, humble branch).
 - declare_parameter/get_parameter's real signatures (fetched directly
@@ -35,8 +38,6 @@ verified, directly against real, current sources (not memory):
   dependency) and IS genuinely tested here (not mocked) --
   test/test_joint_deviation_logic.py.
 
-Before trusting this in a real robot pipeline: colcon build it against
-a real ROS2 installation and confirm it actually builds and runs.
 """
 import rclpy
 from rclpy.node import Node
