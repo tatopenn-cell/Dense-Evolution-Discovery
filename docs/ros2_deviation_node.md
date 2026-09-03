@@ -1,8 +1,12 @@
 # A Minimal ROS2 Node for Multi-Joint Deviation Detection
 
 Third standard building block toward real robotics adoption -- the single most "standard"
-ecosystem integration point, since practically every real robotics project checked in
-Experiments 46-47 (Gazebo, TurtleBot, IsaacLab) runs on ROS/ROS2.
+ecosystem integration point: practically every real robotics stack (Gazebo, TurtleBot,
+IsaacLab, real hardware alike) runs on ROS/ROS2, a general, well-known fact about the
+ecosystem, not something this repo's own prior experiments checked -- an earlier draft of
+this sentence cited "Experiments 46-47" for that claim, which was wrong: those two
+experiments are cross-channel correlation and deadband gating, unrelated to simulators;
+fixed here rather than left silently wrong.
 
 ## Honest disclosure, up front: this was never run against a live ROS2 system
 
