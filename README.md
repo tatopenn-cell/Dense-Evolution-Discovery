@@ -472,6 +472,14 @@ Full write-up: **[docs/streaming_deviation_detector.md](https://tatopenn-cell.gi
 
 ---
 
+### 49. Native Multi-Channel Support for classify_segments and Streaming Detection
+
+Second standard building block toward real robotics adoption -- ergonomics, not a new algorithm. Every real robotics experiment in this repo (LeRobot's 6 joints, the UCI HAR IMU's multiple axes) needed a hand-written per-channel loop around a function built for one 1D signal. `classify_segments_multichannel` (batch) and `MultiChannelStreamingDeviationDetector` (built on Experiment 48's streaming detector) apply the same, already-validated per-channel logic across all channels at once -- each channel keeps its own independent reference window and baseline by design (a fast joint and a near-stationary one have very different natural noise scales; a shared baseline would desensitize one or false-alarm on the other). Verified identical to the hand-written loop, not "close enough": zero mismatches on real 6-joint LeRobot arm data (2 episodes, both batch and streaming) and real 3-axis UCI HAR IMU data (n=3072) -- two independent real domains, the same bar prior promotions were held to.
+
+Full write-up: **[docs/multichannel_wrapper.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/multichannel_wrapper/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
