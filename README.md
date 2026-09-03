@@ -488,6 +488,14 @@ Full write-up: **[docs/ros2_deviation_node.md](https://tatopenn-cell.github.io/D
 
 ---
 
+### 51. Streaming Deviation Detection at a Real Robot's Real Frame Rate
+
+Measures `MultiChannelStreamingDeviationDetector`'s real per-call latency against real LeRobot data (episode 0, 6 real joints, real 30Hz recorded rate) rather than relying on an isolated single-channel throughput figure: median 316.9us, 105x real headroom, 0/303 real budget violations, and a sustained real-time playback simulation confirming no drift accumulates over the full real 10.07s episode (max single-frame drift 3.91ms).
+
+Full write-up: **[docs/realtime_streaming_lerobot.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/realtime_streaming_lerobot/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
