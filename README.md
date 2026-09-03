@@ -496,6 +496,14 @@ Full write-up: **[docs/realtime_streaming_lerobot.md](https://tatopenn-cell.gith
 
 ---
 
+### 53. A Causal Rate Limiter for Real Motor Commands: Safety vs. Fidelity
+
+A different damping mechanism after a neighbor-consensus approach (healing_filter, kept private -- no usable utility came of it) proved a causal dead end: bound how fast a command can physically change instead of classifying whether a deviation is real, grounded in Berscheid & Kroger (2021), "Jerk-limited Real-time Trajectory Generation with Arbitrary Target States" (RSS XVII, arXiv:2105.04830, verified causal by construction). Real, honest tradeoff on 120 real trials (6 LeRobot joints x 20 seeds): wins on the real safety metric every single time (max instantaneous jump, 120/120), loses on average tracking fidelity (RMSE, 19/120) -- a genuine engineering tradeoff, not a bug. Not promoted to Dense-Armor yet: validated on only one real physical domain so far, short of this project's own 2-domain bar.
+
+Full write-up: **[docs/rate_limiter_real_joint_commands.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/rate_limiter_real_joint_commands/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
