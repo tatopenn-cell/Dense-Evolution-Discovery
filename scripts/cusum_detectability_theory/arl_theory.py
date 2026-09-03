@@ -121,14 +121,25 @@ def detectability_report(local_noise_scale: float, k: float, h: float, candidate
     -------
     dict with:
         false_alarm_arl : expected samples between false alarms (mu=0).
-        detection_arl    : expected samples to detect `candidate_shift`.
+        detection_arl    : expected samples to detect `candidate_shift`,
+                            floored at 1.0 (see below).
         shift_in_sigma   : candidate_shift / local_noise_scale, the
                             same "offset/MAD" ratio Experiment 42
                             computed ad hoc -- now derivable directly.
+
+    FLOOR AT 1.0: real finding (validate_against_real_imu.py, a quiet
+    real accelerometer baseline where local_noise_scale is tiny relative
+    to a real candidate_shift) -- at extreme shift_in_sigma the raw
+    Wald/Siegmund formula returns a fractional ARL below 1, which has no
+    physical meaning (a detector cannot flag in under one real sample).
+    Both ARLs are floored at 1.0 here; treat any raw value that needed
+    flooring as "near-instant detection", not a precise number -- the
+    formula is an asymptotic approximation, least trustworthy exactly in
+    this regime.
     """
     mu_std = candidate_shift / local_noise_scale
     return dict(
-        false_alarm_arl=two_sided_arl(0.0, k, h),
-        detection_arl=two_sided_arl(mu_std, k, h),
+        false_alarm_arl=max(1.0, two_sided_arl(0.0, k, h)),
+        detection_arl=max(1.0, two_sided_arl(mu_std, k, h)),
         shift_in_sigma=mu_std,
     )

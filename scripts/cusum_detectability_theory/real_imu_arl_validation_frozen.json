@@ -1,0 +1,85 @@
+{
+  "k": 0.5,
+  "h": 5.0,
+  "radius": 25,
+  "ref_mult": 2,
+  "check1_original_offset": 3.0,
+  "check1_rows": [
+    {
+      "point": 300,
+      "local_mad": 0.0028578251073316657,
+      "shift_in_sigma": 1049.7493329117967,
+      "predicted_arl_raw": 0.0058761280807599564,
+      "real_latency": 1
+    },
+    {
+      "point": 600,
+      "local_mad": 0.0019312027950665245,
+      "shift_in_sigma": 1553.436028398384,
+      "predicted_arl_raw": 0.003970336135220352,
+      "real_latency": 1
+    },
+    {
+      "point": 900,
+      "local_mad": 0.0026645194931676267,
+      "shift_in_sigma": 1125.9065687800799,
+      "predicted_arl_raw": 0.005478514065188588,
+      "real_latency": 1
+    },
+    {
+      "point": 1200,
+      "local_mad": 0.001390681701161959,
+      "shift_in_sigma": 2157.215412767281,
+      "predicted_arl_raw": 0.0028588696169563805,
+      "real_latency": 1
+    },
+    {
+      "point": 1500,
+      "local_mad": 0.002345987902395368,
+      "shift_in_sigma": 1278.7789727887573,
+      "predicted_arl_raw": 0.004823367183789189,
+      "real_latency": 1
+    }
+  ],
+  "check1_n_sub_one": 5,
+  "check2_target_sigma": 2.0,
+  "check2_rows": [
+    {
+      "point": 300,
+      "local_mad": 0.0028578251073316657,
+      "shift_in_sigma": 2.0,
+      "predicted_arl": 3.8884444464936085,
+      "real_latency": 10
+    },
+    {
+      "point": 600,
+      "local_mad": 0.0019312027950665245,
+      "shift_in_sigma": 2.0,
+      "predicted_arl": 3.8884444464936085,
+      "real_latency": 1
+    },
+    {
+      "point": 900,
+      "local_mad": 0.0026645194931676267,
+      "shift_in_sigma": 2.0,
+      "predicted_arl": 3.8884444464936085,
+      "real_latency": 2
+    },
+    {
+      "point": 1200,
+      "local_mad": 0.001390681701161959,
+      "shift_in_sigma": 2.0,
+      "predicted_arl": 3.8884444464936085,
+      "real_latency": 9
+    },
+    {
+      "point": 1500,
+      "local_mad": 0.002345987902395368,
+      "shift_in_sigma": 2.0,
+      "predicted_arl": 3.8884444464936085,
+      "real_latency": 6
+    }
+  ],
+  "check2_n_below": 2,
+  "check2_n_total": 5
+}

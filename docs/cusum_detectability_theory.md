@@ -171,6 +171,75 @@ Nx faster than the iid-Gaussian model predicts, treat the ARL prediction as opti
 not just a bare `shift < 3 sigma` check. Left as a noted direction, not a next
 implementation task.
 
+## Update: a second, independent real physical domain (accelerometer)
+
+Step 6 above validated `detectability_report()` against real lidar range data. This update
+checks a second, physically different real sensor -- accelerometer magnitude (UCI HAR,
+subject 17, standing still, already committed from the IMU validation experiment) -- to see
+whether the lidar finding generalizes, not just repeats.
+
+### Check 1: the same real injection magnitude exposes a real formula limit
+
+Reusing the original IMU experiment's own real persistent-injection magnitude (+3.0g) at 5
+real, independent points, each with its own real local causal-window MAD:
+
+```
+pt= 300  MAD=0.0029  shift_sigma=1049.7  predicted_ARL_raw=0.0059  real_latency=1
+pt= 600  MAD=0.0019  shift_sigma=1553.4  predicted_ARL_raw=0.0040  real_latency=1
+pt= 900  MAD=0.0027  shift_sigma=1125.9  predicted_ARL_raw=0.0055  real_latency=1
+pt=1200  MAD=0.0014  shift_sigma=2157.2  predicted_ARL_raw=0.0029  real_latency=1
+pt=1500  MAD=0.0023  shift_sigma=1278.8  predicted_ARL_raw=0.0048  real_latency=1
+5/5 points: raw formula predicts ARL < 1 (physically meaningless)
+```
+
+This real standing-accelerometer baseline is quiet enough (real local MAD ~0.001-0.003g)
+that the real +3.0g injection sits above 1000 sigma of real local noise -- the raw
+Wald/Siegmund formula's exponential term underflows and predicts a fractional ARL below 1
+sample in all 5 real cases. Not a code bug: this is what the asymptotic approximation
+actually computes at extreme SNR, and it has no physical meaning (a detector cannot flag in
+under one real sample). Real detection did happen at latency=1 in all 5 cases -- the
+qualitative direction ("near-instant") is right, the specific number is not. **Fixed**:
+`detectability_report()` now floors both `false_alarm_arl` and `detection_arl` at 1.0.
+
+### Check 2: a moderate, comparable-to-lidar shift gives a genuinely mixed result
+
+To get a meaningful (not degenerate) ARL comparison, the injection was instead scaled to a
+fixed 2.0-sigma-of-real-local-noise offset at each of the same 5 points (preregistered
+before running, never adjusted after seeing results):
+
+```
+pt= 300  MAD=0.0029  shift_sigma=2.00  predicted_ARL=3.89  real_latency=10
+pt= 600  MAD=0.0019  shift_sigma=2.00  predicted_ARL=3.89  real_latency=1
+pt= 900  MAD=0.0027  shift_sigma=2.00  predicted_ARL=3.89  real_latency=2
+pt=1200  MAD=0.0014  shift_sigma=2.00  predicted_ARL=3.89  real_latency=9
+pt=1500  MAD=0.0023  shift_sigma=2.00  predicted_ARL=3.89  real_latency=6
+
+2/5 real points: observed latency < predicted mean ARL
+```
+
+**Honest, real result**: unlike lidar's uniform 7/7 (real detection always faster than
+predicted), this real accelerometer domain gives a genuinely MIXED outcome at moderate SNR --
+2/5 points faster than predicted, 3/5 slower. Documented as found, not forced to match the
+lidar direction. A first draft of this section stated a wrong "5/5, same direction as lidar"
+result -- traced to a real bug in an earlier ad hoc script (`cusum_detector` returns
+`(flagged, cusum)`; the earlier script unpacked them in the wrong order and accidentally
+used the raw, never-zero accumulator as if it were the boolean flag array). The committed
+`validate_against_real_imu.py` unpacks correctly; re-run and re-verified before writing this
+number down.
+
+**What this means for the theory, honestly**: the direction of the theory-vs-reality gap
+found on lidar (real crossings always faster than predicted) does NOT automatically transfer
+to a different real physical domain. Two real, independent checks now exist, with two
+different real outcomes -- use `detectability_report()` as a pre-flight estimate under
+classical iid-Gaussian assumptions, then always measure the real rate for the actual
+deployment; don't assume a correction factor learned on one sensor modality applies to
+another.
+
+**Promoted to Dense-Armor**: `one_sided_arl`, `two_sided_arl`, `detectability_report` (with
+the floor fix) are now in `dense_armor.utility.cusum`, alongside `cusum_detector` -- see
+Dense-Armor's `docs/api/cusum.md`.
+
+
 ---
 
 ## Details
@@ -193,7 +262,10 @@ not this formula alone.
 regenerates `arl_theory_validation_frozen.json` (no download needed, pure simulation);
 `python scripts/cusum_detectability_theory/validate_against_real_lidar.py` regenerates
 `real_lidar_arl_validation_frozen.json` (reuses Experiment 42's own committed data, no
-download needed either); `pytest tests/test_cusum_arl_theory.py tests/test_cusum_arl_real_lidar_validation.py`
+download needed either); `python scripts/cusum_detectability_theory/validate_against_real_imu.py`
+regenerates `real_imu_arl_validation_frozen.json` (reuses the IMU validation experiment's
+own committed data, no download needed); `pytest tests/test_cusum_arl_theory.py
+tests/test_cusum_arl_real_lidar_validation.py tests/test_cusum_arl_real_imu_validation.py`
 reads the already-frozen files.
 
 **Paper indexed**: Reynolds (1975) is now in quantumrag's `statistica_controllo_processo`
