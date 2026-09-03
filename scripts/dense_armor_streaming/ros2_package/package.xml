@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>dense_armor_ros</name>
+  <version>0.1.0</version>
+  <description>ROS2 node wrapping dense_armor.utility.streaming's MultiChannelStreamingDeviationDetector for real-time, multi-joint anomaly flagging. Never tested against a live ROS2 system (built in an environment with no ROS2 installed) -- see README.md and Dense-Evolution-Discovery's Experiment 50 write-up for the honest disclosure of what was and wasn't verified.</description>
+  <maintainer email="tatopenn@gmail.com">Salvatore Pennacchio</maintainer>
+  <license>BUSL-1.1</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <!-- dense-armor itself is a pip package (pyproject.toml), not a rosdep key --
+       install with `pip install dense-armor` before building this package. -->
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
