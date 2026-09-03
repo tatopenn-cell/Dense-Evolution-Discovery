@@ -85,6 +85,7 @@ nav:
     - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
     - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
     - "Native Multi-Channel Support": multichannel_wrapper.md
+    - "A Minimal ROS2 Deviation Node": ros2_deviation_node.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md

@@ -480,6 +480,14 @@ Full write-up: **[docs/multichannel_wrapper.md](https://tatopenn-cell.github.io/
 
 ---
 
+### 50. A Minimal ROS2 Node for Multi-Joint Deviation Detection
+
+Third and last of the standard robotics building blocks -- the single most "standard" ecosystem integration point, since practically every real robotics project checked in Experiments 46-47 (Gazebo, TurtleBot, IsaacLab) runs on ROS/ROS2. Honest disclosure stated up front, not buried: this environment has no ROS2 installation (checked directly -- no `rclpy`, no `ros2` CLI, no Docker available either), so this node has never run against a live ROS2 system. What IS real: the rclpy `Node`/`create_subscription`/`create_publisher` pattern was fetched directly from `ros2/examples` (humble branch, the current real repository, not memory) before writing anything; the message fields used (`JointState.position`, `UInt8MultiArray.data`) were verified against the real definitions in `ros2/common_interfaces` -- including finding, and disclosing rather than silently using, that every `std_msgs/*MultiArray` type has been marked deprecated since Foxy, used anyway because it's still what real ROS2 packages commonly publish and a custom message would need a full package with message generation. Because `import rclpy` fails outright here, the callback logic was split into a separate, zero-rclpy-dependency module and genuinely tested (not mocked) -- including feeding all 303 real frames of a real LeRobot episode through it and checking every output matches calling the Experiment 49 detector directly. The ROS2 wiring layer itself only compiles syntactically; real engineering against verified sources, not a claim of live integration testing.
+
+Full write-up: **[docs/ros2_deviation_node.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/ros2_deviation_node/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
