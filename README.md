@@ -448,6 +448,14 @@ Full write-up: **[docs/river_drift_detector_contribution.md](https://tatopenn-ce
 
 ---
 
+### 46. Cross-Channel Correlation for Robot Joint Fault Detection
+
+A real, verified paper (arXiv:2505.05811, "Unsupervised Anomaly Detection for Autonomous Robots via Mahalanobis SVDD with Audio-IMU Fusion" -- checked via WebFetch before citing, indexed in quantumrag's new `robotica_rilevamento_anomalie` collection) shows a real robot fault shows up as a breakdown in the normal correlation between sensor channels that usually co-vary (F1=92.3% on a real mobile robot with real collisions/mechanical faults). Tested the same insight with a much lighter, classical mechanism on real SO-101 arm data (reusing Experiment 43's already-cached dataset, no new download) instead of their deep-learning one: rolling pairwise Pearson correlation across the arm's 6 joints, same causal-window convention as `arbiter.py`/`cusum.py`. Honest negative result, with a real methodological trap caught before it mattered -- a fault injected as a stuck joint (15 frames frozen) appeared to be detected 100% of the time, but checking the SAME window in the unmodified episode showed it was ALSO already flagged: the "detection" was the same 44.41% false-alarm noise the injection happened to land inside, not a real signal. A velocity-gated variant (reusing Experiment 43's own `vel_threshold=1.0`, not a new number) fixed the false-alarm rate (44.41% -> 14.35%) but removed the only detection along with it (0/15). The underlying insight is real; this project's classical, no-retraining implementation of it does not work on this real case -- the paper's own deep-learning mechanism is likely doing real work a correlation threshold cannot replace here.
+
+Full write-up: **[docs/cross_channel_correlation_fault_detection.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cross_channel_correlation_fault_detection/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
