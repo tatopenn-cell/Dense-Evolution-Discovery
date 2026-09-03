@@ -87,13 +87,32 @@ per-step checks (99.9%) show the filtered command exactly equals the raw command
 current real state is far from the obstacle; the 3 exceptions are small (max 0.447) and
 consistent with a boundary effect right at the far-field threshold, not a systematic issue.
 
+## Step 5. A second, independent real physical domain: ALOHA
+
+This project's own cross-repo promotion discipline requires validation on >=2 independent
+real physical domains. Reused the same real ALOHA domain (`lerobot/aloha_static_coffee`,
+bimanual, 14 real DoF, real 50Hz) already used for `rate_limited_follower`'s own second-
+domain check -- a genuinely different real robot, not just a different episode of SO-101.
+
+```
+Real ALOHA episode 0: 1100 frames, 14 real DoF
+Invariance: 38/38 real (joint, obstacle) trials never violate the real safe set
+Minimal invasiveness: 0/18444 real per-step checks nonzero, max=0.000000, median=0.000000
+```
+
+Even cleaner than SO-101 here: 38/38 (100%) invariance, and 0/18444 -- a PERFECT, exact
+minimal-invasiveness result, not even the 3 tiny boundary-effect exceptions SO-101 showed.
+The core safety property replicates and, on this domain, holds without exception.
+
 ## Result
 
-A real, working safety layer, unlike the neighbor-consensus damping attempt: 100%
-invariance from safe starting conditions, 99.9%+ exact minimal invasiveness, on real robot
-joint commands. Complements `rate_limited_follower` (kinematic: bounds rate of change) with
-a spatial guarantee (never enter a forbidden region) -- the two are not redundant, and could
-run together in a real pipeline.
+A real, working safety layer, unlike the neighbor-consensus damping attempt: validated on
+two independent real physical domains (SO-101 6-DoF 30Hz, ALOHA bimanual 14-DoF 50Hz), 100%
+invariance from safe starting conditions on both, and minimal invasiveness essentially exact
+(99.9%+ on SO-101, exactly 100% on ALOHA). Complements `rate_limited_follower` (kinematic:
+bounds rate of change) with a spatial guarantee (never enter a forbidden region) -- the two
+are not redundant, and could run together in a real pipeline. Promoted to Dense-Armor as
+`cbf_safety_filter`/`cbf_filtered_trajectory` -- see Dense-Armor's `docs/api/cbf_filter.md`.
 
 ---
 
@@ -110,10 +129,12 @@ SAFER-Splat uses, sidestepping its GPU-bound perception requirement by using a k
 geometric obstacle instead of live visual reconstruction.
 
 **Reproducing this**: `python scripts/robot_sensor_validation/cbf_filter_full_evaluation.py`
-regenerates `cbf_filter_full_evaluation_frozen.json` (reuses the already-cached real
-LeRobot parquet, no new download); `pytest tests/test_geometric_cbf_filter.py
-tests/test_cbf_filter_real_joint_commands.py` reads the already-frozen file / runs the
-direct unit tests, no network access needed in CI.
+regenerates `cbf_filter_full_evaluation_frozen.json` (SO-101, reuses the already-cached real
+LeRobot parquet, no new download); `python scripts/robot_sensor_validation/cbf_filter_second_domain_aloha.py`
+regenerates `cbf_filter_second_domain_aloha_frozen.json` (ALOHA, reuses the already-cached
+real ALOHA parquet); `pytest tests/test_geometric_cbf_filter.py
+tests/test_cbf_filter_real_joint_commands.py tests/test_cbf_filter_second_domain_aloha.py`
+reads the already-frozen files / runs the direct unit tests, no network access needed in CI.
 
 **Paper indexed**: Ames et al. (2019) is now in quantumrag's
 `robotica_filtri_sicurezza_semantica` collection, alongside SAFER-Splat, "From Words to

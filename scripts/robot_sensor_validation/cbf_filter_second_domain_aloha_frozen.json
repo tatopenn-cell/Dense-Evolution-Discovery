@@ -1,0 +1,10 @@
+{
+  "domain": "aloha_static_coffee",
+  "n_dof": 14,
+  "n_invariance_trials": 38,
+  "n_invariance_ok": 38,
+  "n_invasiveness_checks": 18444,
+  "n_invasiveness_nonzero": 0,
+  "max_invasiveness_deviation": 0.0,
+  "median_invasiveness_deviation": 0.0
+}
