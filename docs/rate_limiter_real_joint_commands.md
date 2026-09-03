@@ -71,13 +71,44 @@ deployment: if the actual goal is "never let a raw command reach the motor unbou
 (the literal problem statement), this mechanism achieves that with a 100% real track record;
 if the goal is "recover the closest approximation to the true intended signal", it does not.
 
-## Status: not promoted to Dense-Armor
+## Step 3. A second, independent real physical domain: ALOHA (bimanual, 14-DOF, real 50Hz)
 
 This project's own cross-repo promotion discipline (already applied to `streaming.py`,
 `stable_frame_filter.py`, the CUSUM ARL theory) requires validation on >=2 independent real
-physical domains before promotion -- this experiment covers only one (LeRobot robot-arm
-joint commands). A second real domain (e.g. a different real actuator/command stream) would
-be needed before this becomes a `dense_armor.utility` candidate.
+physical domains before promotion. SO-101 above is one; a genuinely different real robot
+-- not just a different episode of the same one -- is needed for the second, the same
+standard already used for `streaming.py` (SO-101 arm + human IMU, not two robot arms).
+`lerobot/aloha_static_coffee`: a real (not simulated) bimanual ALOHA robot, 14 real DoF,
+real 50Hz control rate (vs. SO-101's 6 DoF, 30Hz) -- different hardware, different DoF
+count, different control rate.
+
+```
+Real ALOHA episode 0: 1100 frames, 14 real DoF
+n=280 real trials
+RMSE: rate_limited wins 56/280 (20.0%) vs moving median
+  mean RMSE: rate_limited=0.0045  moving_median=0.0107
+Max jump: rate_limited wins 280/280 (100.0%) vs moving median
+  mean max jump: raw=2.08  rate_limited=0.02  moving_median=0.25
+```
+
+**Safety metric confirmed identically**: 280/280 (100%), same as SO-101's 120/120 -- the
+core safety property replicates exactly across two independent real robots.
+
+**Fidelity metric: an honest, real divergence, not smoothed over.** Per-trial RMSE win rate
+stays a minority here too (20.0%, vs 15.8% on SO-101) -- consistent on that specific measure.
+But the MEAN RMSE actually favors the rate limiter on ALOHA (0.0045 vs 0.0107), unlike
+SO-101 where the mean favored the moving median. Reported exactly as found: likely a
+heavy-tailed moving-median failure mode on some real (seed, joint) trials that drags its
+mean up despite winning more individual trials -- not investigated further here, since the
+core safety finding (the actual reason this mechanism exists) is what needed cross-domain
+confirmation, and it replicated cleanly.
+
+## Status: promoted to Dense-Armor
+
+Both required real physical domains now check out on the property that matters for this
+mechanism's stated purpose (bounding real instantaneous command jumps): 100% win rate on
+both SO-101 (120/120) and ALOHA (280/280). Promoted to `dense_armor.utility` as
+`rate_limited_follower` -- see Dense-Armor's `docs/api/rate_limiter.md`.
 
 ---
 
@@ -90,9 +121,12 @@ finding specifically), but "a rate-limiting mechanism works for safety, not for 
 
 **Reproducing this**:
 `python scripts/robot_sensor_validation/rate_limiter_full_evaluation.py` regenerates
-`rate_limiter_full_evaluation_frozen.json` (reuses the already-cached real LeRobot parquet,
-no new download); `pytest tests/test_rate_limiter_real_joint_commands.py` reads the
-already-frozen file, no network access needed in CI.
+`rate_limiter_full_evaluation_frozen.json` (SO-101, reuses the already-cached real LeRobot
+parquet, no new download); `python scripts/robot_sensor_validation/rate_limiter_second_domain_aloha.py`
+regenerates `rate_limiter_second_domain_aloha_frozen.json` (ALOHA, downloads
+`lerobot/aloha_static_coffee` once if not already cached); `pytest
+tests/test_rate_limiter_real_joint_commands.py tests/test_rate_limiter_second_domain_aloha.py`
+reads the already-frozen files, no network access needed in CI.
 
 **Paper indexed**: Berscheid & Kroger (2021) is now in quantumrag's new
 `robotica_generazione_traiettoria` collection -- the first real-time robot trajectory
