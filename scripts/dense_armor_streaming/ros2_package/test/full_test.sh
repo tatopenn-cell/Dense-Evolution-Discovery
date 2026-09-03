@@ -12,3 +12,5 @@ colcon build --symlink-install 2>&1
 echo "--- TEST IMPORT NODO VIA WORKSPACE ---"
 source install/setup.bash
 python3 -c "from dense_armor_ros.joint_deviation_node import JointDeviationNode; print('NODO IMPORTABILE E COSTRUITO CORRETTAMENTE')"
+echo "--- LIVE rclpy.spin() TEST (fake publisher -> node -> flag collector) ---"
+python3 /ws/src/dense_armor_ros/test/spin_live_test.py
