@@ -1,0 +1,10 @@
+{
+  "n_trials": 120,
+  "wins_rmse": 19,
+  "mean_rmse_rate_limited": 0.7902654449398601,
+  "mean_rmse_moving_median": 0.4394507076801642,
+  "wins_jump": 120,
+  "mean_jump_raw": 129.05515133750862,
+  "mean_jump_rate_limited": 3.7531536595895916,
+  "mean_jump_moving_median": 6.73052705886238
+}

@@ -35,6 +35,7 @@ Desktop.ini
 # redistributed here -- see scripts/robot_sensor_validation/
 # run_lerobot_calibration_regime_analysis.py's docstring)
 /scripts/robot_sensor_validation/lerobot_data/
+/scripts/robot_sensor_validation/lerobot_data_aloha/
 
 # mkdocs build output
 /site/

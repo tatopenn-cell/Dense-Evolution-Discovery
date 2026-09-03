@@ -1,0 +1,12 @@
+{
+  "domain": "aloha_static_coffee",
+  "n_dof_used": 14,
+  "n_trials": 280,
+  "wins_rmse": 56,
+  "mean_rmse_rate_limited": 0.004539041297571313,
+  "mean_rmse_moving_median": 0.010654967238461412,
+  "wins_jump": 280,
+  "mean_jump_raw": 2.0767049108682856,
+  "mean_jump_rate_limited": 0.019320714026024297,
+  "mean_jump_moving_median": 0.24961818521607312
+}
