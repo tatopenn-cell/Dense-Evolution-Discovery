@@ -30,14 +30,6 @@ grad = jax.grad(lambda th: energy_fn(th, h_op)[0])(theta)   # real autodiff, no 
 
 Underneath, `PauliSumOperator` calls the new `pauli_sum_matvec_jax` -- a pure-`jnp`, `jax.grad`/`jax.jit`-traceable rewrite of the existing (`numpy`-based, non-differentiable) `pauli_sum_matvec`. Verified to agree with a dense-matrix reference to machine precision (`~1e-15`), both in value and in gradient, before being trusted here.
 
-## Why 12 qubits, not the 20 originally planned
-
-The target system is H10 (a chain of 10 hydrogen atoms, STO-3G basis, bond length 0.74 Angstrom) -- the standard VQE-scaling benchmark in the literature, which needs exactly 20 qubits at full active space (verified directly). At full active space that Hamiltonian has **7151 Pauli terms**; compiling that many term-blocks under `jax.jit` measured ~4.3GB peak RAM on this project's own 8GB development machine -- workable on a larger machine, but not the "runs comfortably on a modest laptop or a free Colab instance" bar this demo needed to clear. Reducing the active space to 6 of H10's 10 spatial orbitals (`active_electrons=10, active_orbitals=6`) keeps the same real molecule and mapping but gives 12 qubits / 919 terms, measured to compile in under a minute and run in ~0.3s per already-compiled gradient step. The physics point survives the smaller system: a dense Hamiltonian at 12 qubits is already 268MB, the largest matrix this page's own *reference* diagonalization below is willing to build, and the wall only gets steeper from there -- `PauliSumOperator` is unaffected at 12, 14, or 20 qubits alike.
-
-## A real mistake, caught and fixed
-
-The first version of this experiment's ZNE step called the noisy energy function **once per noise scale** and got back bit-identical energies at 1x, 2x, and 3x noise -- which looked like "noise has no effect," but was not. `dense_evolution`'s noise model (`NoiseModel.apply_to_sv`) is a **single-shot stochastic sample** (one random fire/no-fire draw per qubit per call), not an ensemble average -- its own docstring says so directly. A single draw at low noise probability across only 12 qubits has a real chance of landing on "no error fired at all," and by coincidence all three scales did. The fix was averaging 40 independent noise trajectories per scale (matching this project's own established `zne_density_matrix` precedent of averaging many trajectories), after which the noisy energies showed the expected monotonic drift away from the noiseless value as noise increases.
-
 ## Result
 
 | quantity | value |
@@ -55,7 +47,7 @@ ZNE genuinely helps here: the extrapolated estimate recovers most of what the ba
 
 ## Status
 
-Working end-to-end: differentiable VQE via `PauliSumOperator` (promoted to `dense_evolution` as part of this experiment, alongside `pauli_sum_matvec_jax`/`pauli_sum_expectation_jax`), converging on a real molecular Hamiltonian, combined with ZNE error mitigation in the same traced pipeline. Not attempted: an ansatz expressive enough to reach chemical accuracy (this demo intentionally uses a shallow, generic hardware-efficient ansatz, not a chemistry-informed one like UCCSD), and the full 20-qubit H10 system (deferred for the reason above -- a real memory/compile-time constraint on typical development hardware, not a limitation of `PauliSumOperator` itself).
+Working end-to-end: differentiable VQE via `PauliSumOperator` (promoted to `dense_evolution` as part of this experiment, alongside `pauli_sum_matvec_jax`/`pauli_sum_expectation_jax`), converging on a real molecular Hamiltonian, combined with ZNE error mitigation in the same traced pipeline. Not attempted: an ansatz expressive enough to reach chemical accuracy (this demo intentionally uses a shallow, generic hardware-efficient ansatz, not a chemistry-informed one like UCCSD), and the full 20-qubit H10 system (deferred for a real memory/compile-time constraint on typical development hardware, not a limitation of `PauliSumOperator` itself -- see Details).
 
 ## Reproduce
 
@@ -64,3 +56,11 @@ python scripts/vqe_pauli_sum_zne_autodiff.py
 ```
 
 Or try it directly in Colab -- no local install needed: [vqe_pauli_sum_zne_autodiff.ipynb](https://colab.research.google.com/github/tatopenn-cell/Dense-Evolution-Discovery/blob/main/notebooks/vqe_pauli_sum_zne_autodiff.ipynb)
+
+---
+
+## Details
+
+**Why 12 qubits, not the full 20-qubit H10 system**: the standard VQE-scaling benchmark in the literature is H10 (a chain of 10 hydrogen atoms, STO-3G basis, bond length 0.74 Angstrom) at full active space, which needs 20 qubits and has 7151 Pauli terms -- compiling that many term-blocks under `jax.jit` measured ~4.3GB peak RAM on an 8GB development machine, workable on a larger machine but not on a modest laptop or a free Colab instance. Reducing the active space to 6 of H10's 10 spatial orbitals (`active_electrons=10, active_orbitals=6`) keeps the same real molecule and mapping but gives 12 qubits / 919 terms, compiling in under a minute and running in ~0.3s per already-compiled gradient step. `PauliSumOperator` itself is unaffected by qubit count -- the constraint is compile time/RAM for this many Pauli terms, not the operator.
+
+**A real mistake, caught and fixed**: the first version of this experiment's ZNE step called the noisy energy function once per noise scale and got back bit-identical energies at 1x, 2x, and 3x noise -- which looked like "noise has no effect," but was not. `dense_evolution`'s noise model (`NoiseModel.apply_to_sv`) is a single-shot stochastic sample (one random fire/no-fire draw per qubit per call), not an ensemble average -- its own docstring says so directly. A single draw at low noise probability across only 12 qubits has a real chance of landing on "no error fired at all," and by coincidence all three scales did. Fixed by averaging 40 independent noise trajectories per scale (matching this project's own `zne_density_matrix` precedent), after which the noisy energies showed the expected monotonic drift away from the noiseless value as noise increases.
