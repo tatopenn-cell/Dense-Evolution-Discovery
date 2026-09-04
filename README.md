@@ -536,6 +536,14 @@ Full write-up: **[docs/cross_channel_mahalanobis_imu.md](https://tatopenn-cell.g
 
 ---
 
+### 58. The Full Safety Chain, Live: Sensor to Motor, No Replay
+
+Chains every real, promoted Dense-Armor safety primitive into one live loop against real Ignition physics: sensor -> streaming detector -> LLM decides (Claude, live, blocking on a real file handshake) -> rate_limiter -> cbf_filter -> motor (a real actuated joint, not Experiment 56's passive pendulum). Three real bugs found and fixed along the way, none glossed over: bad guessed link inertia caused a real physics-solver explosion; `JointStatePublisher` had no rate parameter at all (confirmed from the compiled plugin's own strings) and free-ran at a real ~960Hz, starving the Python control loop and reproducing Experiment 54's known discrete-overshoot failure live -- the real joint blew through its declared safety boundary and hit its hard mechanical limit; fixed by slowing physics to a real 50Hz and sub-stepping the CBF every control tick. The corrected run holds exactly at the safety boundary with a smooth, minimally-invasive brake -- real numbers, real plot.
+
+Full write-up: **[docs/live_safety_loop.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/live_safety_loop/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
