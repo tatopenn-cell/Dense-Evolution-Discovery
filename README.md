@@ -544,6 +544,14 @@ Full write-up: **[docs/live_safety_loop.md](https://tatopenn-cell.github.io/Dens
 
 ---
 
+### 59. A Universal Point-to-Point Trajectory Generator, Closed-Form
+
+Scoped down from two real papers proposing much larger URDF/dynamics-aware optimizers (Lozer et al., *Robotics and Autonomous Systems*; Fried & Paternain, arXiv:2412.07859 -- both read in full before writing any code) to the simplest real piece both agree is the right starting point: a closed-form, minimum-jerk-continuous quintic point-to-point generator, universal in the sense that matters for this repo's stack -- no URDF, no dynamics, no robot connection, composes directly with the existing rate_limiter/cbf_filter (which already own rate-of-change and spatial safety). A first validation attempt (real episode start/end frames) was thrown out as degenerate (a real pick-and-place task often returns near its own start, giving nothing to compare); fixed by comparing each real joint's own min-to-max excursion instead. Real result, both domains (SO-101 + ALOHA, 20 real joint excursions): the quintic's peak velocity is always lower than the real recorded peak velocity (ratio 0.05-0.62) -- expected, since it is the smoothest possible path between two points.
+
+Full write-up: **[docs/quintic_trajectory_planner.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quintic_trajectory_planner/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
