@@ -520,6 +520,14 @@ Full write-up: **[docs/roboguard_inspired_ltl_safety_check.md](https://tatopenn-
 
 ---
 
+### 56. A Real Live Gazebo Physics Loop, With the Real Promoted Detector
+
+Closes Experiment 50's real remaining gap: that ROS2 node was only ever tested against a fake publisher, never real physics. Built a persistent Docker image (`docker/Dockerfile.robotics`) after re-installing the same packages from scratch too many times across prior experiments. Two real bugs found and fixed (`gz` vs. the real `ign` binary this Gazebo Fortress pairing actually ships; hand-quoted YAML breaking on raw URDF XML, fixed with `robot_state_publisher`), plus a real negative finding (Ignition's `set_pose` service doesn't perturb a physics-constrained joint's actual state -- worked around by perturbing the initial condition instead). Real result: a real Gazebo `rrbot` model swings under real gravity/damping, its real `/joint_states` bridged live to ROS2, processed message-by-message by the real, PyPI-installed `MultiChannelStreamingDeviationDetector` -- not synthetic, not replayed.
+
+Full write-up: **[docs/gazebo_live_physics_loop.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/gazebo_live_physics_loop/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash

@@ -1,0 +1,56 @@
+# Persistent, reusable Docker image for this repo's robotics/simulation
+# experiments -- built after repeatedly re-installing the same packages
+# from scratch in throwaway `ros:humble` containers across Experiments
+# 50, 54, 55, and this Gazebo live-loop check (each apt-get/conda pass
+# took several real minutes). Build once, reuse the cached layers.
+#
+# Two separate Python environments, kept deliberately apart:
+#   - SYSTEM python3.10 (ROS2 Humble's own) -- default on PATH. rclpy,
+#     ros_gz, Gazebo, and this repo's own dense_armor_ros package all
+#     need THIS interpreter specifically; nothing here shadows it.
+#   - Miniconda's python, under /opt/miniconda -- NOT on PATH by
+#     default (deliberately, to avoid shadowing rclpy's system python).
+#     Provides the real `spot` LTL/omega-automata library from
+#     conda-forge (Experiment 55) -- PyPI's own package named "spot" is
+#     an unrelated namespace collision, confirmed directly, never used.
+#     Reach it with the full path: /opt/miniconda/bin/python3
+#
+# Build:  docker build -f docker/Dockerfile.robotics -t dense-armor-robotics .
+# Run:    docker run --rm -v "<host path>:/ws:ro" dense-armor-robotics bash /ws/<script>.sh
+
+FROM ros:humble
+
+# ROS2/Gazebo stack (Experiments 50, this Gazebo check) -- ign gazebo
+# (Ignition Fortress naming, NOT `gz sim` -- that rename came with the
+# later Gazebo Harmonic release, confirmed directly by checking what
+# binary this apt package actually installs).
+RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+    ros-humble-ros-gz-sim \
+    ros-humble-ros-gz-bridge \
+    ros-humble-ros-gz-image \
+    ros-humble-xacro \
+    ros-humble-robot-state-publisher \
+    python3-pip \
+    wget \
+    bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Real LeRobot data access (Experiments 51, 53, 54) -- huggingface_hub
+# downloads into a real HF cache; pandas/pyarrow read the real parquet.
+RUN pip3 install --no-cache-dir \
+    huggingface_hub pandas pyarrow dense-armor
+
+# Miniconda + real Spot (Experiment 55) -- --override-channels avoids
+# Anaconda's newer non-interactive Terms-of-Service gate on the default
+# channels (pkgs/main, pkgs/r), which this image never actually needs
+# since only conda-forge's spot package is used.
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
+    && bash /tmp/miniconda.sh -b -p /opt/miniconda \
+    && rm /tmp/miniconda.sh \
+    && /opt/miniconda/bin/conda install -y --override-channels -c conda-forge spot \
+    && /opt/miniconda/bin/conda clean -afy
+
+# Source ROS2 automatically in every interactive/non-interactive shell
+RUN echo "source /opt/ros/humble/setup.bash" >> /etc/bash.bashrc
+
+WORKDIR /ws
