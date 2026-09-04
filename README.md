@@ -560,6 +560,18 @@ Full write-up: **[docs/kinematic_tracking_controller.md](https://tatopenn-cell.g
 
 ---
 
+### 61. A Real Rigid-Body Dynamics Engine, and a Passivity-CBF Controller That Needed a Safety Net Too
+
+The "universal controller" search (Experiment 60) deliberately stayed kinematic because none of the papers found fit a single-integrator model. This experiment takes the next real step, following Kurtz, Wensing & Lin (2021, arXiv:2109.13349, read in full): full torque-level dynamics, M(q)q̈+C(q,q̇)q̇+g(q)=τ, not kinematic. The real mass, inertia and joint geometry come straight from `GEN3_URDF_V12.urdf` (github.com/vincekurtz/passivity_cbf_demo -- the same URDF the paper's own Drake code loads), not invented: a lesson learned the hard way from Experiment 58's guessed-inertia physics explosion. `gen3_dynamics.py` builds M(q), C(q,q̇)q̇ and g(q) from Euler-Lagrange via JAX autodiff (`jax.grad`/`jax.jvp`, no hand-derived Christoffel symbols), verified two ways: the mass matrix is symmetric positive-definite at 20 random configurations, and free (torque-free) dynamics conserve energy with the correct 4th-order RK4 convergence as dt shrinks (rel. drift 9.7e-2 -> 5.2e-6 -> 4.6e-10). On top of it, `pbc_singularity_cbf_controller.py` implements the paper's real controller as a small QP: passivity (Vdot<=0) and a minimum-manipulability CBF as constraints affine in q̈, both extracted by autodiff instead of by hand.
+
+The QP itself produced a real bug: at a 500Hz control rate, OSQP occasionally reported the two constraints jointly infeasible (the passivity row goes numerically near-zero exactly when tracking is already good) and returned its infeasibility certificate -- a vector with norm in the billions -- as if it were a real solution, blowing the closed-loop simulation up to NaN within two steps. Fixed by checking the solver status and, on infeasibility, dropping the soft passivity constraint and re-solving with only the hard safety-critical CBF one, the same priority `cbf_filter` already uses elsewhere in this stack. After the fix: driving the end effector from a bent home pose toward full extension (a real kinematic singularity, mu=2.9e-32 there) without the CBF reaches mu=0.00003; with it, the CBF holds mu>=0.02947 at 100Hz and mu>=0.02997 at 500Hz against a declared eps=0.03 -- a small, honestly-reported residual from zero-order-hold discretization of a continuous-time guarantee, shrinking as the control rate increases, exactly as CBF theory predicts.
+
+Not promoted to Dense-Armor: unlike every other module in that library, this one is tied to one specific robot's real inertial parameters, not generic across any joint array, and has only one validated real domain (Kinova Gen3) rather than the two-domain bar used elsewhere. Kept here as a validated, real, robot-specific result.
+
+Full write-up: **[docs/gen3_dynamics_and_cbf_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/gen3_dynamics_and_cbf_controller/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash

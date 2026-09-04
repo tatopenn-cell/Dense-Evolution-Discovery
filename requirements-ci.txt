@@ -8,3 +8,4 @@ jaxlib
 pandas
 matplotlib
 optax
+osqp
