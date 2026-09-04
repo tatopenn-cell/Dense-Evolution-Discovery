@@ -94,6 +94,7 @@ nav:
     - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
     - "The Full Safety Chain, Live": live_safety_loop.md
     - "A Universal Point-to-Point Trajectory Generator": quintic_trajectory_planner.md
+    - "A Kinematic Tracking Controller": kinematic_tracking_controller.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md

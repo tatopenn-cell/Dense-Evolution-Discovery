@@ -552,6 +552,14 @@ Full write-up: **[docs/quintic_trajectory_planner.md](https://tatopenn-cell.gith
 
 ---
 
+### 60. A Kinematic Tracking Controller, and a Real Course Correction
+
+The "universal controller" note (planner -> controller -> rate_limiter -> cbf_filter -> motor) sent this search through three real papers, all checked directly and all real: Wu & Tan (2025), the closest match, paywalled with no open-access copy found; Scruggs, real but needing infinite-dimensional convex Youla-parameter optimization; Califano et al., real and open but needing differential-geometric Hamiltonian mechanics. The originally proposed fallback (classical PD-with-gravity-compensation) also didn't fit -- caught before writing code: it needs a real second-order dynamics model, the exact URDF/dynamics scope already deliberately avoided elsewhere in this stack. What actually fits: a feedforward-plus-proportional kinematic tracking law at the same single-integrator level as `rate_limiter`/`cbf_filter` -- `u = qd_ref + kp*(q_ref - q)` -- with an exact closed-form exponential convergence guarantee, verified numerically. Validated on the same 20 real SO-101/ALOHA joint excursions from Experiment 59, chained with `quintic_trajectory`: every real excursion recovers from a real disclosed initial tracking error and converges.
+
+Full write-up: **[docs/kinematic_tracking_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kinematic_tracking_controller/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
