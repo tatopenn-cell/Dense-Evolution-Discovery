@@ -92,6 +92,7 @@ nav:
     - "RoboGuard-Inspired LTL Safety Check (with Claude)": roboguard_inspired_ltl_safety_check.md
     - "A Real Live Gazebo Physics Loop": gazebo_live_physics_loop.md
     - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
+    - "The Full Safety Chain, Live": live_safety_loop.md
     - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
