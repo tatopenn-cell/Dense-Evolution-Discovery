@@ -572,6 +572,16 @@ Full write-up: **[docs/gen3_dynamics_and_cbf_controller.md](https://tatopenn-cel
 
 ---
 
+### 62. Generalizing the Dynamics Engine: One Real Parser, Three Real Robots
+
+Experiment 61's dynamics engine worked, but only for one hardcoded robot -- `LINK_MASS`, `LINK_COM`, `LINK_INERTIA` were the Kinova Gen3's own numbers, typed in by hand. That was the explicit reason it wasn't promoted to Dense-Armor: every other module there is generic across any joint array, this one wasn't generic at all. `urdf_dynamics.py` fixes that: a real URDF parser (Python's stdlib `xml.etree.ElementTree`, no new heavy dependency) that reads any real URDF's `<link>`/`<joint>` tree -- including branching trees, not just a single chain -- and builds the same Euler-Lagrange M(q), C(q,q̇)q̇, g(q) via the same autodiff approach as Experiment 61, generalized to revolute, continuous, and prismatic joints (Rodrigues' rotation formula for an arbitrary joint axis, not just z).
+
+Cross-checked first against Experiment 61's own hand-transcribed numbers, on the same real Gen3 7-DoF URDF: mass matrix and gravity forces match to machine precision (1e-16). Then validated on two more real, independent robots, neither built into the code: a real Kinova Gen3 6-DoF variant (github.com/vincekurtz/kinova_drake, a structurally different chain -- `bicep_link`/`forearm_link`, not `half_arm_1`/`half_arm_2`, one fewer joint) and a real Franka Emika Panda (bulletphysics/bullet3's official pybullet data, a different manufacturer entirely, 7 revolute joints plus 2 prismatic gripper joints -- the first real test of the prismatic-joint code path). All three: mass matrix symmetric and positive-definite at 20 random configurations, and free-dynamics energy conservation with the correct 4th-order RK4 convergence -- the Panda's, since its published inertia values are simpler, converges even tighter (rel. drift 5.9e-7 -> 6.0e-11 -> 5.5e-15).
+
+Full write-up: **[docs/urdf_dynamics_generalization.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/urdf_dynamics_generalization/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
