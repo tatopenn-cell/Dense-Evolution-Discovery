@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="Dense Evolution Discovery — Empirical studies & quantum error mitigation research" width="900">
+  <img src="docs/assets/banner.svg" alt="Dense Evolution Discovery — Research lab for robot safety and quantum error mitigation" width="900">
 </p>
 
 # 🔬 Dense Evolution Discovery — Quantum Simulation Experiments and Robustness Studies
