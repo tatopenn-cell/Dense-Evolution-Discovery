@@ -474,7 +474,7 @@ Full write-up: **[docs/streaming_deviation_detector.md](https://tatopenn-cell.gi
 
 ### 49. Native Multi-Channel Support for classify_segments and Streaming Detection
 
-Second standard building block toward real robotics adoption -- ergonomics, not a new algorithm. Every real robotics experiment in this repo (LeRobot's 6 joints, the UCI HAR IMU's multiple axes) needed a hand-written per-channel loop around a function built for one 1D signal. `classify_segments_multichannel` (batch) and `MultiChannelStreamingDeviationDetector` (built on Experiment 48's streaming detector) apply the same, already-validated per-channel logic across all channels at once -- each channel keeps its own independent reference window and baseline by design (a fast joint and a near-stationary one have very different natural noise scales; a shared baseline would desensitize one or false-alarm on the other). Verified identical to the hand-written loop, not "close enough": zero mismatches on real 6-joint LeRobot arm data (2 episodes, both batch and streaming) and real 3-axis UCI HAR IMU data (n=3072) -- two independent real domains, the same bar prior promotions were held to.
+`classify_segments_multichannel` and `MultiChannelStreamingDeviationDetector` apply the existing per-channel logic across all channels at once, each keeping its own reference window and baseline; verified identical to the hand-written loop on LeRobot arm data and UCI HAR IMU data.
 
 Full write-up: **[docs/multichannel_wrapper.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/multichannel_wrapper/)**.
 
@@ -482,31 +482,31 @@ Full write-up: **[docs/multichannel_wrapper.md](https://tatopenn-cell.github.io/
 
 ### 50. A Minimal ROS2 Node for Multi-Joint Deviation Detection
 
-Third and last of the standard robotics building blocks -- the single most "standard" ecosystem integration point -- practically every real robotics stack (Gazebo, TurtleBot, IsaacLab, real hardware alike) runs on ROS/ROS2 (a general, well-known fact about the ecosystem, not something this repo's own prior experiments checked -- an earlier draft of this sentence cited "Experiments 46-47" for that claim, which was wrong: those two experiments are cross-channel correlation and deadband gating, unrelated to simulators; fixed here rather than left silently wrong). Started with an honest disclosure that this environment had no ROS2 installation and the node had never run live; that gap is now closed. The rclpy `Node`/`create_subscription`/`create_publisher` pattern was fetched directly from `ros2/examples` (humble branch, the current real repository, not memory) before writing anything; the message fields used (`JointState.position`, `UInt8MultiArray.data`) were verified against the real definitions in `ros2/common_interfaces` -- including finding, and disclosing rather than silently using, that every `std_msgs/*MultiArray` type has been marked deprecated since Foxy, used anyway because it's still what real ROS2 packages commonly publish and a custom message would need a full package with message generation. The callback logic lives in a separate, zero-rclpy-dependency module and was genuinely tested (not mocked) -- including feeding all 303 real frames of a real LeRobot episode through it and checking every output matches calling the Experiment 49 detector directly. With virtualization enabled, WSL2 set up, and Docker Desktop installed, the package was then actually live-tested inside an official `ros:humble` container: real `rclpy`/`sensor_msgs`/`std_msgs`/`dense_armor.utility.streaming` imports, a real `colcon build`, and a real import of `JointDeviationNode` -- the actual rclpy `Node` subclass -- via the built workspace. Along the way, a real bug surfaced and got root-caused rather than worked around blindly: the container's legacy `packaging`/`setuptools` chain couldn't validate Dense-Armor's SPDX `license = "BUSL-1.1"` expression, silently building the wheel under the name `UNKNOWN` instead of raising a clear error; sidestepped by installing a pre-built wheel instead of building inside the container. That gap is now closed too: `test/spin_live_test.py` runs a fake `JointState` publisher, the real node, and a flag-collector subscriber through a real `SingleThreadedExecutor` -- 90 published messages, 90 round-tripped, a synthetic deviation injected on one joint correctly flagged with zero false positives on the baseline or the other joints.
+A minimal rclpy node wrapping the Experiment 49 detector, live-tested end to end inside an official `ros:humble` Docker container: a `colcon build`, the node imported and run, and a fake `JointState` publisher round-tripped through a `SingleThreadedExecutor` with zero false positives.
 
 Full write-up: **[docs/ros2_deviation_node.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/ros2_deviation_node/)**.
 
 ---
 
-### 51. Streaming Deviation Detection at a Real Robot's Real Frame Rate
+### 51. Streaming Deviation Detection at a Robot's Frame Rate
 
-Measures `MultiChannelStreamingDeviationDetector`'s real per-call latency against real LeRobot data (episode 0, 6 real joints, real 30Hz recorded rate) rather than relying on an isolated single-channel throughput figure: median 320.2us, 104x real headroom, 0/303 real budget violations, and a sustained real-time playback simulation confirming no drift accumulates over the full real 10.07s episode (max single-frame drift 1.95ms).
+Measures the streaming detector's per-call latency against LeRobot's recorded 30Hz rate: median 320.2us, 104x headroom, zero budget violations over the full episode, no drift accumulation.
 
 Full write-up: **[docs/realtime_streaming_lerobot.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/realtime_streaming_lerobot/)**. Follow-up: this detector is now also reachable live by an agent via 3 new stateful MCP tools in Dense-Armor -- **[dense_armor/mcp_server/README.md](https://github.com/tatopenn-cell/Dense-Armor/blob/master/dense_armor/mcp_server/README.md)**.
 
 ---
 
-### 53. A Causal Rate Limiter for Real Motor Commands: Safety vs. Fidelity
+### 53. A Causal Rate Limiter for Motor Commands: Safety vs. Fidelity
 
-A different damping mechanism after a neighbor-consensus approach (healing_filter, kept private -- no usable utility came of it) proved a causal dead end: bound how fast a command can physically change instead of classifying whether a deviation is real, grounded in Berscheid & Kroger (2021), "Jerk-limited Real-time Trajectory Generation with Arbitrary Target States" (RSS XVII, arXiv:2105.04830, verified causal by construction). Validated on two independent real physical domains -- LeRobot SO-101 (120/120 real trials) and a genuinely different real robot, ALOHA bimanual 14-DoF at 50Hz (280/280) -- the real safety metric (max instantaneous jump) wins every single time on both; average tracking fidelity (RMSE) is a real, honest mixed picture across the two domains, not smoothed over. Promoted to Dense-Armor as `rate_limited_follower`.
+A jerk-limited rate limiter (Berscheid & Kroger 2021), validated on two robot domains (SO-101, ALOHA) with the safety metric holding every time on both; promoted to Dense-Armor as `rate_limited_follower`.
 
 Full write-up: **[docs/rate_limiter_real_joint_commands.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/rate_limiter_real_joint_commands/)**.
 
 ---
 
-### 54. A Geometric Control Barrier Function Filter for Real Robot Commands
+### 54. A Geometric Control Barrier Function Filter for Robot Commands
 
-Closes the spatial-safety gap `rate_limited_follower` (kinematic only) leaves open: never let a command drive a joint into a forbidden region, not just bound how fast it changes. Grounded in Ames et al. (2019), "Control Barrier Functions: Theory and Applications" (2019 ECC, arXiv:1903.11199) -- the same theory SAFER-Splat uses, applied to a known geometric obstacle instead of SAFER-Splat's GPU-bound Gaussian-Splatting perception (confirmed unavailable on this machine: no NVIDIA GPU). A real numerical finding along the way: the CBF's continuous-time guarantee needs discrete sub-stepping (20 substeps/sample) to hold in practice -- a single large real step could overshoot the barrier otherwise, confirmed and fixed directly. Validated on two independent real physical domains (SO-101 6-DoF 30Hz, ALOHA bimanual 14-DoF 50Hz): 100% invariance from safe starts on both (17/17, 38/38), minimal invasiveness 99.9%+ exact on SO-101 and perfectly exact (0/18444) on ALOHA. Promoted to Dense-Armor as `cbf_safety_filter`/`cbf_filtered_trajectory`.
+A CBF-based spatial safety filter (Ames et al. 2019), validated on two robot domains with 100% invariance from safe starts and near-exact minimal invasiveness; promoted to Dense-Armor as `cbf_safety_filter`/`cbf_filtered_trajectory`.
 
 Full write-up: **[docs/geometric_cbf_filter_real_joint_commands.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/geometric_cbf_filter_real_joint_commands/)**.
 
@@ -514,23 +514,23 @@ Full write-up: **[docs/geometric_cbf_filter_real_joint_commands.md](https://tato
 
 ### 55. A RoboGuard-Inspired Two-Stage LTL Safety Check, With Claude Instead of OpenAI
 
-Builds the "semantic/task-level" safety layer `prog.txt` left unexplored: does an overall behavior violate a rule expressed in plain language, not just a single command. Inspired by RoboGuard (Ravichandran et al., arXiv:2503.07885) with two real, disclosed deviations -- `pip install spot` installs an unrelated PyPI package (a real namespace collision, caught and avoided; the real library needs conda-forge, installed via Docker), and the LLM chain-of-thought step (translating a natural-language rule to LTL) is done directly by Claude instead of RoboGuard's own hard-coded OpenAI dependency, per instruction, for free. Getting real Spot model checking right took three sequential mistakes (mismatched automaton alphabets, a wrong `contains()` direction) caught by testing against hand-verified truth tables in both directions, not trusting the first plausible result. Real result: the real SO-101 trace violates a real translated safety rule at 86/303 points, matching a direct Python cross-check exactly; both directional sanity checks (a deliberately violating trace, a constructed safe trace) pass.
+A RoboGuard-inspired (Ravichandran et al., arXiv:2503.07885) two-stage LTL safety check, using Claude instead of RoboGuard's own OpenAI dependency: a SO-101 trace correctly flagged violating a translated safety rule at 86/303 points, matching a direct Python cross-check exactly.
 
 Full write-up: **[docs/roboguard_inspired_ltl_safety_check.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/roboguard_inspired_ltl_safety_check/)**.
 
 ---
 
-### 56. A Real Live Gazebo Physics Loop, With the Real Promoted Detector
+### 56. A Live Gazebo Physics Loop, With the Promoted Detector
 
-Closes Experiment 50's real remaining gap: that ROS2 node was only ever tested against a fake publisher, never real physics. Built a persistent Docker image (`docker/Dockerfile.robotics`) after re-installing the same packages from scratch too many times across prior experiments. Two real bugs found and fixed (`gz` vs. the real `ign` binary this Gazebo Fortress pairing actually ships; hand-quoted YAML breaking on raw URDF XML, fixed with `robot_state_publisher`), plus a real negative finding (Ignition's `set_pose` service doesn't perturb a physics-constrained joint's actual state -- worked around by perturbing the initial condition instead). Real result: a real Gazebo `rrbot` model swings under real gravity/damping, its real `/joint_states` bridged live to ROS2, processed message-by-message by the real, PyPI-installed `MultiChannelStreamingDeviationDetector` -- not synthetic, not replayed.
+Closes Experiment 50's last gap: a Gazebo `rrbot` model swinging under live physics, its `/joint_states` bridged to ROS2 and processed by the PyPI-installed `MultiChannelStreamingDeviationDetector` -- not synthetic, not replayed.
 
 Full write-up: **[docs/gazebo_live_physics_loop.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/gazebo_live_physics_loop/)**.
 
 ---
 
-### 57. Cross-Channel Mahalanobis Fusion: A Real Negative Result
+### 57. Cross-Channel Mahalanobis Fusion: A Negative Result
 
-Tests, closed-form and without a neural network, the Mahalanobis-SVDD Audio-IMU paper's real claim (arXiv:2505.05811, quantumrag) that fusing two sensor channels catches correlation-breakdown faults a single channel structurally cannot. On real UCI HAR accelerometer+gyroscope data with a real temporal-reordering fault injected (identical real sample values, only their order reversed), neither of two closed-form attempts (a point-wise joint Mahalanobis distance, then a rolling cross-channel correlation) beat single-channel detection -- diagnosed, not just reported: the point-wise distance can't see reordering at all, and the rolling correlation's real baseline was already close to zero for this specific channel pair (3-axis magnitudes likely discard the directional coupling that would carry the real signal). Kept as an honest negative finding, not smoothed into a success story.
+Tests whether fusing accelerometer+gyroscope channels catches a temporal-reordering fault a single channel can't (arXiv:2505.05811's claim); neither closed-form fusion attempt beat single-channel detection, kept as an honest, diagnosed negative result.
 
 Full write-up: **[docs/cross_channel_mahalanobis_imu.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cross_channel_mahalanobis_imu/)**.
 
@@ -538,7 +538,7 @@ Full write-up: **[docs/cross_channel_mahalanobis_imu.md](https://tatopenn-cell.g
 
 ### 58. The Full Safety Chain, Live: Sensor to Motor, No Replay
 
-Chains every real, promoted Dense-Armor safety primitive into one live loop against real Ignition physics: sensor -> streaming detector -> LLM decides (Claude, live, blocking on a real file handshake) -> rate_limiter -> cbf_filter -> motor (a real actuated joint, not Experiment 56's passive pendulum). Three real bugs found and fixed along the way, none glossed over: bad guessed link inertia caused a real physics-solver explosion; `JointStatePublisher` had no rate parameter at all (confirmed from the compiled plugin's own strings) and free-ran at a real ~960Hz, starving the Python control loop and reproducing Experiment 54's known discrete-overshoot failure live -- the real joint blew through its declared safety boundary and hit its hard mechanical limit; fixed by slowing physics to a real 50Hz and sub-stepping the CBF every control tick. The corrected run holds exactly at the safety boundary with a smooth, minimally-invasive brake -- real numbers, real plot.
+Chains every promoted Dense-Armor safety primitive into one live control loop against Ignition physics (sensor, streaming detector, an LLM safety decision, rate limiter, CBF filter, motor); after fixing three bugs found along the way, the corrected run holds exactly at the safety boundary.
 
 Full write-up: **[docs/live_safety_loop.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/live_safety_loop/)**.
 
@@ -546,37 +546,31 @@ Full write-up: **[docs/live_safety_loop.md](https://tatopenn-cell.github.io/Dens
 
 ### 59. A Universal Point-to-Point Trajectory Generator, Closed-Form
 
-Scoped down from two real papers proposing much larger URDF/dynamics-aware optimizers (Lozer et al., *Robotics and Autonomous Systems*; Fried & Paternain, arXiv:2412.07859 -- both read in full before writing any code) to the simplest real piece both agree is the right starting point: a closed-form, minimum-jerk-continuous quintic point-to-point generator, universal in the sense that matters for this repo's stack -- no URDF, no dynamics, no robot connection, composes directly with the existing rate_limiter/cbf_filter (which already own rate-of-change and spatial safety). A first validation attempt (real episode start/end frames) was thrown out as degenerate (a real pick-and-place task often returns near its own start, giving nothing to compare); fixed by comparing each real joint's own min-to-max excursion instead. Real result, both domains (SO-101 + ALOHA, 20 real joint excursions): the quintic's peak velocity is always lower than the real recorded peak velocity (ratio 0.05-0.62) -- expected, since it is the smoothest possible path between two points.
+Scoped down from two papers proposing larger URDF/dynamics-aware optimizers to the simplest piece both agree on: a closed-form quintic point-to-point generator, validated on two robot domains (SO-101, ALOHA); promoted to Dense-Armor as `quintic_trajectory`.
 
 Full write-up: **[docs/quintic_trajectory_planner.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/quintic_trajectory_planner/)**.
 
 ---
 
-### 60. A Kinematic Tracking Controller, and a Real Course Correction
+### 60. A Kinematic Tracking Controller, and a Course Correction
 
-The "universal controller" note (planner -> controller -> rate_limiter -> cbf_filter -> motor) sent this search through three real papers, all checked directly and all real: Wu & Tan (2025), the closest match, paywalled with no open-access copy found; Scruggs, real but needing infinite-dimensional convex Youla-parameter optimization; Califano et al., real and open but needing differential-geometric Hamiltonian mechanics. The originally proposed fallback (classical PD-with-gravity-compensation) also didn't fit -- caught before writing code: it needs a real second-order dynamics model, the exact URDF/dynamics scope already deliberately avoided elsewhere in this stack. What actually fits: a feedforward-plus-proportional kinematic tracking law at the same single-integrator level as `rate_limiter`/`cbf_filter` -- `u = qd_ref + kp*(q_ref - q)` -- with an exact closed-form exponential convergence guarantee, verified numerically. Validated on the same 20 real SO-101/ALOHA joint excursions from Experiment 59, chained with `quintic_trajectory`: every real excursion recovers from a real disclosed initial tracking error and converges.
+After three candidate papers turned out paywalled or too deep, and classical PD-with-gravity-compensation needed a dynamics model this stack avoids elsewhere, what fit was a closed-form feedforward-plus-proportional law (`u = qd_ref + kp*(q_ref - q)`) with an exact convergence guarantee, validated on the same two robot domains; promoted to Dense-Armor as `kinematic_tracking_controller`.
 
 Full write-up: **[docs/kinematic_tracking_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/kinematic_tracking_controller/)**.
 
 ---
 
-### 61. A Real Rigid-Body Dynamics Engine, and a Passivity-CBF Controller That Needed a Safety Net Too
+### 61. A Rigid-Body Dynamics Engine, and a Passivity-CBF Controller
 
-The "universal controller" search (Experiment 60) deliberately stayed kinematic because none of the papers found fit a single-integrator model. This experiment takes the next real step, following Kurtz, Wensing & Lin (2021, arXiv:2109.13349, read in full): full torque-level dynamics, M(q)q̈+C(q,q̇)q̇+g(q)=τ, not kinematic. The real mass, inertia and joint geometry come straight from `GEN3_URDF_V12.urdf` (github.com/vincekurtz/passivity_cbf_demo -- the same URDF the paper's own Drake code loads), not invented: a lesson learned the hard way from Experiment 58's guessed-inertia physics explosion. `gen3_dynamics.py` builds M(q), C(q,q̇)q̇ and g(q) from Euler-Lagrange via JAX autodiff (`jax.grad`/`jax.jvp`, no hand-derived Christoffel symbols), verified two ways: the mass matrix is symmetric positive-definite at 20 random configurations, and free (torque-free) dynamics conserve energy with the correct 4th-order RK4 convergence as dt shrinks (rel. drift 9.7e-2 -> 5.2e-6 -> 4.6e-10). On top of it, `pbc_singularity_cbf_controller.py` implements the paper's real controller as a small QP: passivity (Vdot<=0) and a minimum-manipulability CBF as constraints affine in q̈, both extracted by autodiff instead of by hand.
-
-The QP itself produced a real bug: at a 500Hz control rate, OSQP occasionally reported the two constraints jointly infeasible (the passivity row goes numerically near-zero exactly when tracking is already good) and returned its infeasibility certificate -- a vector with norm in the billions -- as if it were a real solution, blowing the closed-loop simulation up to NaN within two steps. Fixed by checking the solver status and, on infeasibility, dropping the soft passivity constraint and re-solving with only the hard safety-critical CBF one, the same priority `cbf_filter` already uses elsewhere in this stack. After the fix: driving the end effector from a bent home pose toward full extension (a real kinematic singularity, mu=2.9e-32 there) without the CBF reaches mu=0.00003; with it, the CBF holds mu>=0.02947 at 100Hz and mu>=0.02997 at 500Hz against a declared eps=0.03 -- a small, honestly-reported residual from zero-order-hold discretization of a continuous-time guarantee, shrinking as the control rate increases, exactly as CBF theory predicts.
-
-Not promoted to Dense-Armor: unlike every other module in that library, this one is tied to one specific robot's real inertial parameters, not generic across any joint array, and has only one validated real domain (Kinova Gen3) rather than the two-domain bar used elsewhere. Kept here as a validated, real, robot-specific result.
+Full torque-level dynamics and a passivity+singularity-CBF QP controller for a Kinova Gen3 (Kurtz, Wensing & Lin 2021), built from the paper's own URDF; a solver-infeasibility bug found and fixed along the way, kept in Discovery since it's tied to one robot's parameters.
 
 Full write-up: **[docs/gen3_dynamics_and_cbf_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/gen3_dynamics_and_cbf_controller/)**.
 
 ---
 
-### 62. Generalizing the Dynamics Engine: One Real Parser, Three Real Robots
+### 62. Generalizing the Dynamics Engine to Any Robot
 
-Experiment 61's dynamics engine worked, but only for one hardcoded robot -- `LINK_MASS`, `LINK_COM`, `LINK_INERTIA` were the Kinova Gen3's own numbers, typed in by hand. That was the explicit reason it wasn't promoted to Dense-Armor: every other module there is generic across any joint array, this one wasn't generic at all. `urdf_dynamics.py` fixes that: a real URDF parser (Python's stdlib `xml.etree.ElementTree`, no new heavy dependency) that reads any real URDF's `<link>`/`<joint>` tree -- including branching trees, not just a single chain -- and builds the same Euler-Lagrange M(q), C(q,q̇)q̇, g(q) via the same autodiff approach as Experiment 61, generalized to revolute, continuous, and prismatic joints (Rodrigues' rotation formula for an arbitrary joint axis, not just z).
-
-Cross-checked first against Experiment 61's own hand-transcribed numbers, on the same real Gen3 7-DoF URDF: mass matrix and gravity forces match to machine precision (1e-16). Then validated on two more real, independent robots, neither built into the code: a real Kinova Gen3 6-DoF variant (github.com/vincekurtz/kinova_drake, a structurally different chain -- `bicep_link`/`forearm_link`, not `half_arm_1`/`half_arm_2`, one fewer joint) and a real Franka Emika Panda (bulletphysics/bullet3's official pybullet data, a different manufacturer entirely, 7 revolute joints plus 2 prismatic gripper joints -- the first real test of the prismatic-joint code path). All three: mass matrix symmetric and positive-definite at 20 random configurations, and free-dynamics energy conservation with the correct 4th-order RK4 convergence -- the Panda's, since its published inertia values are simpler, converges even tighter (rel. drift 5.9e-7 -> 6.0e-11 -> 5.5e-15).
+Replaces Experiment 61's hardcoded robot numbers with a URDF parser, cross-checked to machine precision against those numbers and validated fresh on two more independent robots (a different Kinova variant, a Franka Panda from a different manufacturer); promoted to Dense-Armor as `RigidBodyModel`.
 
 Full write-up: **[docs/urdf_dynamics_generalization.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/urdf_dynamics_generalization/)**.
 
