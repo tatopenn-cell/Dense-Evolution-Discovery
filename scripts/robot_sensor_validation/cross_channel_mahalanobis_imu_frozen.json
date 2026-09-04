@@ -1,0 +1,16 @@
+{
+  "n_samples": 1152,
+  "fault_at": 700,
+  "fault_width": 150,
+  "calib_len": 400,
+  "rate_accel": 0.04,
+  "rate_gyro": 0.02666666666666667,
+  "rate_cross": 0.0,
+  "threshold": 3.6696429155689767,
+  "fp_cross": 0.02526595744680851,
+  "fp_accel": 0.04521276595744681,
+  "fp_gyro": 0.03324468085106383,
+  "corr_baseline_mean": 0.042544486081416616,
+  "corr_baseline_std": 0.11273020855707912,
+  "corr_fault_mean": 0.19609182814734805
+}

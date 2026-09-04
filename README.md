@@ -528,6 +528,14 @@ Full write-up: **[docs/gazebo_live_physics_loop.md](https://tatopenn-cell.github
 
 ---
 
+### 57. Cross-Channel Mahalanobis Fusion: A Real Negative Result
+
+Tests, closed-form and without a neural network, the Mahalanobis-SVDD Audio-IMU paper's real claim (arXiv:2505.05811, quantumrag) that fusing two sensor channels catches correlation-breakdown faults a single channel structurally cannot. On real UCI HAR accelerometer+gyroscope data with a real temporal-reordering fault injected (identical real sample values, only their order reversed), neither of two closed-form attempts (a point-wise joint Mahalanobis distance, then a rolling cross-channel correlation) beat single-channel detection -- diagnosed, not just reported: the point-wise distance can't see reordering at all, and the rolling correlation's real baseline was already close to zero for this specific channel pair (3-axis magnitudes likely discard the directional coupling that would carry the real signal). Kept as an honest negative finding, not smoothed into a success story.
+
+Full write-up: **[docs/cross_channel_mahalanobis_imu.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/cross_channel_mahalanobis_imu/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
