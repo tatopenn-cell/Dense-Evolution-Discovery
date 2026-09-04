@@ -576,6 +576,14 @@ Full write-up: **[docs/urdf_dynamics_generalization.md](https://tatopenn-cell.gi
 
 ---
 
+### 63. Generalizing the Passivity-CBF Controller to Any Robot
+
+`general_pbc_cbf_controller.py` drives Experiment 61's passivity+singularity-CBF controller off `RigidBodyModel` instead of Gen3-only functions -- cross-checked to machine precision against the original on Gen3, and confirmed stable on the structurally different Gen3 6-DoF, holding manipulability near its declared floor while reaching for a singular target.
+
+Full write-up: **[docs/general_pbc_cbf_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/general_pbc_cbf_controller/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
