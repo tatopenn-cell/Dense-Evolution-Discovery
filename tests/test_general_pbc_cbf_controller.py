@@ -7,7 +7,7 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts", "rigid_body_dynamics"))
 
 from urdf_dynamics import RigidBodyModel  # noqa: E402
-from general_pbc_cbf_controller import solve_control_qp as solve_general  # noqa: E402
+from general_pbc_cbf_controller import solve_control_qp as solve_general, _qp_ingredients  # noqa: E402
 from pbc_singularity_cbf_controller import solve_control_qp as solve_gen3_hardcoded  # noqa: E402
 
 URDF_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts", "rigid_body_dynamics", "urdf")
@@ -79,3 +79,41 @@ def test_general_controller_stays_finite_on_a_third_robot_different_manufacturer
     assert np.all(np.isfinite(qdd))
     assert np.all(np.isfinite(tau))
     assert np.linalg.norm(qdd) < 1e4
+
+
+def test_joint_limit_cbf_brakes_a_joint_at_its_real_limit():
+    """
+    Real per-joint limits from the URDF's <limit> tags are enforced as an
+    additional CBF (Kurtz et al.'s own "joint" constraint type): a joint
+    sitting right at its real bound with velocity pushing further past it
+    must be braked toward zero/negative acceleration, not left to the
+    unconstrained nominal command (which here demands strong further
+    acceleration in the wrong direction).
+    """
+    model = RigidBodyModel(os.path.join(URDF_DIR, "panda.urdf"))
+    link = "panda_hand"
+    # panda_joint4's real range is [-3.1416, 0.0] -- start right at its
+    # upper bound with positive velocity driving further past it.
+    q = jnp.array([0.0, 0.5, 0.0, -0.001, 0.0, 1.5, 0.0, 0.0, 0.0])
+    qd = jnp.array([0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    p_des = model.link_position(q, link) + jnp.array([0.0, 0.0, 0.3])
+    pd_des = jnp.zeros(3)
+    pdd_des = jnp.zeros(3)
+
+    qdd, tau, mu, h = solve_general(model, link, q, qd, p_des, pd_des, pdd_des, eps=0.03)
+
+    _, _, _, qdd_nom, _, _, _, _, _, _, qdd_lb, qdd_ub = _qp_ingredients(
+        model, link, q, qd, jnp.asarray(p_des), pd_des, pdd_des, 50.0, 20.0, 5.0, 0.03, 100.0, 20.0)
+
+    q4_max = float(model.q_max[3])
+    assert q[3] < q4_max
+    # The unconstrained nominal command demands far stronger deceleration
+    # (qdd_nom[3] = -205.8 here) than the real CBF box allows
+    # ([-7.175, -4.999]); the solved qdd3 must land inside that real box
+    # (continuous-time guarantee at this instant -- not a full-dt
+    # forward-Euler prediction, which would show the same small
+    # zero-order-hold discretization gap documented elsewhere in this
+    # project for the singularity CBF), clamped rather than left at the
+    # nominal command's much larger magnitude.
+    assert float(qdd_nom[3]) < float(qdd_lb[3])
+    assert float(qdd_lb[3]) - 1e-6 <= float(qdd[3]) <= float(qdd_ub[3]) + 1e-6

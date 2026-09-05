@@ -55,8 +55,16 @@ def parse_urdf(path):
         rpy = np.array(_floats(origin.get("rpy", "0 0 0"))) if origin is not None else np.zeros(3)
         axis_el = joint_el.find("axis")
         axis = np.array(_floats(axis_el.get("xyz"))) if axis_el is not None else np.array([1.0, 0.0, 0.0])
+        limit_el = joint_el.find("limit")
+        if limit_el is not None:
+            q_min = float(limit_el.get("lower")) if limit_el.get("lower") is not None else -np.inf
+            q_max = float(limit_el.get("upper")) if limit_el.get("upper") is not None else np.inf
+            qd_max = float(limit_el.get("velocity")) if limit_el.get("velocity") is not None else np.inf
+        else:
+            q_min, q_max, qd_max = -np.inf, np.inf, np.inf
         joints.append(dict(name=name, type=jtype, parent=parent, child=child,
-                            xyz=xyz, rpy=rpy, axis=axis))
+                            xyz=xyz, rpy=rpy, axis=axis,
+                            q_min=q_min, q_max=q_max, qd_max=qd_max))
 
     children_names = {j["child"] for j in joints}
     root_candidates = [name for name in links if name not in children_names]
@@ -137,6 +145,13 @@ class RigidBodyModel:
         self.inertia = jnp.array([links[name]["inertia"] for name in self.link_names])
         self.link_index = {name: i for i, name in enumerate(self.link_names)}
 
+        # Real per-joint limits from the URDF's own <limit> tags (±inf where the
+        # URDF declares none, e.g. a "continuous" joint's position, or a joint
+        # with no <limit> element at all -- never invented).
+        self.q_min = jnp.array([j["q_min"] for j in self.dof_joints])
+        self.q_max = jnp.array([j["q_max"] for j in self.dof_joints])
+        self.qd_max = jnp.array([j["qd_max"] for j in self.dof_joints])
+
     def forward_kinematics(self, q):
         """
         Returns (pos, rot, joint_axis_world): dicts from link/joint name to its
@@ -188,10 +203,7 @@ class RigidBodyModel:
             if j["type"] == "prismatic":
                 jv = jv.at[:, dof_idx].set(axis_w)
             else:
-                p_joint = pos[j["child"]] - rot[j["child"]] @ (
-                    axis_angle_matrix(jnp.asarray(j["axis"]), jnp.array(0.0)) @ jnp.zeros(3))
-                p_joint = pos[j["parent"]] + rot[j["parent"]] @ rpy_to_matrix(jnp.asarray(j["rpy"])) @ jnp.zeros(3) \
-                    if False else self._joint_origin_world(j, pos, rot)
+                p_joint = self._joint_origin_world(j, pos, rot)
                 jv = jv.at[:, dof_idx].set(jnp.cross(axis_w, p_link - p_joint))
                 jw = jw.at[:, dof_idx].set(axis_w)
         return jv, jw

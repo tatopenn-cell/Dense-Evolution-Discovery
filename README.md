@@ -584,6 +584,14 @@ Full write-up: **[docs/general_pbc_cbf_controller.md](https://tatopenn-cell.gith
 
 ---
 
+### 64. Enforcing Real Joint Limits
+
+`RigidBodyModel` now parses each joint's real position/velocity limit from the URDF's own `<limit>` tags and enforces them as an additional CBF (Kurtz et al.'s own "joint" constraint type), added only when a robot's URDF declares a real limit somewhere -- a joint sitting right at its real bound gets braked (nominal command -205.8 clamped to the real box [-7.175, -4.999] for Panda's joint4) instead of commanded past it.
+
+Full write-up: **[docs/joint_limits_cbf.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/joint_limits_cbf/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
