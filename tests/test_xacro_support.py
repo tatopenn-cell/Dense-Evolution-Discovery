@@ -16,16 +16,18 @@ XACRO_PATH = os.path.join(URDF_DIR, "xacro_panda", "panda_arm_hand.urdf.xacro")
 def test_xacro_expands_to_full_panda_model():
     """
     xacro.process_file() must expand the real, unmodified Franka Panda macro
-    source (arm macro + hand macro, via xacro:include) into the same 9-DOF
-    model already validated in test_urdf_dynamics.py from a plain URDF.
+    source (arm macro + hand macro, via xacro:include) into the 7-arm-joint
+    model, plus one independent gripper coordinate -- hand.xacro's second
+    finger is a real <mimic> of the first (see test_mimic_joints.py), not a
+    second independent DOF.
     """
     m = RigidBodyModel(XACRO_PATH)
-    assert m.n == 9
+    assert m.n == 8
     names = [j["name"] for j in m.dof_joints]
     assert names == [
         "panda_joint1", "panda_joint2", "panda_joint3", "panda_joint4",
         "panda_joint5", "panda_joint6", "panda_joint7",
-        "panda_finger_joint1", "panda_finger_joint2",
+        "panda_finger_joint1",
     ]
 
 
