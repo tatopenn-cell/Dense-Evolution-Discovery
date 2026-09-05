@@ -28,31 +28,29 @@ At the exact joint state that triggered Experiment 61's real OSQP-infeasibility 
 controller reproduces the hardcoded one to machine precision (`qdd`, `tau`, `mu`, `h` all
 within `1e-9`) -- including correctly taking the same infeasibility-fallback branch.
 
-## Validated on a second, structurally different robot
+## Validated on two more independent robots
 
-Driving the Gen3 6-DoF's `bracelet_with_vision_link` toward its own singular pose (`mu=0` at
-full extension, the same true singularity Experiment 62 found on this robot):
+Driving each robot's own task-space link toward its own singular pose (`mu=0`, a true
+singularity in each case, same as Experiment 62 found):
 
-| scenario | min(mu) | final tracking error |
-|---|---|---|
-| no CBF | 0.00006 | 0.00017 m |
-| CBF, eps=0.03, 100Hz | 0.02995 | 0.27633 m |
+| robot | link | min(mu), no CBF | min(mu), CBF eps=0.03 | final err (CBF) |
+|---|---|---|---|---|
+| Gen3 6-DoF | `bracelet_with_vision_link` | 0.00006 | 0.02995 | 0.27633 m |
+| Franka Panda | `panda_hand` | 0.00296 | 0.02997 | 0.05034 m |
 
-The CBF holds manipulability almost exactly at its declared floor (0.17% below eps, tighter
-than the 7-DoF's own 100Hz result). The larger residual tracking error here is expected, not a
-bug: the commanded target is the singular pose itself (`mu=0`), which is unreachable once the
-CBF enforces `mu>=eps` -- the controller correctly gets as close as the constraint allows and
-stops there, rather than either ignoring the constraint or failing to converge for an unrelated
-reason.
+Both: the CBF holds manipulability almost exactly at its declared floor (0.17% and 0.1% below
+eps respectively -- both tighter than the 7-DoF Gen3's own 100Hz result). The nonzero residual
+tracking error is expected, not a bug: the commanded target is the singular pose itself
+(`mu=0`), unreachable once the CBF enforces `mu>=eps` -- the controller correctly gets as close
+as the constraint allows and stops there.
 
 ---
 
 ## Details
 
-**Not yet promoted.** Kept in Discovery for now; a natural next step parallel to
-`RigidBodyModel`'s promotion, but validated on fewer robots (two, both Kinova) than the
-dynamics engine was before promotion (three, including a different manufacturer) -- a third,
-more different robot would strengthen the case the same way it did for Experiment 62.
+**Not yet promoted**, but now validated on three independent robots (Gen3 7-DoF, Gen3 6-DoF,
+Franka Panda -- a different manufacturer), matching `RigidBodyModel`'s own validation bar
+before its promotion.
 
 **Reproducing this**: `pytest tests/test_general_pbc_cbf_controller.py`;
 `python scripts/rigid_body_dynamics/general_controller_multirobot_validation.py` for the
