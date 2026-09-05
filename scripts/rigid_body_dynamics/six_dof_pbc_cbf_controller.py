@@ -179,6 +179,23 @@ def solve_control_qp(model, link_name, q, qd, p_des, pd_des, pdd_des, r_des, w_d
         prob.setup(p_mat, q_vec, a_cbf, l_cbf, u_cbf, verbose=False, polish=True)
         res = prob.solve()
 
+        if has_real_limits and res.info.status_val != osqp.constant("OSQP_SOLVED"):
+            # A real second-level infeasibility: the 6-DoF manipulability
+            # measure (spatial Jacobian, includes orientation) can be much
+            # smaller than the 3-DoF one at the same configuration (a real
+            # wrist-singularity-adjacent case, not an artifact), so the CBF's
+            # required recovery rate can exceed what the velocity-limit box
+            # allows -- CBF+box jointly infeasible. The CBF is the harder
+            # safety constraint (prevents an actual kinematic singularity,
+            # not just a momentary rate-limit overshoot), so drop the box
+            # and keep only the CBF -- feasible in R^n as long as a2 != 0.
+            a_cbf2 = sparse.csc_matrix(np.asarray(a2).reshape(1, n))
+            l_cbf2 = np.array([-1e20])
+            u_cbf2 = np.array([float(u2)])
+            prob = osqp.OSQP()
+            prob.setup(p_mat, q_vec, a_cbf2, l_cbf2, u_cbf2, verbose=False, polish=True)
+            res = prob.solve()
+
     qdd = np.asarray(res.x)
     tau = np.asarray(m) @ qdd + np.asarray(bias) + np.asarray(grav)
     return qdd, tau, float(mu), float(h)

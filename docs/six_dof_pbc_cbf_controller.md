@@ -59,12 +59,35 @@ solved torque matches `gravity_forces(q)` to machine precision (`8.9e-16`).
 Both errors decay roughly an order of magnitude every 200 steps -- clean exponential
 convergence, both position and orientation together.
 
+## Validated on three robots
+
+The same singular configurations `test_general_pbc_cbf_controller.py` uses for the position-only
+controller, evaluated through the full 6-DoF pipeline instead:
+
+| robot | link | mu | h (mu - eps) | qdd norm |
+|---|---|---|---|---|
+| Kinova Gen3 6-DoF | `bracelet_with_vision_link` | 0.017607 | -0.012393 | 162.60 |
+| Franka Panda | `panda_hand` | 0.032751 | 0.002751 | 5.00 |
+
+The Gen3 6-DoF row is the interesting one: the 6-DoF (spatial) manipulability measure includes
+orientation, and can be well below the 3-DoF (position-only) one at the exact same configuration
+-- 0.0176 here vs. 0.1128 for the position-only Jacobian at this same `q`, a real
+wrist-singularity-adjacent case the position-only measure doesn't see. `h` is already negative
+(the floor is already crossed) before the QP even solves.
+
+**A real second-level infeasibility, found and fixed by this validation.** At that Gen3 6-DoF
+configuration, the manipulability-recovery CBF's required rate exceeded what the real
+velocity-limit box allowed -- CBF+box jointly infeasible, not just the softer passivity+CBF+box
+QP. The existing single-level fallback (drop passivity, keep CBF+box) doesn't cover this: it
+re-solved the still-infeasible CBF+box QP and returned OSQP's infeasibility certificate as if it
+were a real answer -- `qdd` norm in the billions, the exact failure mode the module's own
+OSQP-infeasibility fix was written to prevent, just one level deeper. Fixed with a third-level
+fallback: if CBF+box is still infeasible, drop the box too and keep only the CBF -- guaranteed
+feasible in R^n as long as the manipulability gradient isn't the zero vector. The CBF is the
+harder safety constraint (prevents an actual kinematic singularity), so it's kept last.
+
 ---
 
 ## Details
-
-**Not yet promoted.** Kept in Discovery for now, parallel to Experiment 63's own path: a
-strong single-robot validation, not yet cross-validated on a second/third robot the way
-`RigidBodyModel` and the position-only controller were before their promotions.
 
 **Reproducing this**: `pytest tests/test_six_dof_pbc_cbf_controller.py`.

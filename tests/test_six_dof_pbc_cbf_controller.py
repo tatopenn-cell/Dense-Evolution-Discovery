@@ -41,6 +41,50 @@ def test_rotation_error_zero_iff_equal():
     assert np.max(np.abs(np.array(rotation_error(r, r)))) < 1e-12
 
 
+def test_six_dof_stays_finite_on_a_different_robot():
+    """
+    Same real singular configuration as test_general_pbc_cbf_controller.py's
+    3-robot validation bar (Gen3 6-DoF, driven toward its own true
+    singularity) -- but through the full 6-DoF pipeline (spatial Jacobian,
+    rotation error, task-space Lambda) instead of the 3-DoF one, completing
+    for the 6-DoF controller the same bar RigidBodyModel and the 3-DoF
+    controller were held to before their own promotion.
+    """
+    model = RigidBodyModel(os.path.join(URDF_DIR, "GEN3-6DOF.urdf"))
+    link = "bracelet_with_vision_link"
+    q = jnp.array([0.51570841, 0.7814598, -1.17051634, 0.37482289, -0.25813235, 0.34260431])
+    qd = jnp.zeros(6)
+    p_des = jnp.array([0.0, 0.00135062, 1.11510006])
+    _, r_des = model.link_pose(q, link)
+
+    qdd, tau, mu, h = solve_control_qp(model, link, q, qd, p_des, jnp.zeros(3), jnp.zeros(3),
+                                        r_des, jnp.zeros(3), jnp.zeros(3), eps=0.03)
+
+    assert np.all(np.isfinite(qdd))
+    assert np.all(np.isfinite(tau))
+    assert np.linalg.norm(qdd) < 1e4
+
+
+def test_six_dof_stays_finite_on_a_third_robot_different_manufacturer():
+    """Third robot, a different manufacturer (Franka Panda) -- same real
+    singular configuration as test_general_pbc_cbf_controller.py's own third
+    test, through the full 6-DoF pipeline."""
+    model = RigidBodyModel(os.path.join(URDF_DIR, "panda.urdf"))
+    link = "panda_hand"
+    q = jnp.array([-0.19360032, 0.89941805, -0.27271074, -1.15251618,
+                   -2.92540148, 2.89498581, 2.73584013, 0.0, 0.0])
+    qd = jnp.zeros(9)
+    p_des = jnp.array([-0.2295431, -0.47162945, 1.00885136])
+    _, r_des = model.link_pose(q, link)
+
+    qdd, tau, mu, h = solve_control_qp(model, link, q, qd, p_des, jnp.zeros(3), jnp.zeros(3),
+                                        r_des, jnp.zeros(3), jnp.zeros(3), eps=0.03)
+
+    assert np.all(np.isfinite(qdd))
+    assert np.all(np.isfinite(tau))
+    assert np.linalg.norm(qdd) < 1e4
+
+
 def test_position_and_orientation_converge():
     """
     Real closed-loop check: a real disclosed 10cm/10cm position offset and a
