@@ -60,3 +60,22 @@ def test_general_controller_stays_finite_on_a_different_robot():
     # The real failure mode this guards against (Experiment 61's OSQP
     # infeasibility bug) produces qdd with norm in the billions, not hundreds.
     assert np.linalg.norm(qdd) < 1e4
+
+
+def test_general_controller_stays_finite_on_a_third_robot_different_manufacturer():
+    """Third robot, a different manufacturer (Franka Panda, 7 revolute + 2
+    prismatic finger joints): completes the same 3-robot validation bar
+    RigidBodyModel was held to before its own promotion."""
+    model = RigidBodyModel(os.path.join(URDF_DIR, "panda.urdf"))
+    q = jnp.array([-0.19360032, 0.89941805, -0.27271074, -1.15251618,
+                   -2.92540148, 2.89498581, 2.73584013, 0.0, 0.0])
+    qd = jnp.zeros(9)
+    p_des = jnp.array([-0.2295431, -0.47162945, 1.00885136])
+    pd_des = jnp.zeros(3)
+    pdd_des = jnp.zeros(3)
+
+    qdd, tau, mu, h = solve_general(model, "panda_hand", q, qd, p_des, pd_des, pdd_des, eps=0.03)
+
+    assert np.all(np.isfinite(qdd))
+    assert np.all(np.isfinite(tau))
+    assert np.linalg.norm(qdd) < 1e4
