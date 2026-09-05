@@ -616,6 +616,14 @@ Full write-up: **[docs/mimic_joints.md](https://tatopenn-cell.github.io/Dense-Ev
 
 ---
 
+### 68. 2D Lidar Scan Matching via Modified Hausdorff Distance
+
+`mhd_scan_matching.py` implements Nazate-Burgos et al.'s real MHD-based scan matching, validated on the real Intel Research Lab and MIT CSAIL 2D-lidar SLAM datasets (the paper's own Pullally orchard dataset requires a university login, not truly public) -- correctly recovers a near-pure-rotation case to within one grid step, but honestly surfaces a real limitation: on larger-translation cases, the MHD cost surface has a genuine local minimum below the true pose's own cost, not fixed by accumulating a 5-scan local map.
+
+Full write-up: **[docs/mhd_scan_matching.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/mhd_scan_matching/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash
