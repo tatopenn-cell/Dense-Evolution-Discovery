@@ -594,7 +594,7 @@ Full write-up: **[docs/joint_limits_cbf.md](https://tatopenn-cell.github.io/Dens
 
 ### 65. Full 6-DoF (Position + Orientation) Tracking
 
-`six_dof_pbc_cbf_controller.py` extends Experiment 63's controller from position-only to the link's full 6-DoF pose, using the spatial Jacobian and Lee, Leok & McClamroch (2010)'s SO(3) attitude error instead of Kurtz et al.'s own gimbal-lock-prone RPY error; verified both by an exact gravity-compensation check at zero error (machine precision) and a real closed-loop run converging a 10cm/30-degree offset to near-zero (position 1e-10 m, orientation 3e-8) over 1500 steps.
+`six_dof_pbc_cbf_controller.py` extends Experiment 63's controller from position-only to the link's full 6-DoF pose, using the spatial Jacobian and Lee, Leok & McClamroch (2010)'s SO(3) attitude error instead of Kurtz et al.'s own gimbal-lock-prone RPY error; verified by an exact gravity-compensation check at zero error (machine precision), a real closed-loop run converging a 10cm/30-degree offset to near-zero (position 1e-10 m, orientation 3e-8) over 1500 steps, and validated on the same 3-robot bar as Experiment 63 -- which surfaced and fixed a real second-level OSQP infeasibility unique to the 6-DoF manipulability measure.
 
 Full write-up: **[docs/six_dof_pbc_cbf_controller.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/six_dof_pbc_cbf_controller/)**.
 
