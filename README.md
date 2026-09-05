@@ -600,6 +600,14 @@ Full write-up: **[docs/six_dof_pbc_cbf_controller.md](https://tatopenn-cell.gith
 
 ---
 
+### 66. Loading Robots from Xacro Macros
+
+`RigidBodyModel` now accepts `.xacro` macro files directly, expanding them via the real `xacro` package before parsing, cross-checked to machine precision against the same robot's pre-expanded plain URDF -- along the way, a real inconsistency in the Franka Panda's own published macros (a commented-out link needed by the hand attachment) had to be resolved.
+
+Full write-up: **[docs/xacro_support.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/xacro_support/)**.
+
+---
+
 ## 🚀 Reproducing the Results
 
 ```bash

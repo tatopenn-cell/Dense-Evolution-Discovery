@@ -25,8 +25,16 @@ def parse_urdf(path):
     tree (not just a single chain): branching robots (e.g. two arms, a gripper
     with independent fingers) are supported via the parent/child adjacency built
     below, not assumed to be a single serial chain.
+
+    A path ending in .xacro (or .urdf.xacro) is expanded first via the real
+    `xacro` package (macros, ${...} math, xacro:if/unless, xacro:include),
+    not a hand-rolled subset -- the same tool the ROS ecosystem itself uses.
     """
-    root = ET.parse(path).getroot()
+    if str(path).endswith(".xacro"):
+        import xacro
+        root = ET.fromstring(xacro.process_file(str(path)).toxml())
+    else:
+        root = ET.parse(path).getroot()
 
     links = {}
     for link_el in root.findall("link"):
