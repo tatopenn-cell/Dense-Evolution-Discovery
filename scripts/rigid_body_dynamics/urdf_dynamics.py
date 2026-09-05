@@ -70,9 +70,15 @@ def parse_urdf(path):
             qd_max = float(limit_el.get("velocity")) if limit_el.get("velocity") is not None else np.inf
         else:
             q_min, q_max, qd_max = -np.inf, np.inf, np.inf
+        mimic_el = joint_el.find("mimic")
+        mimic_joint = mimic_el.get("joint") if mimic_el is not None else None
+        mimic_multiplier = float(mimic_el.get("multiplier", "1.0")) if mimic_el is not None else 1.0
+        mimic_offset = float(mimic_el.get("offset", "0.0")) if mimic_el is not None else 0.0
         joints.append(dict(name=name, type=jtype, parent=parent, child=child,
                             xyz=xyz, rpy=rpy, axis=axis,
-                            q_min=q_min, q_max=q_max, qd_max=qd_max))
+                            q_min=q_min, q_max=q_max, qd_max=qd_max,
+                            mimic_joint=mimic_joint, mimic_multiplier=mimic_multiplier,
+                            mimic_offset=mimic_offset))
 
     children_names = {j["child"] for j in joints}
     root_candidates = [name for name in links if name not in children_names]
@@ -129,7 +135,7 @@ class RigidBodyModel:
         def walk(link_name):
             for j in joints_by_parent.get(link_name, []):
                 self.link_parent_joint[j["child"]] = j
-                if j["type"] != "fixed":
+                if j["type"] != "fixed" and j["mimic_joint"] is None:
                     self.dof_joints.append(j)
                 walk(j["child"])
 
@@ -137,12 +143,30 @@ class RigidBodyModel:
         self.n = len(self.dof_joints)
         self.dof_index = {j["name"]: idx for idx, j in enumerate(self.dof_joints)}
 
+        # A <mimic> joint is not its own independent coordinate: its angle/displacement
+        # is master*multiplier + offset, a real holonomic constraint (e.g. a gripper's
+        # second finger slaved to the first) -- so it maps onto the master's own dof_idx
+        # everywhere below, chain-ruled by the multiplier, rather than getting a column
+        # of its own.
+        self.mimic_map = {}
+        for jlist in joints_by_parent.values():
+            for j in jlist:
+                if j["mimic_joint"] is not None:
+                    self.mimic_map[j["name"]] = (self.dof_index[j["mimic_joint"]],
+                                                  j["mimic_multiplier"], j["mimic_offset"])
+
         self.link_ancestor_dofs = {root_link: []}
 
         def collect(link_name, ancestors):
             self.link_ancestor_dofs[link_name] = list(ancestors)
             for j in joints_by_parent.get(link_name, []):
-                next_ancestors = ancestors + ([self.dof_index[j["name"]]] if j["type"] != "fixed" else [])
+                if j["type"] == "fixed":
+                    next_ancestors = ancestors
+                elif j["name"] in self.mimic_map:
+                    master_idx, mult, _offset = self.mimic_map[j["name"]]
+                    next_ancestors = ancestors + [(j, master_idx, mult)]
+                else:
+                    next_ancestors = ancestors + [(j, self.dof_index[j["name"]], 1.0)]
                 collect(j["child"], next_ancestors)
 
         collect(root_link, [])
@@ -179,11 +203,11 @@ class RigidBodyModel:
 
                 if j["type"] in ("revolute", "continuous"):
                     joint_axis_world[j["name"]] = axis_world
-                    angle = q[self.dof_index[j["name"]]]
+                    angle = self._dof_value(j, q)
                     r_child = r_child @ axis_angle_matrix(jnp.asarray(j["axis"]), angle)
                 elif j["type"] == "prismatic":
                     joint_axis_world[j["name"]] = axis_world
-                    disp = q[self.dof_index[j["name"]]]
+                    disp = self._dof_value(j, q)
                     p_child = p_child + axis_world * disp
 
                 pos[j["child"]] = p_child
@@ -196,6 +220,12 @@ class RigidBodyModel:
     def _children_joints(self, link_name):
         return [j for j in self.link_parent_joint.values() if j["parent"] == link_name]
 
+    def _dof_value(self, j, q):
+        if j["name"] in self.mimic_map:
+            master_idx, mult, offset = self.mimic_map[j["name"]]
+            return q[master_idx] * mult + offset
+        return q[self.dof_index[j["name"]]]
+
     def com_positions(self, q):
         pos, rot, _ = self.forward_kinematics(q)
         return jnp.stack([pos[name] + rot[name] @ jnp.asarray(self.links[name]["com"])
@@ -205,15 +235,14 @@ class RigidBodyModel:
         p_link = pos[link_name] + rot[link_name] @ jnp.asarray(self.links[link_name]["com"])
         jv = jnp.zeros((3, self.n))
         jw = jnp.zeros((3, self.n))
-        for dof_idx in self.link_ancestor_dofs[link_name]:
-            j = self.dof_joints[dof_idx]
+        for j, dof_idx, scale in self.link_ancestor_dofs[link_name]:
             axis_w = joint_axis_world[j["name"]]
             if j["type"] == "prismatic":
-                jv = jv.at[:, dof_idx].set(axis_w)
+                jv = jv.at[:, dof_idx].add(scale * axis_w)
             else:
                 p_joint = self._joint_origin_world(j, pos, rot)
-                jv = jv.at[:, dof_idx].set(jnp.cross(axis_w, p_link - p_joint))
-                jw = jw.at[:, dof_idx].set(axis_w)
+                jv = jv.at[:, dof_idx].add(scale * jnp.cross(axis_w, p_link - p_joint))
+                jw = jw.at[:, dof_idx].add(scale * axis_w)
         return jv, jw
 
     def _joint_origin_world(self, j, pos, rot):
@@ -268,14 +297,13 @@ class RigidBodyModel:
     def link_jacobian(self, q, link_name):
         pos, rot, joint_axis_world = self.forward_kinematics(q)
         jv = jnp.zeros((3, self.n))
-        for dof_idx in self.link_ancestor_dofs[link_name]:
-            j = self.dof_joints[dof_idx]
+        for j, dof_idx, scale in self.link_ancestor_dofs[link_name]:
             axis_w = joint_axis_world[j["name"]]
             if j["type"] == "prismatic":
-                jv = jv.at[:, dof_idx].set(axis_w)
+                jv = jv.at[:, dof_idx].add(scale * axis_w)
             else:
                 p_joint = self._joint_origin_world(j, pos, rot)
-                jv = jv.at[:, dof_idx].set(jnp.cross(axis_w, pos[link_name] - p_joint))
+                jv = jv.at[:, dof_idx].add(scale * jnp.cross(axis_w, pos[link_name] - p_joint))
         return jv
 
     def link_spatial_jacobian(self, q, link_name):
@@ -284,13 +312,12 @@ class RigidBodyModel:
         p_link = pos[link_name]
         jv = jnp.zeros((3, self.n))
         jw = jnp.zeros((3, self.n))
-        for dof_idx in self.link_ancestor_dofs[link_name]:
-            j = self.dof_joints[dof_idx]
+        for j, dof_idx, scale in self.link_ancestor_dofs[link_name]:
             axis_w = joint_axis_world[j["name"]]
             if j["type"] == "prismatic":
-                jv = jv.at[:, dof_idx].set(axis_w)
+                jv = jv.at[:, dof_idx].add(scale * axis_w)
             else:
                 p_joint = self._joint_origin_world(j, pos, rot)
-                jv = jv.at[:, dof_idx].set(jnp.cross(axis_w, p_link - p_joint))
-                jw = jw.at[:, dof_idx].set(axis_w)
+                jv = jv.at[:, dof_idx].add(scale * jnp.cross(axis_w, p_link - p_joint))
+                jw = jw.at[:, dof_idx].add(scale * axis_w)
         return jnp.concatenate([jw, jv], axis=0)

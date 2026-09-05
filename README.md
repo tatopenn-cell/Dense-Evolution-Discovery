@@ -602,9 +602,17 @@ Full write-up: **[docs/six_dof_pbc_cbf_controller.md](https://tatopenn-cell.gith
 
 ### 66. Loading Robots from Xacro Macros
 
-`RigidBodyModel` now accepts `.xacro` macro files directly, expanding them via the real `xacro` package before parsing, cross-checked to machine precision against the same robot's pre-expanded plain URDF -- along the way, a real inconsistency in the Franka Panda's own published macros (a commented-out link needed by the hand attachment) had to be resolved.
+`RigidBodyModel` now accepts `.xacro` macro files directly, expanding them via the real `xacro` package before parsing -- along the way, a real inconsistency in the Franka Panda's own published macros (a commented-out link needed by the hand attachment) had to be resolved.
 
 Full write-up: **[docs/xacro_support.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/xacro_support/)**.
+
+---
+
+### 67. Coupled Joints via `<mimic>`
+
+`RigidBodyModel` now respects a joint's `<mimic>` tag (a real gripper's second finger slaved to the first, seen in Experiment 66's own xacro source) instead of giving it a second independent coordinate: its motion is chain-ruled onto its master's column in the hand-built Jacobian, checked to match a real finite-difference derivative of link position to under 1e-5.
+
+Full write-up: **[docs/mimic_joints.md](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/mimic_joints/)**.
 
 ---
 
