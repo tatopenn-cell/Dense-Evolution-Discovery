@@ -105,25 +105,79 @@ this run:
 | SCF converged | yes, 10 iterations |
 | Total energy | **-128.4744065199038 Hartree** |
 
-## Step 4. The one external physics check available without PySCF
+## Step 4. The real anchor: PySCF, and the 5d/6d gotcha it caught
+
+Run on Google Colab (`!pip install pyscf --quiet`, a real C++ toolchain
+this machine doesn't have):
+
+```python
+from pyscf import gto, scf
+
+mol = gto.M(atom="Ne 0 0 0", basis="6-31g*", charge=0, spin=0, unit="Bohr")
+mf = scf.RHF(mol)
+print(mf.kernel())
+```
+
+```
+converged SCF energy = -128.473876870668
+```
+
+That's **-128.47387687066836** against this implementation's
+**-128.4744065199038** -- a ~5e-4 Hartree discrepancy. Exactly the
+subtle, not-caught-by-the-variational-bound kind of wrongness worth
+worrying about (still safely above the -128.5470 numerical HF limit,
+still looking fine by Step 3's own checks). Before concluding this
+implementation has a real bug, one alternative explanation: PySCF
+defaults to **spherical** d functions (5 components -- the physical
+d-orbital basis, dropping the linear combination that transforms like an
+s function) unless told otherwise, while this implementation only
+supports **Cartesian** d functions (6 components: dxx,dyy,dzz,dxy,dxz,dyz)
+-- the classic 5d-vs-6d basis-set convention mismatch, not a bug in
+either implementation, just two different (both valid) definitions of
+"the d part of 6-31G*".
+
+Forcing PySCF to match this implementation's convention:
+
+```python
+mol = gto.M(atom="Ne 0 0 0", basis="6-31g*", charge=0, spin=0,
+            unit="Bohr", cart=True)
+mf = scf.RHF(mol)
+print(mf.kernel(), mol.nao)
+```
+
+```
+converged SCF energy = -128.474406519905
+nao = 15
+```
+
+`nao=15` confirms the AO count now matches this script's own count
+exactly (6 Cartesian d components, not 5 spherical). And the energy:
+**-128.47440651990485** against this implementation's
+**-128.4744065199038** -- agreement to **~1e-12 Hartree**, machine
+precision. The hypothesis was right: the first run's ~5e-4 discrepancy
+was purely the spherical/Cartesian convention mismatch, not a bug. This
+is now frozen in the script as `NE_631GSTAR_PYSCF_RHF_ENERGY` and
+checked with `abs=1e-6` (a real, basis-specific external anchor -- the
+same kind the main repo's H₂/H₂O golden tests use, not available when
+this page was first written; see "PySCF, resolved" below).
+
+## Step 5. The variational bound, kept as a secondary check
 
 The neon atom's numerical (complete-basis-set) non-relativistic
 Hartree-Fock limit is a well-established reference value: **-128.5470
 Hartree** (Clementi & Roetti 1974, *Atomic Data and Nuclear Data Tables*
 14, 177 -- the standard atomic HF reference table). Any finite-basis RHF
 energy must sit *above* (less negative than) this limit by the
-variational principle. This run's -128.4744 does:
+variational principle:
 
 ```
 -128.4744065199038 > -128.5470   # True
 ```
 
-This rules out gross errors (wrong sign, wrong magnitude, a missing
-factor) but is a **necessary, not sufficient** check -- a subtly wrong
-d-shell integral (a bad normalization constant that's still positive, an
-off-by-one in the recursion) could easily still land inside this bound
-while being wrong by millihartree, exactly the scale that would matter
-for a real quantum-chemistry application. See "Not yet done" below.
+On its own this would only rule out gross errors (wrong sign, wrong
+magnitude, a missing factor) -- Step 4's PySCF anchor is what actually
+confirms correctness at the millihartree scale that would matter for a
+real quantum-chemistry application. Both checks run in the script.
 
 ## Real timing (one run on this machine)
 
@@ -150,23 +204,17 @@ correctness result above.
 
 ## Details
 
-### Why this couldn't be verified against PySCF
+### PySCF, resolved
 
-The strongest possible anchor for Step 3 would be the actual published or
-independently-computed RHF/6-31G* energy for neon specifically (the same
-kind of external anchor the main repo's H₂/H₂O golden tests use) --
-stronger than the variational-bound check in Step 4, which only rules
-out gross errors. Getting that number requires a real quantum-chemistry
-package; this machine has no C++ toolchain (`pyscf`'s and `pyquante2`'s
+This machine itself has no C++ toolchain (`pyscf`'s and `pyquante2`'s
 wheel builds both failed on `Microsoft Visual C++ 14.0` requirements), no
 usable WSL Linux distribution (only Docker Desktop's internal, Python-
-free distro was present), no Docker CLI, and no conda. A targeted web
-search for a published HF/6-31G* neon value also came up empty -- it is
-a less commonly tabulated number than the H₂/H₂O values the main repo's
-own golden tests already anchor against. **Not yet done**: freeze a real
-PySCF-computed (or otherwise independently sourced) RHF/6-31G* energy
-for neon as the primary check here, with the variational bound kept only
-as a secondary sanity check.
+free distro was present), no Docker CLI, and no conda -- a targeted web
+search for a published HF/6-31G* neon value also came up empty (it is a
+less commonly tabulated number than the H₂/H₂O values the main repo's
+own golden tests already anchor against). Google Colab has a real C++
+toolchain and installs `pyscf` in seconds, which is where Step 4's two
+runs above were actually produced.
 
 ### Why this lives here and not in the main repo's CI
 

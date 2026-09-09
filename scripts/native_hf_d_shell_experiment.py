@@ -46,12 +46,22 @@ from dense_evolution.native_hf.scf import run_scf
 # Atomic Data and Nuclear Data Tables 14, 177 -- the standard reference
 # atomic HF energy table). Any finite-basis RHF energy, including the
 # 6-31G* result below, must be >= this value by the variational
-# principle -- a necessary but not sufficient correctness check (it
-# only rules out gross errors, not a subtly-wrong d-shell integral that
-# happens to still land above this bound). A basis-specific frozen
-# reference value (e.g. from PySCF) would be the stronger anchor this
-# script doesn't yet have -- see the note at the bottom of the docs page.
+# principle -- necessary but not sufficient (it only rules out gross
+# errors), kept as a secondary sanity check below the real anchor.
 NE_NUMERICAL_HF_LIMIT = -128.5470
+
+# The real, basis-specific anchor: PySCF 2.x RHF/6-31G* on the same
+# geometry (a single Ne atom at the origin, unit="Bohr"), run on Google
+# Colab with mol.cart=True -- Dense-Evolution's native_hf only implements
+# CARTESIAN d functions (6 components), while PySCF defaults to SPHERICAL
+# d functions (5 components) unless told otherwise; the first run of this
+# comparison (spherical, PySCF's default) showed a ~5e-4 Hartree
+# discrepancy that looked exactly like the subtle-bug pattern to worry
+# about, until forcing cart=True on both sides (confirmed nao=15,
+# matching this script's own AO count) resolved it to agreement at
+# machine precision (~1e-12 Hartree) -- a basis-convention mismatch, not
+# a bug. See the docs page for both PySCF runs.
+NE_631GSTAR_PYSCF_RHF_ENERGY = -128.47440651990485
 
 
 def main():
@@ -91,12 +101,19 @@ def main():
     print(f"total energy: {result.total_energy}")
 
     assert result.converged
+
+    diff = abs(result.total_energy - NE_631GSTAR_PYSCF_RHF_ENERGY)
+    assert diff < 1e-6, (
+        f"{result.total_energy} differs from the PySCF anchor {NE_631GSTAR_PYSCF_RHF_ENERGY} "
+        f"by {diff}, more than 1e-6 Hartree -- a real discrepancy"
+    )
+    print(f"\nPySCF anchor check: {result.total_energy} vs {NE_631GSTAR_PYSCF_RHF_ENERGY}, diff={diff:.2e} -- OK")
+
     assert result.total_energy > NE_NUMERICAL_HF_LIMIT, (
         f"{result.total_energy} is below the numerical HF limit {NE_NUMERICAL_HF_LIMIT} "
         f"-- violates the variational principle, a real bug"
     )
-
-    print(f"\nvariational check: {result.total_energy} > {NE_NUMERICAL_HF_LIMIT} (numerical HF limit) -- OK")
+    print(f"variational check: {result.total_energy} > {NE_NUMERICAL_HF_LIMIT} (numerical HF limit) -- OK")
     print(f"total wall time: {t_overlap + t_core + t_eri + t_scf:.1f}s")
 
 
