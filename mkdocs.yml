@@ -99,3 +99,4 @@ nav:
     - Germanium iSWAP Validation: germanium_iswap_validation.md
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
     - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
+    - "native_hf: d-Shell Support": native_hf_d_shell_experiment.md
