@@ -57,50 +57,59 @@ nav:
   - Home: index.md
   - Repository:
     - Architecture & Ecosystem: repository_architecture.md
-  - Density-Matrix Diagnostics:
-    - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
-    - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
-    - "Classical Shadows: Bug Fix & Magic Entropy Estimation": quantum_shadows_magic_entropy.md
-    - Kullback-Leibler Divergence: kullback_leibler_divergence.md
-  - Vector Healing:
-    - Stratonovich-Projection Vector Healing: stratonovich_vector_healing.md
-    - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md
-    - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
-    - "ZNE Healing-Branch Sigma Provenance: a Confound": zne_healing_sigma_provenance.md
-    - Central Charge (Calabrese-Cardy): central_charge_calabrese_cardy.md
-  - Other Investigations:
-    - Harrison / VHD Tight-Binding: harrison_tight_binding.md
-    - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
-    - Photonic Predictive ZNE: photonic_predictive_zne.md
-    - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
-    - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
-    - "Hubbard Square (Mott Localization, d-Wave Pairing)": hubbard_square_arovas.md
-    - "Indirect Prompt Injection vs. Dense-Armor": agent_indirect_prompt_injection.md
-    - "Dense-Armor on Real IMU Sensor Data": imu_sensor_validation.md
-    - "Dense-Armor on Real Lidar Sensor Data": lidar_sensor_validation.md
-    - "Dense-Armor on Real Robot-Arm Data (LeRobot)": lerobot_calibration_regime_detection.md
-    - "Predicting CUSUM Detectability From Theory": cusum_detectability_theory.md
-    - "Contributing Drift Detectors to river": river_drift_detector_contribution.md
-    - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
-    - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
-    - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
-    - "Native Multi-Channel Support": multichannel_wrapper.md
-    - "A Minimal ROS2 Deviation Node": ros2_deviation_node.md
-    - "Real-Time Streaming Latency on Real LeRobot Data": realtime_streaming_lerobot.md
-    - "A Causal Rate Limiter for Real Motor Commands": rate_limiter_real_joint_commands.md
-    - "A Geometric CBF Filter for Real Robot Commands": geometric_cbf_filter_real_joint_commands.md
-    - "RoboGuard-Inspired LTL Safety Check (with Claude)": roboguard_inspired_ltl_safety_check.md
-    - "A Real Live Gazebo Physics Loop": gazebo_live_physics_loop.md
-    - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
-    - "The Full Safety Chain, Live": live_safety_loop.md
-    - "A Universal Point-to-Point Trajectory Generator": quintic_trajectory_planner.md
-    - "A Kinematic Tracking Controller": kinematic_tracking_controller.md
-    - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
-    - Germanium iSWAP Validation: germanium_iswap_validation.md
-    - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
-    - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
-    - "native_hf: d-Shell Support": native_hf_d_shell_experiment.md
-    - "Bucketed-SVD MPS Optimization": mps_bucketed_svd_optimization.md
-    - "Bucketed-SVD MPS: GPU Timing Correction": mps_bucketed_svd_gpu_timing_followup.md
-    - "Gate Blocking: Closing the GPU Gap": mps_gate_blocking_experiment.md
-    - "Gate Blocking Redesign: Promotion-Ready": mps_gate_blocking_redesign_v2.md
+  - MPS GPU Optimization:
+    - "Bucketed SVD + Gate Blocking": mps_gpu_optimization.md
+  - "Diagnostics & Healing":
+    - "Density-Matrix Diagnostics":
+      - Sandwiched Renyi Divergence: sandwiched_renyi_density_matrix.md
+      - Quantum Ruzsa Key Unitary & Magic Entropy: quantum_ruzsa_magic_entropy.md
+      - "Classical Shadows: Bug Fix & Magic Entropy Estimation": quantum_shadows_magic_entropy.md
+      - Kullback-Leibler Divergence: kullback_leibler_divergence.md
+    - "Vector Healing":
+      - Stratonovich-Projection Vector Healing: stratonovich_vector_healing.md
+      - Healing Trigger False-Positive Audit: healing_trigger_false_positive_audit.md
+      - Leaky-Switch Differentiable Healing: leaky_differentiable_healing.md
+      - "ZNE Healing-Branch Sigma Provenance: a Confound": zne_healing_sigma_provenance.md
+      - Central Charge (Calabrese-Cardy): central_charge_calabrese_cardy.md
+  - "Dense-Armor: Robot Safety Monitoring":
+    - "Sensor Validation":
+      - "Dense-Armor on Real IMU Sensor Data": imu_sensor_validation.md
+      - "Dense-Armor on Real Lidar Sensor Data": lidar_sensor_validation.md
+      - "Dense-Armor on Real Robot-Arm Data (LeRobot)": lerobot_calibration_regime_detection.md
+      - "Real-Time Streaming Latency on Real LeRobot Data": realtime_streaming_lerobot.md
+    - "Detection & Drift Algorithms":
+      - "Predicting CUSUM Detectability From Theory": cusum_detectability_theory.md
+      - "Contributing Drift Detectors to river": river_drift_detector_contribution.md
+      - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
+      - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
+      - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
+      - "Native Multi-Channel Support": multichannel_wrapper.md
+      - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
+    - "Safety & Control":
+      - "A Causal Rate Limiter for Real Motor Commands": rate_limiter_real_joint_commands.md
+      - "A Geometric CBF Filter for Real Robot Commands": geometric_cbf_filter_real_joint_commands.md
+      - "RoboGuard-Inspired LTL Safety Check (with Claude)": roboguard_inspired_ltl_safety_check.md
+      - "The Full Safety Chain, Live": live_safety_loop.md
+      - "A Universal Point-to-Point Trajectory Generator": quintic_trajectory_planner.md
+      - "A Kinematic Tracking Controller": kinematic_tracking_controller.md
+    - "Integration & Deployment":
+      - "A Minimal ROS2 Deviation Node": ros2_deviation_node.md
+      - "A Real Live Gazebo Physics Loop": gazebo_live_physics_loop.md
+    - "Security":
+      - "Indirect Prompt Injection vs. Dense-Armor": agent_indirect_prompt_injection.md
+  - "Dense-Evolution: Quantum Simulation & Physics":
+    - "Materials & Tight-Binding":
+      - Harrison / VHD Tight-Binding: harrison_tight_binding.md
+      - "Hubbard Square (Mott Localization, d-Wave Pairing)": hubbard_square_arovas.md
+      - Germanium iSWAP Validation: germanium_iswap_validation.md
+    - "Noise, Error Mitigation & Validation":
+      - Photonic Predictive ZNE: photonic_predictive_zne.md
+      - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
+      - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
+    - "Exotic Physics":
+      - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
+      - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
+      - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
+    - "Simulator Infrastructure":
+      - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
+      - "native_hf: d-Shell Support": native_hf_d_shell_experiment.md
