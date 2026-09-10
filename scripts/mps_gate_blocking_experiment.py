@@ -127,8 +127,6 @@ def fuse_gate_list(gate_list, dtype):
                     continue
                 if active_qubit not in (nq1, nq2):
                     break
-                # grow into the 2-qubit space: embed the 1q matrix so far,
-                # then left-multiply by the new 2-qubit gate.
                 pair = (nq1, nq2)
                 mat = _embed_1q(mat, active_qubit, pair)
                 nmat = np.asarray(_mps_2q_matrix(jnp.asarray(ng_id), jnp.asarray(nparam), dtype)).reshape(4, 4)
@@ -136,7 +134,6 @@ def fuse_gate_list(gate_list, dtype):
                 j += 1
                 continue
 
-            # pair is fixed (a, b) -- fuse anything acting only within it.
             if n_is_2q:
                 if (nq1, nq2) != pair:
                     break
