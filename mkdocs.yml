@@ -103,3 +103,4 @@ nav:
     - "Bucketed-SVD MPS Optimization": mps_bucketed_svd_optimization.md
     - "Bucketed-SVD MPS: GPU Timing Correction": mps_bucketed_svd_gpu_timing_followup.md
     - "Gate Blocking: Closing the GPU Gap": mps_gate_blocking_experiment.md
+    - "Gate Blocking Redesign: Promotion-Ready": mps_gate_blocking_redesign_v2.md
