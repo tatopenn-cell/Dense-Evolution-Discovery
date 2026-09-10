@@ -1,0 +1,3 @@
+variant,warm_seconds,speedup_vs_default
+default (fuse_gates=False),2.895,1.0
+fuse_gates=True,1.342,2.16
