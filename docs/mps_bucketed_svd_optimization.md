@@ -29,6 +29,10 @@ Full multi-gate circuit correctness (not just single-gate) was then checked via 
 </tbody>
 </table>
 
+## A second real bug, found before merging: the middle bond
+
+The single-gate correctness matrix above slices an *already fully-contracted* `theta` tensor -- safe by construction, since the middle-bond sum already ran at full size before the slice. The actual circuit-level runner does something different: it slices `gamma`/`lambda` tensors to bucket size `B` *before* the einsum contracts the middle bond away. Those are not the same computation. Concretely: with outer bonds `chi_l=2, chi_r=2` and a middle bond `chi_m=16`, the outer-bonds-only bound formula picked `B=4`, silently discarding ~82% of the state's real norm from the contraction -- not an approximation, a correctness bug. Fixed by widening the bound to `max(chi_l_real, chi_r_real, chi_m_real, min(chi_l_real*2, chi_r_real*2))`, verified against the exact computation on 6 constructed asymmetric cases (norm preserved to machine precision in all of them) and re-confirmed on the full circuit-fidelity check (which went from 0.999999999998 to an exact 1.000000000000 on the complex128 configs once fixed -- the bug's impact on the specific TFIM circuit tested had been small but nonzero).
+
 ## Speed: real, verified on CPU and GPU, at very different margins
 
 Same N=50, 5-step TFIM Trotter circuit used throughout this repo's MPS benchmarking, `max_bond=64`, warm (post-compile) timing:
