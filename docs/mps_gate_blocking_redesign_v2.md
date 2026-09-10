@@ -39,6 +39,10 @@ Fusing multiple original 2-qubit gates into one step means `self._bond_history`/
 
 Same apples-to-apples methodology as the [timing follow-up](mps_bucketed_svd_gpu_timing_followup.md) (all three variants through one consistent code path), now on the complete, promotion-ready pipeline (real `_compile_mps_ops`, matrix-based kernel, full diagnostic tuple):
 
+![Original vs bucketed vs bucketed+gate-blocked GPU timing](assets/mps_gate_blocking_redesign_v2/gpu_timing_v2.png)
+
+Raw data: [gpu_timing_v2.csv](assets/mps_gate_blocking_redesign_v2/gpu_timing_v2.csv).
+
 <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px">
 <thead><tr>
 <th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Version</th>

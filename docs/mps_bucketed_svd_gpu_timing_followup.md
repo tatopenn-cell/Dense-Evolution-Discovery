@@ -18,6 +18,10 @@
 
 Not GPU session noise (a factory-reset re-test still showed the same slowdown, ruling that out). The real cause: `run_circuit_jit`'s "warm" timing was always measured on a **fresh `MPSSimulator` instance**, but `self._mps_runner` (the `@jax.jit`-compiled closure) is built lazily per instance and never shared across instances -- a fresh instance means a fresh, uncompiled closure, so "warm" was paying a full recompile every time, same as "cold". A second attempt (calling `run_circuit_jit` twice on the *same* instance) also failed, for a different reason: the second call's circuit ran on top of the first call's already-evolved state, compounding real entanglement growth instead of measuring steady state (10.2s -> 12.2s -> 42.2s across repeated calls). The fix: a **fresh `|0...0>` instance for each timing, with the already-compiled closure manually shared onto it** -- fresh state and a pre-compiled kernel together. That gives the real, stable, honest number: bucketing alone is ~1.41x faster on GPU (not the earlier flawed 2.74x, and not a regression either).
 
+![Four attempts at measuring GPU warm time, two flawed and two correct](assets/mps_bucketed_svd_gpu_timing_followup/methodology_progression.png)
+
+Raw data: [methodology_progression.csv](assets/mps_bucketed_svd_gpu_timing_followup/methodology_progression.csv).
+
 ## Scripts
 
 - `scripts/colab_gpu_mps_benchmark_v2.py` -- real `run_circuit_jit`, pinned to 8.1.76, circuit built via real QASM (8.89s warm, later found to be a flawed "fresh instance" measurement)
