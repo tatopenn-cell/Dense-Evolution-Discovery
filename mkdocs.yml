@@ -100,3 +100,4 @@ nav:
     - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
     - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
     - "native_hf: d-Shell Support": native_hf_d_shell_experiment.md
+    - "Bucketed-SVD MPS Optimization": mps_bucketed_svd_optimization.md
