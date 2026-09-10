@@ -40,18 +40,18 @@ CUTOFF = 1e-12 if PRECISION == "complex128" else 1e-6
 print(f"PRECISION={PRECISION} N={N} max_bond={MAX_BOND}")
 
 
-def trotter_ops(n, dt, steps, J, g):
-    theta_zz, theta_x = -2.0 * dt * J, -2.0 * dt * g
-    ops = []
-    for _ in range(steps):
-        for i in range(n - 1):
-            ops += [("cx", i, i + 1), ("rz", i + 1, theta_zz), ("cx", i, i + 1)]
-        for i in range(n):
-            ops.append(("rx", i, theta_x))
-    return ops
-
-
-ops = trotter_ops(N, DT, STEPS, J, G)
+theta_zz = -2.0 * DT * J
+theta_x = -2.0 * DT * G
+lines = ["OPENQASM 2.0;", 'include "qelib1.inc";', f"qreg q[{N}];"]
+for _ in range(STEPS):
+    for i in range(N - 1):
+        lines.append(f"cx q[{i}],q[{i+1}];")
+        lines.append(f"rz({theta_zz}) q[{i+1}];")
+        lines.append(f"cx q[{i}],q[{i+1}];")
+    for i in range(N):
+        lines.append(f"rx({theta_x}) q[{i}];")
+circuit = de.QASMParser().parse("\n".join(lines))
+ops = circuit.to_tuples()
 print(f"n_gates={len(ops)}")
 
 sim = de.MPSSimulator(N, max_bond=MAX_BOND, svd_cutoff=CUTOFF, use_float32=USE_FLOAT32)

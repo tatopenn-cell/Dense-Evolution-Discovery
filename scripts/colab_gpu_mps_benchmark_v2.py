@@ -6,23 +6,18 @@
 #
 # Cell 2: the code below.
 #
-# Re-run of this session's N=50 GPU benchmark, now pinned to 8.1.76 --
-# the release that promotes the bucketed-SVD dispatch into
-# run_circuit_jit itself (dense_evolution/backends/mps.py). No script
-# changes needed: run_circuit_jit's public signature/behavior is
-# unchanged, only its internal SVD sizing. This is the "does the real
-# release beat cuQuantum now" follow-up to the earlier same-N comparison
-# (which found cuQuantum ~1.7-2.9x faster than the pre-optimization
-# Dense-Evolution MPS backend).
+# What this circuit is, in plain terms: a Trotterized simulation of the
+# Transverse Field Ising Model (TFIM) -- a chain of N qubits, each
+# entangled with its neighbor (cx), given a small phase kick (rz) tuned
+# by the interaction strength J, then a small rotation (rx) tuned by the
+# transverse field g. Repeating this "layer" STEPS times approximates
+# continuous time evolution under the TFIM Hamiltonian. Same circuit
+# family used throughout this repo's MPS benchmarking (dense_evolution_
+# mps_benchmark.ipynb).
 #
-# Companion script: colab_cuquantum_mps_benchmark_v2.py -- same N=50,
-# same PRECISION toggle, run separately (cuQuantum is a different
-# environment/install, not combined into one script).
-#
-# See mps_bucketed_svd_gpu_timing_followup.md for what this actually
-# found: a real, unresolved discrepancy between this script's warm time
-# (8.89s) and the isolated bucketed-runner benchmark that validated the
-# optimization (2.41s, same circuit) -- not yet root-caused.
+# Built as real OPENQASM 2.0 text, parsed by dense_evolution's own
+# QASMParser -- not hand-written gate tuples -- so this is exactly what
+# a user would write to run this circuit themselves via run_circuit_jit.
 PRECISION = "complex128"  # or "complex64"
 
 import time
@@ -47,19 +42,20 @@ USE_FLOAT32 = PRECISION == "complex64"
 CUTOFF = 1e-12 if PRECISION == "complex128" else 1e-6
 print(f"PRECISION={PRECISION} use_float32={USE_FLOAT32} svd_cutoff={CUTOFF} max_bond={MAX_BOND}")
 
+theta_zz = -2.0 * DT * J
+theta_x = -2.0 * DT * G
 
-def trotter_ops(n, dt, steps, J, g):
-    theta_zz, theta_x = -2.0 * dt * J, -2.0 * dt * g
-    ops = []
-    for _ in range(steps):
-        for i in range(n - 1):
-            ops += [("cx", i, i + 1), ("rz", i + 1, theta_zz), ("cx", i, i + 1)]
-        for i in range(n):
-            ops.append(("rx", i, theta_x))
-    return ops
+lines = ["OPENQASM 2.0;", 'include "qelib1.inc";', f"qreg q[{N}];"]
+for _ in range(STEPS):
+    for i in range(N - 1):
+        lines.append(f"cx q[{i}],q[{i+1}];")
+        lines.append(f"rz({theta_zz}) q[{i+1}];")
+        lines.append(f"cx q[{i}],q[{i+1}];")
+    for i in range(N):
+        lines.append(f"rx({theta_x}) q[{i}];")
 
-
-ops = trotter_ops(N, DT, STEPS, J, G)
+circuit = de.QASMParser().parse("\n".join(lines))
+ops = circuit.to_tuples()
 print(f"N={N} n_gates={len(ops)}")
 
 sim = de.MPSSimulator(N, max_bond=MAX_BOND, svd_cutoff=CUTOFF, use_float32=USE_FLOAT32)

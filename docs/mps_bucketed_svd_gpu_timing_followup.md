@@ -20,11 +20,14 @@ GPU session/runtime state (shared T4 contention, thermal throttling, or accumula
 
 ## Scripts
 
-- `scripts/colab_gpu_mps_benchmark_v2.py` -- real `run_circuit_jit`, pinned to 8.1.76 (8.89s warm)
+- `scripts/colab_gpu_mps_benchmark_v2.py` -- real `run_circuit_jit`, pinned to 8.1.76, circuit built via real QASM (8.89s warm, later found to be a flawed "fresh instance" measurement)
 - `scripts/colab_cuquantum_mps_benchmark_v2.py` -- cuQuantum comparison (1.14s warm)
 - `scripts/colab_gpu_mps_timing_breakdown.py` -- splits `run_circuit_jit` into prep/kernel/bookkeeping (kernel=8.6s dominates)
 - `scripts/colab_gpu_diagnostics_cost_check.py` -- A/B test on the trunc_err/entropy hypothesis (ruled out)
 - `scripts/colab_print_installed_mps_source.py` -- dumps the installed `_build_mps_runner` source for direct comparison (confirmed identical)
+- `scripts/colab_gpu_mps_benchmark_v3_same_instance.py` -- same-instance repeated calls (also flawed: compounds entanglement instead of measuring steady state)
+- `scripts/colab_gpu_mps_benchmark_v4_shared_compiled_runner.py` -- the version that got it right: fresh `|0...0>` instance + manually shared, already-compiled `self._mps_runner` (2.730s/2.737s warm, stable)
+- `scripts/colab_gpu_mps_fair_comparison_old_vs_new.py` -- 8.1.75 (old, shipped) measured with the same correct methodology (3.746s/3.820s warm) -- the real baseline this experiment's ~1.37-1.40x GPU speedup is measured against
 
 ## Lesson
 
