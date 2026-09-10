@@ -101,6 +101,16 @@ Speed was not. Measured on Kaggle T4 (same N=50 TFIM circuit, standalone compari
 
 Not promoted. Scripts and the full derivation live in Dense-Evolution-Discovery (`mps_qr_truncation_approach_b_prototype.py`, `mps_qr_truncation_circuit_correctness.py`, `mps_qr_truncation_jax_prototype.py`).
 
+## A fifth idea, tested negative but not conclusively closed: batched even-odd gate application
+
+A different axis than the other three: instead of changing what one two-site update costs, reduce the *number* of sequential GPU dispatches. For a 1D nearest-neighbor circuit, "even" bonds `(0,1),(2,3),(4,5),...` never share a qubit with each other, and neither do "odd" bonds `(1,2),(3,4),...` — so, using the standard even-odd (2nd-order Suzuki-Trotter) circuit decomposition instead of a naive left-to-right sweep, every even bond can be updated in one `jax.vmap(SVD)` call, then every odd bond in a second, instead of walking each bond one at a time. Mathematically exact (batching independent operations changes nothing about the math), unlike QR truncation — verified to match a dense-statevector reference to machine precision at every tested bond dimension.
+
+The correctness-validated implementation keeps each tensor at its true, current shape (padding only temporarily, per gate, so bonds of different sizes can be stacked for the batched call). Measured on Kaggle T4 (same N=50 circuit): **0.21x** — nearly 5x *slower* than the sequential baseline, worse even than its own CPU number (0.61x). Root cause: the per-gate padding/trimming bookkeeping this implementation needs is itself a Python loop of small eager JAX dispatches — exactly the anti-pattern this investigation already found and fixed once in production (`_pad_gamma`/`_pad_lambda`), now reintroduced by the very code meant to avoid extra dispatches.
+
+A second implementation attempt kept every tensor permanently padded to `max_bond` (removing the per-gate padding loop entirely, matching production's own convention) to test whether that fixes the overhead — but hit a distinct, unresolved correctness bug (breaks specifically when a cut's real bond dimension reaches its own theoretical maximum) that a second root-cause pass didn't find. **This means the true GPU potential of batched even-odd dispatch, done efficiently, is still genuinely open** — the 0.21x result is real and confirmed for the specific (correct but padding-inefficient) implementation tested, not a verdict on the underlying idea.
+
+Not promoted, not conclusively rejected. Scripts: `mps_batched_even_odd_prototype.py` (NumPy, exact), `mps_batched_even_odd_jax_prototype.py` (JAX, correctness-validated, GPU-tested negative), `mps_batched_even_odd_jax_padded_v2.py` (permanently-padded attempt, unresolved bug).
+
 ## Reproduce
 
 ```bash
