@@ -1,0 +1,4 @@
+variant,warm_seconds,speedup_vs_original
+original_fixed_svd,3.385,1.0
+bucketed_only,2.435,1.39
+bucketed_plus_gate_blocking,1.223,2.77

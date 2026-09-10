@@ -1,0 +1,5 @@
+attempt,warm_seconds,note
+v2_fresh_instance_flawed,8.89,flawed: fresh instance recompiles every call
+v3_same_instance_flawed,12.16,flawed: compounds real entanglement growth
+v4_shared_compiled_runner_correct,2.73,correct: fresh state + shared compiled kernel
+fair_comparison_875_baseline_correct,3.75,"correct: same methodology, pre-optimization baseline"
