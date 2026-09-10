@@ -91,6 +91,16 @@ Both PRs (#228, #229) and their Discovery validation scripts are linked below. W
 
 **Lesson carried forward**: every one of these three bugs was invisible until the literal, promoted public API was benchmarked on real GPU hardware. A reimplementation's numbers, however carefully measured, are not a substitute for testing the thing that ships.
 
+## A tried-and-rejected fourth idea: QR-based truncation
+
+A natural next question after closing the 2.16x gap: could the SVD truncation *itself* be replaced with something faster on GPU? **arXiv:2212.09782** ("Fast Time-Evolution of MPS using the QR decomposition") proposes exactly that — replace the two-site SVD with two QR/LQ decompositions plus one small, physical-dimension-independent `chi x chi` SVD, cutting the scaling in the local Hilbert space dimension `d` from `d^3` to `d^2`.
+
+Correctness was real: a first implementation attempt had a genuine bug (`A[m]_new` was built from the wrong intermediate matrix — caught by a full-rank sanity check that should be exact to machine precision and wasn't, until fixed), and once fixed, the corrected version matched a dense-statevector reference to fidelity >0.9999 on a full TFIM circuit using only 2 warm-started QR/LQ iterations per gate.
+
+Speed was not. Measured on Kaggle T4 (same N=50 TFIM circuit, standalone comparison, not yet touching `run_circuit_jit`): the QR method was **0.83x** — genuinely *slower* than plain SVD, not faster. Most likely explanation: qubits have `d=2`, the smallest possible physical dimension, where the paper's own `d^3`-to-`d^2` improvement is only a factor of ~2 in the dominant term — and this implementation pays for that small per-operation saving with *four* separate GPU dispatches per gate (2 iterations x QR+LQ) instead of *one* SVD dispatch. That trade is exactly the same "per-step dispatch overhead dominates on GPU, not FLOP count" lesson this page's whole investigation already established for gate blocking, now confirmed in a different context. The technique may still pay off for larger local Hilbert spaces (qudits, bosonic modes) where `d` is bigger — not validated here, and not pursued further for this qubit-only simulator.
+
+Not promoted. Scripts and the full derivation live in Dense-Evolution-Discovery (`mps_qr_truncation_approach_b_prototype.py`, `mps_qr_truncation_circuit_correctness.py`, `mps_qr_truncation_jax_prototype.py`).
+
 ## Reproduce
 
 ```bash
