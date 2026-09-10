@@ -13,9 +13,11 @@ Archived on Zenodo — see [CITATION.cff](https://github.com/tatopenn-cell/Dense
 The newest work has its own dedicated page per topic (see the sidebar); everything older lives inline further down this page, one numbered experiment at a time.
 
 - **[Repository](repository_architecture.md)** — what every script and test file does.
+- **[MPS GPU Optimization](mps_gpu_optimization.md)** — bucketed-SVD dispatch and gate blocking for `MPSSimulator.run_circuit_jit`, 2.16x on real GPU hardware.
 - **Density-Matrix Diagnostics** — [Sandwiched Renyi Divergence](sandwiched_renyi_density_matrix.md) · [Quantum Ruzsa Key Unitary & Magic Entropy](quantum_ruzsa_magic_entropy.md) · [Classical Shadows: Bug Fix & Magic Entropy Estimation](quantum_shadows_magic_entropy.md)
 - **Vector Healing** — [Stratonovich-Projection Vector Healing](stratonovich_vector_healing.md) · [Healing Trigger False-Positive Audit](healing_trigger_false_positive_audit.md) · [Leaky-Switch Differentiable Healing](leaky_differentiable_healing.md)
-- **Other Investigations** — [Harrison / VHD Tight-Binding](harrison_tight_binding.md) · [Traversable-Wormhole Teleportation](wormhole_syk_teleportation.md) · [Photonic Predictive ZNE](photonic_predictive_zne.md) · [Quantum Many-Body Scar Investigation](quantum_scar_investigation.md)
+- **[Dense-Armor: Robot Safety Monitoring](live_safety_loop.md)** — drift/fault detection and safety filtering on real IMU, Lidar, and LeRobot data.
+- **Dense-Evolution: Quantum Simulation & Physics** — [Harrison / VHD Tight-Binding](harrison_tight_binding.md) · [Traversable-Wormhole Teleportation](wormhole_syk_teleportation.md) · [Photonic Predictive ZNE](photonic_predictive_zne.md) · [Quantum Many-Body Scar Investigation](quantum_scar_investigation.md)
 
 ---
 
