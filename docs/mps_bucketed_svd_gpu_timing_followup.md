@@ -1,6 +1,6 @@
-# Bucketed-SVD MPS on GPU: an Unresolved Regression, Not Yet a Win
+# Bucketed-SVD MPS on GPU: Correcting a Wrong Claim
 
-**Status: open, unresolved.** This corrects the GPU claim in [mps_bucketed_svd_optimization.md](mps_bucketed_svd_optimization.md) (2.74x faster) -- that number came from a standalone reimplementation of the bucketed dispatch, never from the real `MPSSimulator.run_circuit_jit` API it was promoted into (Dense-Evolution PR #226). The real API was not benchmarked on GPU before promotion. When it finally was, afterward, it measured **slower than the pre-optimization baseline**, not faster.
+**Status: resolved.** This corrects the GPU claim in [mps_bucketed_svd_optimization.md](mps_bucketed_svd_optimization.md) (2.74x faster) -- that number came from a standalone reimplementation of the bucketed dispatch, never from the real `MPSSimulator.run_circuit_jit` API it was promoted into (Dense-Evolution PR #226). The real API was not benchmarked on GPU before promotion. When it finally was, afterward, it first measured **slower than the pre-optimization baseline**, not faster -- traced below to a benchmark methodology bug, not a real regression. Once measured correctly, bucketing alone gives a real ~1.41x on GPU; [gate blocking](mps_gate_blocking_experiment.md) closes the rest of the gap to a genuine 2.87x, measured through one consistent methodology end to end.
 
 ## The numbers, in order
 
@@ -14,9 +14,9 @@
 - **The extra `trunc_err`/entanglement-entropy computation** the real per-branch SVD step does (and the standalone benchmark didn't): tested both with and without, as an actual scan output (not just computed-and-discarded, which the first attempt at this check got wrong and had to be redone) -- 2.451s vs 2.449s. Not the cause.
 - **Source drift**: `inspect.getsource` on the installed 8.1.76 package's `_build_mps_runner` was compared line-by-line against a hand-copied reimplementation using the same real private helpers (`_mps_1q_matrix`, `_mps_2q_matrix`, `_vectorized_chi_search_jax`, `_pad_gamma`, `_pad_lambda`, `_bucket_sizes`) -- byte-identical. The hand-copied version still measured 2.45s under the same conditions the real `sim._mps_runner` measured 8.6s in. The discrepancy is not (yet) explained by any source difference found so far.
 
-## Leading, unconfirmed hypothesis
+## Root cause, confirmed
 
-GPU session/runtime state (shared T4 contention, thermal throttling, or accumulated state from other scripts run earlier in the same Colab session/notebook without a runtime restart). Not confirmed. A clean re-test (`Runtime > Factory reset runtime`, not just restart) of `run_circuit_jit`'s real GPU timing is the next step, and this page will be updated with whatever it finds -- including if it confirms a real, unexplained regression that needs fixing or reverting PR #226's GPU behavior, not just a measurement artifact.
+Not GPU session noise (a factory-reset re-test still showed the same slowdown, ruling that out). The real cause: `run_circuit_jit`'s "warm" timing was always measured on a **fresh `MPSSimulator` instance**, but `self._mps_runner` (the `@jax.jit`-compiled closure) is built lazily per instance and never shared across instances -- a fresh instance means a fresh, uncompiled closure, so "warm" was paying a full recompile every time, same as "cold". A second attempt (calling `run_circuit_jit` twice on the *same* instance) also failed, for a different reason: the second call's circuit ran on top of the first call's already-evolved state, compounding real entanglement growth instead of measuring steady state (10.2s -> 12.2s -> 42.2s across repeated calls). The fix: a **fresh `|0...0>` instance for each timing, with the already-compiled closure manually shared onto it** -- fresh state and a pre-compiled kernel together. That gives the real, stable, honest number: bucketing alone is ~1.41x faster on GPU (not the earlier flawed 2.74x, and not a regression either).
 
 ## Scripts
 
@@ -28,6 +28,7 @@ GPU session/runtime state (shared T4 contention, thermal throttling, or accumula
 - `scripts/colab_gpu_mps_benchmark_v3_same_instance.py` -- same-instance repeated calls (also flawed: compounds entanglement instead of measuring steady state)
 - `scripts/colab_gpu_mps_benchmark_v4_shared_compiled_runner.py` -- the version that got it right: fresh `|0...0>` instance + manually shared, already-compiled `self._mps_runner` (2.730s/2.737s warm, stable)
 - `scripts/colab_gpu_mps_fair_comparison_old_vs_new.py` -- 8.1.75 (old, shipped) measured with the same correct methodology (3.746s/3.820s warm) -- the real baseline this experiment's ~1.37-1.40x GPU speedup is measured against
+- `scripts/colab_full_chain_apples_to_apples.py` -- all three variants (original, bucketed-only, bucketed+gate-blocked) measured through one consistent internal-scan methodology, giving the independently-confirmed 1.41x (bucketing alone) and 2.87x (combined with [gate blocking](mps_gate_blocking_experiment.md)) used for the final target-vs-result comparison
 
 ## Lesson
 

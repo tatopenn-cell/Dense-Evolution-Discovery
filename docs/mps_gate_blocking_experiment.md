@@ -31,7 +31,7 @@ Verified against the real eager `MPSSimulator` reference (not the bucketed dispa
 
 CPU (N=50, max_bond=64, 5 Trotter steps): 64.81ms unfused vs. 70.73ms fused -- a 0.92x "speedup" (slightly negative). Expected, not a problem: CPU doesn't pay meaningful per-step dispatch overhead in the first place, so halving the step count has nothing to amortize.
 
-GPU (T4, same circuit, complex128, measured with the corrected methodology from the timing follow-up -- a fresh `|0...0>` instance reusing an already-compiled kernel, avoiding both the fresh-instance-recompile trap and the same-instance-entanglement-accumulation trap found there):
+GPU (T4, same circuit, complex128). **Correction (2026-09-10):** an earlier version of this table divided the ORIGINAL baseline measured via the real `run_circuit_jit` API against the fused result measured via a different code path (the internal bucketed-switch reimplementation) -- two different measurement methodologies stitched together, giving a meaningless ~3.16-3.22x. All three numbers below are now measured through the exact same internal-scan methodology (bypassing `run_circuit_jit` entirely for all three, so the ratios are genuinely comparable):
 
 ![GPU timing: original vs bucketed vs bucketed+blocked](assets/mps_gate_blocking_experiment/mps_gate_blocking_gpu_timing.png)
 
@@ -39,16 +39,16 @@ GPU (T4, same circuit, complex128, measured with the corrected methodology from 
 <thead><tr>
 <th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Version</th>
 <th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Warm time</th>
-<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Speedup vs. 8.1.75</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em">Speedup vs. original</th>
 </tr></thead>
 <tbody>
-<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8.1.75 (original, fixed max_bond SVD)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">3.746s / 3.820s</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.00x</td></tr>
-<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">8.1.76 (bucketed SVD only)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">2.730s / 2.737s</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">~1.37-1.40x</td></tr>
-<tr><td style="padding:9px 10px">Bucketed SVD + gate blocking (this experiment)</td><td style="padding:9px 10px">1.185s</td><td style="padding:9px 10px"><strong>~3.16-3.22x</strong></td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">Original (always fixed max_bond SVD)</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">3.401s</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.00x</td></tr>
+<tr><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">Bucketed SVD only</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">2.420s</td><td style="padding:9px 10px;border-bottom:1px solid #d7dbe0">1.41x</td></tr>
+<tr><td style="padding:9px 10px">Bucketed SVD + gate blocking (this experiment)</td><td style="padding:9px 10px">1.186s</td><td style="padding:9px 10px"><strong>2.87x</strong></td></tr>
 </tbody>
 </table>
 
-Gate blocking alone, isolated from the rest of the stack (bucketed-only vs. bucketed+blocked, same run): **2.04x**. Combined with the bucketed dispatch, the total measured speedup clears the 2x target.
+Gate blocking alone, isolated from the rest of the stack (bucketed-only vs. bucketed+blocked, same run, same methodology): **2.04x**. Combined with the bucketed dispatch, the total measured speedup is **2.87x** -- clears the 2x target, measured honestly through a single consistent code path end to end. This number reflects the internal bucketed+fused reimplementation, not yet the real `run_circuit_jit` API (gate blocking is not promoted into `dense_evolution` -- see Status below).
 
 ## Status
 
