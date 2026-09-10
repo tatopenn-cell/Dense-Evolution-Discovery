@@ -101,6 +101,19 @@ CASES = [
 
 
 def _run_matrix(dtype, eps, jsd_budget, max_bond, label):
+    """Runs the CASES matrix for one (dtype, eps, jsd_budget, max_bond)
+    configuration, comparing exact_step against bucketed_step.
+
+    When the exact result already violates jsd_budget (jsd_e_f >
+    JSD_BUDGET), only the overlapping singular values need to agree, not
+    chi/jsd exactly: exact's own result is already in the unreliable,
+    budget-violated (capped-at-max_possible) regime there -- a documented
+    complex64 artifact where zero-padding before the SVD creates
+    floating-point "ghost" singular values (~1e-8) that the JSD metric
+    can amplify into a spurious violation even when true discarded mass
+    is negligible. The bucketed SVD, run on far fewer zero-padded
+    candidates (or none, when the real rank already fits the bucket),
+    doesn't have this artifact and is MORE reliable here, not wrong."""
     global DTYPE, EPS, JSD_BUDGET
     DTYPE, EPS, JSD_BUDGET = dtype, eps, jsd_budget
     base_key = jax.random.PRNGKey(0)
@@ -124,16 +137,6 @@ def _run_matrix(dtype, eps, jsd_budget, max_bond, label):
         chi_match = chi_e_i == chi_b_i
         jsd_match = abs(jsd_e_f - jsd_b_f) < 1e-9 if dtype == jnp.complex128 else abs(jsd_e_f - jsd_b_f) < 1e-4
         if jsd_e_f > JSD_BUDGET:
-            # exact's own result is already in the unreliable, budget-violated
-            # (capped-at-max_possible) regime here -- a documented complex64
-            # artifact where zero-padding before the SVD creates floating-point
-            # "ghost" singular values (~1e-8) that this JSD metric can amplify
-            # into a spurious violation even when true discarded mass is
-            # negligible. The bucketed SVD, run on far fewer zero-padded
-            # candidates (or none, when the real rank already fits the
-            # bucket), doesn't have this artifact and is MORE reliable here,
-            # not wrong -- only the overlapping singular values that both
-            # sides actually computed need to agree.
             ok = s_match
         else:
             ok = s_match and chi_match and jsd_match

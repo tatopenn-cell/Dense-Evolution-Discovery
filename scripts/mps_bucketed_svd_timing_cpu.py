@@ -40,6 +40,21 @@ def trotter_ops_de(n, dt, steps, j, g):
 
 
 def main():
+    """_bucketed_runner is a plain Python function -- called eagerly,
+    every invocation retraces jax.lax.scan from scratch (no compiled
+    program persists across separate calls without an outer jax.jit).
+    Wrapping it once (run_bucketed_jit, below) is the fix -- the first
+    call compiles (real "cold"), the second reuses that exact compiled
+    program (real "warm"), same cold/warm distinction run_circuit_jit
+    already gets for free from its own cached self._mps_runner.
+
+    N=50 is too large for contract_to_statevector() (2^50 amplitudes) --
+    z0_from_gamma_lambda instead compares the single-qubit reduced
+    density matrix on qubit 0, the same z0 = <Z> metric used throughout
+    this session's GPU benchmarking, to check that the max_bond_used
+    (8 vs 6) difference between the shipped and bucketed paths doesn't
+    come with a real physical disagreement, not just eyeballing the
+    bond numbers."""
     print(f"N={N} max_bond={MAX_BOND} STEPS={STEPS}")
 
     ops_de = trotter_ops_de(N, DT, STEPS, J, G)
@@ -58,13 +73,6 @@ def main():
     gate_list = _tfim_gate_list(N, DT, STEPS, J, G)
     ops_jnp = jnp.asarray(_to_ops_rows(gate_list), dtype=jnp.float64)
 
-    # _bucketed_runner is a plain Python function -- called eagerly, every
-    # invocation retraces jax.lax.scan from scratch (no compiled program
-    # persists across separate calls without an outer jax.jit). Wrapping it
-    # here, once, is the fix -- the first call compiles (real "cold"), the
-    # second reuses that exact compiled program (real "warm"), same
-    # cold/warm distinction run_circuit_jit already gets for free from its
-    # own cached self._mps_runner.
     run_bucketed_jit = jax.jit(lambda ops: _bucketed_runner(N, MAX_BOND, 1e-12, 1e-5, jnp.complex128, ops))
 
     t0 = time.perf_counter()
@@ -81,11 +89,6 @@ def main():
 
     print(f"\nspeedup (warm): {t_shipped_warm / t_bucketed_warm:.2f}x")
 
-    # N=50 is too large for contract_to_statevector() (2^50 amplitudes) --
-    # comparing the single-qubit reduced density matrix on qubit 0 instead,
-    # same z0 = <Z> metric used throughout this session's GPU benchmarking,
-    # to check the max_bond_used(8 vs 6) difference didn't come with a real
-    # physical disagreement, not just eyeball the bond numbers.
     def z0_from_gamma_lambda(gamma0, lambda1):
         A = gamma0[0] * lambda1[None, :]
         rho0 = A @ A.conj().T
