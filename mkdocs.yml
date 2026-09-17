@@ -112,4 +112,11 @@ nav:
       - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
+      - "Chunk: GPU Dynamic-Cap Finding": chunk_gpu_cap_finding.md
       - "native_hf: d-Shell Support": native_hf_d_shell_experiment.md
+      - "Gauge-Safe Gradients at Eigenvalue Degeneracy (Kato)": spectral_evolve_kato_degeneracy.md
+    - "CASMI26 Chemistry & QM/MM":
+      - "Isodesmic Bond-Scission Energy": isodesmic_bond_scission_energy.md
+      - "JAX Spectral Retrieval": jax_spectral_retrieval_casmi26.md
+      - "QM/MM Region Partitioning + MMFF94 Correction": qmmm_region_partitioning_mmff_correction.md
+      - "QM/MM Bond Order and Electrostatic Embedding": qmmm_bond_order_and_embedding.md
