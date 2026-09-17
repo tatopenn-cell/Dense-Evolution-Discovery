@@ -37,7 +37,12 @@ artifact -- the MM point charge immediately across the cut bond sits too
 close to the QM density.
 
 **Charge-shifting attempt**: redistributing that one boundary atom's
-charge onto its own remaining MM neighbors (the standard textbook fix)
+charge onto its own remaining MM neighbors -- the real "charge shift"
+scheme, traced to its primary source only after this was first written:
+de Vries, Sherwood, Collins, Rigby, Rigutto & Kramer, "Zeolite structure
+and reactivity by combined quantum-chemical-classical calculations," J.
+Phys. Chem. B 103, 6133 (1999) (DOI 10.1021/jp9913012, not open-access,
+verified via two independent citation searches rather than assumed) --
 did **not** close the gap -- at radius 3 (the only radius where the
 boundary atom had nonzero charge to shift), the corrected result (0.21
 kcal/mol) was worse than both plain embedding (0.09) and plain truncation
