@@ -16,6 +16,15 @@ et al. 2024, "hybrid quantum pipeline for drug discovery," uses a
 
 ## Steps 1-2: partitioning + link-atom capping
 
+```python
+qm_frag, qm_atoms, boundary_bonds = partition_qm_mm(smiles, (o_idx, c_idx), qm_radius=2)
+```
+
+`o_idx`/`c_idx` are the two atoms of the reactive bond. `partition_qm_mm`
+walks outward from them in heavy-atom hops up to `qm_radius`, then caps
+the single bond it crosses with a hydrogen, returning a smaller,
+already-valid molecule (`qm_frag`) in place of the whole one.
+
 BFS from the reactive bond in **heavy-atom hops only** -- hydrogens
 always follow their own heavy atom's region, never independently
 BFS-expanded. A real bug was found and fixed building this: letting
@@ -59,16 +68,14 @@ QM region + a classical MM correction term reproduces the whole-molecule
 chemistry to within ~0.5 kcal/mol here, at a fraction of the
 whole-molecule cost.
 
-## Step 5 (separate experiment)
+## Details
 
-Electrostatic embedding was tried separately and is documented in
-[QM/MM bond order and electrostatic embedding](qmmm_bond_order_and_embedding.md)
+Step 5 (electrostatic embedding) was tried separately and is documented
+in [QM/MM bond order and electrostatic embedding](qmmm_bond_order_and_embedding.md)
 -- a mixed/negative result, not included here.
 
-## Status
+**Status**: documented here (Discovery), promotion to Dense-Evolution not
+yet proposed -- steps 1-4 are validated on one molecule/one bond; a
+second independent molecule would strengthen the case before promoting.
 
-Documented here (Discovery), promotion to Dense-Evolution not yet
-proposed -- steps 1-4 are validated on one molecule/one bond; a second
-independent molecule would strengthen the case before promoting.
-
-Script: `scripts/qmmm_region_partitioning_mmff_correction.py`.
+**Script**: `scripts/qmmm_region_partitioning_mmff_correction.py`.
