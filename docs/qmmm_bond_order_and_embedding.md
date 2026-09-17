@@ -5,7 +5,7 @@ Two follow-up experiments to
 steps 1-4, each with a real, honest result -- one still open, one
 reversed from negative to positive on a second test.
 
-## Step 5: electrostatic embedding (open, not solved)
+## Step 5: electrostatic embedding (closed, unresolved)
 
 ```python
 V_ext = external_point_charge_potential(atomic_numbers, geometry_bohr, basis, mm_charges, mm_positions)
@@ -69,17 +69,58 @@ verified correct with a minimal He-atom test (E(+1 charge nearby) <
 E(isolated) < E(-1 charge nearby), exactly as physics requires) -- this
 is not a sign bug.
 
-![Embedding helps only with real MM charge, but overpolarizes; five different fixes tried, none close the gap](assets/qmmm_bond_order_and_embedding/qmmm_embedding_charge_shifting.png)
+![Embedding helps only with real MM charge, but overpolarizes; six different fixes tried, none close the gap](assets/qmmm_bond_order_and_embedding/qmmm_embedding_charge_shifting.png)
 
-**Left open.** A working hypothesis, not yet tested: the combination of
-a link atom placed at a fixed standard bond length right next to M1, and
-a minimal basis set (STO-3G, no polarization functions) with no room to
-relax around that artificial atom, may make this specific system
-structurally unable to respond correctly to any electrostatic
-correction -- every fix alters the plain model's own (accidentally
-favorable) error cancellation without fixing the underlying cause. Not
-confirmed: this would need a real test with a polarized basis (e.g.
-6-31G*) to check whether the pattern changes, which was not run here.
+**Basis-flexibility hypothesis, tested and rejected.** The working
+hypothesis after the first five attempts was that STO-3G's lack of
+polarization functions leaves the QM density no room to relax around the
+link atom, and that a richer basis might change the picture. Tested
+directly at radius 3 (the only radius with a real charge to embed) with
+6-31G* instead of STO-3G: the gap between plain and embedded got WORSE,
+not better (plain 0.02 -> -0.04, point-embedded 0.09 -> 0.16 -- the
+embedding penalty roughly tripled, 0.07 -> 0.20 kcal/mol). Basis rigidity
+is not the cause.
+
+**Sixth attempt: the real RC scheme, not an approximation of it.** Lin &
+Truhlar, "QM/MM: What have we learned, where are we, and where do we go
+from here?" (contribution to the 10th Electronic Computational Chemistry
+Conference proceedings, *Theor. Chem. Acc.*; legitimately self-archived
+by the authors, not paywalled) describes their own real redistributed-
+charge (RC) scheme precisely: the M1 boundary atom's charge is moved to
+the MIDPOINTS of its M1-M2 bonds -- not onto M2's own position, which is
+what the earlier "charge-shifting attempt" above actually did (that was
+de Vries et al.'s older "Shift" scheme, not RC). In the source paper's
+own validation (CF3CH2O- proton affinity, errors of tens of kcal/mol),
+RC clearly outperforms cruder charge-elimination schemes. Implemented
+here exactly as described and tested on the same system as every other
+attempt:
+
+| radius | plain | point charge | RC (real midpoint scheme) |
+|---|---|---|---|
+| 1 | 0.11 | 0.27 | 0.27 (M1 charge is 0 here, nothing to redistribute) |
+| 2 | 0.08 | 0.26 | 0.26 (same) |
+| 3 | 0.02 | 0.09 | **0.17** |
+
+Worse than plain, worse than the naive point charge, at the only radius
+where it does anything. A real, correctly-implemented, literature-
+validated scheme still loses to doing nothing here. Plausible
+reconciliation: Lin & Truhlar's own validation involves proton-affinity
+differences of tens of kcal/mol, where a good scheme's advantage over a
+bad one is large and clear; here the whole effect being corrected is
+0.1-0.3 kcal/mol, a scale where even a theoretically sound correction can
+add more noise than the truncation error it targets.
+
+**Closed.** Six real embedding treatments (point charge, Shift/charge-
+redistribution, Gaussian-smeared over the whole MM region, Gaussian-
+smeared on just M1, M1 charge deletion, RC/midpoint-redistribution) and
+one basis-set test, all grounded in real, verified sources or direct
+physical reasoning, and all worse than plain truncation on this system.
+The sign convention was independently verified correct (a minimal
+He-atom test: E(+1 charge nearby) < E(isolated) < E(-1 charge nearby),
+exactly as physics requires) -- this is not a bug in this codebase, and
+not (as tested) a basis-set artifact either. Plain truncation is the
+right default until a real cause is found. Not reopening without a new,
+concrete, source-grounded hypothesis.
 
 ## Bond-order-weighted region partitioning: reversed by a second test
 
@@ -148,16 +189,22 @@ isomorphism-invariant -- not just assumed from its structure -- by
 randomly relabeling every atom and checking the selected region maps
 back to the same atoms regardless.
 
-**Status**: neither promoted to Dense-Evolution. Step 5 (electrostatic
-embedding) is genuinely unsolved after five attempts (above). Bond-order
+**Status**: neither promoted to Dense-Evolution (region partitioning and
+Diffuse2Seg propagation WERE promoted separately, see
+[QM/MM region utilities](qmmm_utils.md) -- embedding was not, since it
+never worked). Step 5 (electrostatic embedding) is CLOSED, unsolved,
+after six real fix attempts plus a basis-set test (above) -- not
+reopening without a new, concrete, source-grounded hypothesis. Bond-order
 partitioning has a real differentiation signal but no demonstrated
 reaction-energy advantage over BFS yet -- would need thresholds chosen to
 actually diverge from BFS's selection, not just a differently-computed
 region that happens to match it.
 
 **Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`,
+`scripts/qmmm_rc_midpoint_scheme.py` (sixth attempt, real RC scheme),
 `scripts/qmmm_bond_order_partition_vs_radius.py` (first, negative test),
 `scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py` (second, positive
-signal), `scripts/qmmm/` (the reusable partitioning/capping
-utility that came out of all of this -- ring-safe BFS only, no
-electrostatic embedding, no MMFF94 correction).
+signal), `scripts/qmmm/` (the reusable partitioning/capping/propagation
+utility that came out of all of this and WAS promoted -- ring-safe BFS
+and Diffuse2Seg propagation only, no electrostatic embedding, no MMFF94
+correction).
