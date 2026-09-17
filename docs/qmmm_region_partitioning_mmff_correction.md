@@ -76,7 +76,7 @@ uncorrected error was already under 0.2 kcal/mol at every radius (not
 time (down to -1.5 kcal/mol). The same held on a second, branched-
 aromatic molecule. The correction was compensating for the independent-
 re-embedding artifact above, not for truncation itself -- it does not
-generalize and is not used in `scripts/qmmm_utils.py`.
+generalize and is not used in `scripts/qmmm/`.
 
 ## Details
 
@@ -85,7 +85,7 @@ in [QM/MM bond order and electrostatic embedding](qmmm_bond_order_and_embedding.
 -- five different fixes tried, all worse than no embedding, still open.
 
 **Status**: partitioning + capping (steps 1-2) are the part that holds
-up, consolidated into a real reusable module, `scripts/qmmm_utils.py`
+up, consolidated into a real reusable module, `scripts/qmmm/`
 (`partition_qm_mm_region`, `sliced_geometry`) -- ring-safe (a boundary
 bond into an aromatic ring now pulls the whole ring in, fixing a real
 `AtomKekulizeException` crash found on a branched-aromatic molecule) and
@@ -97,5 +97,5 @@ dependency), but this is the validated building block for any future
 QM/MM experiment in this repo.
 
 **Scripts**: `scripts/qmmm_region_partitioning_mmff_correction.py`
-(original, retracted correction), `scripts/qmmm_utils.py` (the reusable
+(original, retracted correction), `scripts/qmmm/` (the reusable
 utility that replaces it).
