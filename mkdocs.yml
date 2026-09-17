@@ -120,3 +120,4 @@ nav:
       - "JAX Spectral Retrieval": jax_spectral_retrieval_casmi26.md
       - "QM/MM Region Partitioning + MMFF94 Correction": qmmm_region_partitioning_mmff_correction.md
       - "QM/MM Bond Order and Electrostatic Embedding": qmmm_bond_order_and_embedding.md
+      - "QM/MM Region Utilities": qmmm_utils.md

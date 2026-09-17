@@ -153,6 +153,6 @@ region that happens to match it.
 **Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`,
 `scripts/qmmm_bond_order_partition_vs_radius.py` (first, negative test),
 `scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py` (second, positive
-signal), `scripts/qmmm_utils.py` (the reusable partitioning/capping
+signal), `scripts/qmmm/` (the reusable partitioning/capping
 utility that came out of all of this -- ring-safe BFS only, no
 electrostatic embedding, no MMFF94 correction).
