@@ -41,12 +41,40 @@ charge onto its own remaining MM neighbors (the standard textbook fix)
 did **not** close the gap -- at radius 3 (the only radius where the
 boundary atom had nonzero charge to shift), the corrected result (0.21
 kcal/mol) was worse than both plain embedding (0.09) and plain truncation
-(0.02). Likely cause: the redistribution target (the boundary atom's own
-hydrogens) can be just as close to the boundary as the atom being zeroed.
-**Left open** -- a correct fix needs a more careful redistribution scheme
-than this first attempt.
+(0.02).
 
-![Embedding helps only with real MM charge, but overpolarizes; charge-shifting doesn't fix it](assets/qmmm_bond_order_and_embedding/qmmm_embedding_charge_shifting.png)
+**Three more literature-standard fixes tried, all worse too.**
+Nochebuena, Naseem-Khan & Cisneros 2020 (arXiv:2010.14723, read directly)
+confirms the real fix for this exact artifact is the Double Link Atom
+method: replace the boundary point charge with a single s-type
+Gaussian-smeared charge, not deletion or redistribution:
+
+| radius | plain | point charge | Gaussian (all MM) | Gaussian (M1 only) | M1 deleted |
+|---|---|---|---|---|---|
+| 1 | 0.11 | 0.27 | 0.31 | 0.27 | 0.27 |
+| 2 | 0.08 | 0.26 | 0.29 | 0.26 | 0.26 |
+| 3 | 0.02 | 0.09 | 0.23 | 0.30 | 0.27 |
+
+At radius 1-2 the boundary (M1) atom has zero charge, so anything that
+only touches M1 changes nothing. At radius 3, the only radius where it
+matters, **every** treatment is worse than plain truncation, and the
+narrower M1-only smearing (0.30) is worse than smearing the whole region
+(0.23). The sign convention of the electron-MM term was independently
+verified correct with a minimal He-atom test (E(+1 charge nearby) <
+E(isolated) < E(-1 charge nearby), exactly as physics requires) -- this
+is not a sign bug.
+
+![Embedding helps only with real MM charge, but overpolarizes; five different fixes tried, none close the gap](assets/qmmm_bond_order_and_embedding/qmmm_embedding_charge_shifting.png)
+
+**Left open.** A working hypothesis, not yet tested: the combination of
+a link atom placed at a fixed standard bond length right next to M1, and
+a minimal basis set (STO-3G, no polarization functions) with no room to
+relax around that artificial atom, may make this specific system
+structurally unable to respond correctly to any electrostatic
+correction -- every fix alters the plain model's own (accidentally
+favorable) error cancellation without fixing the underlying cause. Not
+confirmed: this would need a real test with a polarized basis (e.g.
+6-31G*) to check whether the pattern changes, which was not run here.
 
 ## Bond-order-weighted region partitioning: reversed by a second test
 
@@ -88,13 +116,24 @@ always includes or excludes both branches together at a given radius.
 
 ![Real bond order differentiates the aromatic and alkyl branches; fixed-radius BFS cannot](assets/qmmm_bond_order_and_embedding/qmmm_bond_order_aromatic_vs_alkyl.png)
 
-**Conclusion**: the method has no advantage on uniform aliphatic chains,
-but a real, demonstrated one on molecules with real bond-order
-heterogeneity near the reactive site -- aromatic/conjugated groups are
-common in real drug-like molecules, so this is the realistic case, not
-an edge case. Worth a second look for promotion once it's validated on
-an actual reaction-energy comparison (this test only validated the
-partitioning signal itself, not yet the resulting isodesmic energy).
+**Decisive follow-up (matched atom budget, real reaction energy):**
+tested against fixed-radius BFS at the SAME atom count on the branching
+molecule above. At both budgets tested (3 and 10 heavy atoms), the
+bond-order threshold selected the EXACT SAME atoms as BFS -- identical
+SMILES, identical isodesmic energies. The chosen thresholds happened to
+land where both methods agree, not in the differentiating zone
+identified above; this test does not show bond-order beating BFS on
+reaction energy, only that the two didn't happen to diverge at these
+specific thresholds. Separately, on this same molecule, the MMFF94
+correction from
+[QM/MM region partitioning](qmmm_region_partitioning_mmff_correction.md)
+was found not to hold up at all once geometry was fixed -- see that
+page's retraction note.
+
+**Conclusion**: bond order has no advantage on uniform aliphatic chains,
+and a real signal differentiating aromatic vs. alkyl branches at equal
+hop-distance -- but that signal has not yet translated into a
+demonstrated reaction-energy win over BFS. Not promoted.
 
 ## Details
 
@@ -104,13 +143,16 @@ isomorphism-invariant -- not just assumed from its structure -- by
 randomly relabeling every atom and checking the selected region maps
 back to the same atoms regardless.
 
-**Status**: neither promoted to Dense-Evolution yet. Step 5 remains
-genuinely unsolved. The bond-order partitioning idea has a real positive
-signal (above) but still needs a full reaction-energy comparison against
-steps 1-4's MMFF94-corrected result, at a matched atom budget, before
-promotion is warranted.
+**Status**: neither promoted to Dense-Evolution. Step 5 (electrostatic
+embedding) is genuinely unsolved after five attempts (above). Bond-order
+partitioning has a real differentiation signal but no demonstrated
+reaction-energy advantage over BFS yet -- would need thresholds chosen to
+actually diverge from BFS's selection, not just a differently-computed
+region that happens to match it.
 
-**Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`
-(step 5), `scripts/qmmm_bond_order_partition_vs_radius.py` (first,
-negative test), `scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py`
-(second, positive test).
+**Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`,
+`scripts/qmmm_bond_order_partition_vs_radius.py` (first, negative test),
+`scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py` (second, positive
+signal), `scripts/qmmm_utils.py` (the reusable partitioning/capping
+utility that came out of all of this -- ring-safe BFS only, no
+electrostatic embedding, no MMFF94 correction).

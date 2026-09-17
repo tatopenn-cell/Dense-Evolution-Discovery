@@ -63,19 +63,39 @@ added on top of the small-region QM energy:
 
 The correction roughly halves the error at every radius, and -- unlike
 the uncorrected version -- improves with region size (best at radius 3).
-Validates steps 1-4 together as a real, working approximation: a small
-QM region + a classical MM correction term reproduces the whole-molecule
-chemistry to within ~0.5 kcal/mol here, at a fraction of the
-whole-molecule cost.
+
+**Retracted, not a real fix.** This result did not survive a later,
+more careful geometry treatment. The QM energies above come from
+independently re-embedding each fragment (whole, region, o-frag, c-frag)
+with its own fresh RDKit conformer -- a real geometric inconsistency the
+follow-up electrostatic-embedding kernel fixed by slicing every piece
+from ONE shared whole-molecule conformer instead. Re-running the exact
+same correction arithmetic under that better geometry: 1-hexanol's
+uncorrected error was already under 0.2 kcal/mol at every radius (not
+1.8-2.1), and applying the MMFF94 correction made it **worse** every
+time (down to -1.5 kcal/mol). The same held on a second, branched-
+aromatic molecule. The correction was compensating for the independent-
+re-embedding artifact above, not for truncation itself -- it does not
+generalize and is not used in `scripts/qmmm_utils.py`.
 
 ## Details
 
 Step 5 (electrostatic embedding) was tried separately and is documented
 in [QM/MM bond order and electrostatic embedding](qmmm_bond_order_and_embedding.md)
--- a mixed/negative result, not included here.
+-- five different fixes tried, all worse than no embedding, still open.
 
-**Status**: documented here (Discovery), promotion to Dense-Evolution not
-yet proposed -- steps 1-4 are validated on one molecule/one bond; a
-second independent molecule would strengthen the case before promoting.
+**Status**: partitioning + capping (steps 1-2) are the part that holds
+up, consolidated into a real reusable module, `scripts/qmmm_utils.py`
+(`partition_qm_mm_region`, `sliced_geometry`) -- ring-safe (a boundary
+bond into an aromatic ring now pulls the whole ring in, fixing a real
+`AtomKekulizeException` crash found on a branched-aromatic molecule) and
+validated with a shared conformer, no MMFF94 correction. Plain truncation
+alone is accurate to <0.2 kcal/mol on every radius tested on two
+different molecules -- promotion to Dense-Evolution not yet proposed
+(this is Discovery research code, RDKit is not a Dense-Evolution
+dependency), but this is the validated building block for any future
+QM/MM experiment in this repo.
 
-**Script**: `scripts/qmmm_region_partitioning_mmff_correction.py`.
+**Scripts**: `scripts/qmmm_region_partitioning_mmff_correction.py`
+(original, retracted correction), `scripts/qmmm_utils.py` (the reusable
+utility that replaces it).
