@@ -127,7 +127,12 @@ def _region_mol_capped(mol, qm_atoms, boundary_pairs):
     """The QM region as its own RDKit molecule, boundary bonds capped
     with H, for MMFF94 energy evaluation (a fresh embedding is fine here
     -- MMFF94 correction only needs consistent topology, not real
-    relative QM/MM distances, unlike electrostatic embedding)."""
+    relative QM/MM distances, unlike electrostatic embedding).
+
+    Also returns `old_to_new`, a dict mapping each ORIGINAL atom index
+    (from `mol`) that survived into this fragment to its new index here
+    -- needed to re-locate the reactive bond inside the fragment after
+    RDKit's RemoveAtom has renumbered everything."""
     em = Chem.RWMol(mol)
     for kept, cut in boundary_pairs:
         for bond in list(em.GetBonds()):
@@ -135,7 +140,10 @@ def _region_mol_capped(mol, qm_atoms, boundary_pairs):
                 em.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
                 cap = em.AddAtom(Chem.Atom(1))
                 em.AddBond(kept, cap, Chem.BondType.SINGLE)
-    keep = set(qm_atoms) | {em.GetNumAtoms() - 1 - i for i in range(len(boundary_pairs))}
+    n_after_caps = em.GetNumAtoms()
+    keep = set(qm_atoms) | set(range(n_after_caps - len(boundary_pairs), n_after_caps))
+    old_to_new = {old: new for new, old in enumerate(sorted(keep))}
+
     frag = Chem.RWMol(em)
     remove = sorted((i for i in range(frag.GetNumAtoms()) if i not in keep), reverse=True)
     for i in remove:
@@ -147,7 +155,33 @@ def _region_mol_capped(mol, qm_atoms, boundary_pairs):
     params.randomSeed = 2026
     AllChem.EmbedMolecule(frag, params)
     AllChem.MMFFOptimizeMolecule(frag)
-    return frag
+    return frag, old_to_new
+
+
+def _cap_dummies_with_hydrogen(mol):
+    """RDKit's FragmentOnBonds(addDummies=True) marks the cut point with
+    an isotope-tagged dummy atom, not a bare [*] -- naive string
+    replacement silently fails. Patch the RWMol directly instead."""
+    rw = Chem.RWMol(mol)
+    for atom in rw.GetAtoms():
+        if atom.GetAtomicNum() == 0:
+            atom.SetAtomicNum(1)
+            atom.SetIsotope(0)
+            atom.SetNoImplicit(False)
+            atom.SetFormalCharge(0)
+    capped = rw.GetMol()
+    Chem.SanitizeMol(capped)
+    return capped
+
+
+def _embed_and_mmff_energy(mol):
+    mol = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3()
+    params.randomSeed = 2026
+    AllChem.EmbedMolecule(mol, params)
+    AllChem.MMFFOptimizeMolecule(mol)
+    props = AllChem.MMFFGetMoleculeProperties(mol)
+    return AllChem.MMFFGetMoleculeForceField(mol, props).CalcEnergy()
 
 
 def _aromatic_ring_count(mol):
@@ -156,21 +190,34 @@ def _aromatic_ring_count(mol):
                if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring))
 
 
-def mmff94_correction(whole_mol, qm_atoms, boundary_pairs, e_qm_kcal, mmff_delta_whole_kcal):
-    """ONIOM-style correction `dE_MMFF94(whole) - dE_MMFF94(QM-region)`,
-    added to `e_qm_kcal`, GUARDED against the aromatic-ring mismatch
-    failure described in the module docstring: refuses to apply
-    (`applied=False`) when the whole molecule and the QM-region fragment
-    don't have the same number of aromatic rings, since that comparison
-    is not physically meaningful (MMFF94 cannot represent the quantum
-    resonance energy a ring difference implies).
+def mmff94_correction(whole_mol, qm_atoms, boundary_pairs, reactive_bond, e_qm_kcal, mmff_delta_whole_kcal):
+    """ONIOM-style correction `dE_MMFF94(whole reaction) - dE_MMFF94(QM-
+    region-only reaction)`, added to `e_qm_kcal`. Both deltas are the SAME
+    kind of quantity: sum(fragment MMFF94 energies after splitting at
+    `reactive_bond`) minus the intact molecule's own MMFF94 energy -- one
+    evaluated on the real whole molecule (by the caller, once, passed in
+    as `mmff_delta_whole_kcal`), one evaluated here on the smaller
+    QM-region-sized molecule. An earlier version of this function
+    subtracted the region's fragment energy directly from the WHOLE
+    molecule's energy -- comparing two differently-sized systems' bare
+    MMFF94 energies is not a reaction delta at all, and produced
+    corrections off by several kcal/mol even on 1-hexanol (a real bug
+    caught only by re-deriving the arithmetic and testing, not by reading
+    the code).
 
-    `mmff_delta_whole_kcal`: the whole-molecule MMFF94 reaction delta,
-    computed once by the caller (same for every radius on a given
-    molecule) -- not recomputed here to avoid re-doing that work per call.
+    GUARDED against the aromatic-ring mismatch failure described in the
+    module docstring: refuses to apply (`applied=False`) when the whole
+    molecule and the QM-region fragment don't have the same number of
+    aromatic rings, since that comparison is not physically meaningful
+    (MMFF94 cannot represent the quantum resonance energy a ring
+    difference implies).
+
+    `reactive_bond`: (atom_idx_a, atom_idx_b) in `whole_mol`'s own
+    numbering -- the same bond `mmff_delta_whole_kcal` was computed
+    across.
     """
     ring_count_whole = _aromatic_ring_count(whole_mol)
-    region_mol = _region_mol_capped(whole_mol, qm_atoms, boundary_pairs)
+    region_mol, old_to_new = _region_mol_capped(whole_mol, qm_atoms, boundary_pairs)
     ring_count_region = _aromatic_ring_count(region_mol)
 
     if ring_count_whole != ring_count_region:
@@ -183,11 +230,17 @@ def mmff94_correction(whole_mol, qm_atoms, boundary_pairs, e_qm_kcal, mmff_delta
                        f"across a ring boundary"),
         }
 
-    props_region = AllChem.MMFFGetMoleculeProperties(region_mol)
-    e_region = AllChem.MMFFGetMoleculeForceField(region_mol, props_region).CalcEnergy()
-    props_whole = AllChem.MMFFGetMoleculeProperties(whole_mol)
-    e_whole = AllChem.MMFFGetMoleculeForceField(whole_mol, props_whole).CalcEnergy()
-    mmff_delta_region = e_region - e_whole
+    props_region_whole = AllChem.MMFFGetMoleculeProperties(region_mol)
+    e_region_whole = AllChem.MMFFGetMoleculeForceField(region_mol, props_region_whole).CalcEnergy()
+
+    a, b = reactive_bond
+    new_a, new_b = old_to_new[a], old_to_new[b]
+    bond_idx = region_mol.GetBondBetweenAtoms(new_a, new_b).GetIdx()
+    frag_mol = Chem.FragmentOnBonds(region_mol, [bond_idx], addDummies=True)
+    frags = Chem.GetMolFrags(frag_mol, asMols=True, sanitizeFrags=False)
+    frag_energies = [_embed_and_mmff_energy(_cap_dummies_with_hydrogen(frag)) for frag in frags]
+    mmff_delta_region = sum(frag_energies) - e_region_whole
+
     correction = mmff_delta_whole_kcal - mmff_delta_region
     return {
         "correction_kcal": correction,
