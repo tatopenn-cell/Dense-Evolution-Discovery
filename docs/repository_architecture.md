@@ -53,3 +53,19 @@ See [MPS GPU Optimization](mps_gpu_optimization.md) for the full guide and resul
 - **`scripts/colab_gate_blocking_gpu_benchmark.py`** / **`colab_gate_blocking_redesign_v2_gpu.py`**: GPU timing for the gate-blocking prototype and its promotion-ready redesign.
 
 *(Two names appear in `mps_bucketed_svd_optimization`'s original history, `colab_bucketed_svd_gpu_benchmark.py` and `colab_bucketed_svd_hlo_check.py`, but were only ever run as Colab notebook cells, never committed here — noted for provenance, not linkable.)*
+
+## CASMI26 chemistry features and QM/MM
+
+See [Isodesmic bond-scission energy](isodesmic_bond_scission_energy.md),
+[JAX spectral retrieval](jax_spectral_retrieval_casmi26.md),
+[QM/MM region partitioning](qmmm_region_partitioning_mmff_correction.md),
+and [QM/MM bond order and embedding](qmmm_bond_order_and_embedding.md)
+for the full write-ups.
+
+- **`scripts/native_hf_isodesmic_scission_energy.py`**: Isodesmic bond-scission energy (`whole + H2 -> fragment_A_H + fragment_B_H`) as a chemistry-informed candidate-ranking feature. Real basis-set isolated-variable test: STO-3G doesn't discriminate 3 real C3H8O isomers (2.5 kcal/mol spread), 6-31G* does (10.8 kcal/mol). Real memory bottleneck found and fixed (extended the libcint bridge to one-electron integrals, promoted to Dense-Evolution PR #281).
+- **`scripts/spectral_retrieval_jax.py`**: JAX spectral-retrieval architecture (Fourier m/z encoding, self-attention, InfoNCE) for CASMI26 spectrum-to-candidate matching. Verified on synthetic data; SGD plateaus, Adam converges (2.21 -> 0.53 loss over 100 steps) -- a real optimizer-choice fix, not a broken gradient.
+- **`scripts/spectral_evolve_kato_degeneracy.py`**: Gauge-safe spectral-function gradients (`matrix_function_eigh`, `spectral_evolve`) at exact eigenvalue degeneracy, via Kato's divided-difference formula. Fixes a real silent-wrong-gradient bug in plain `jnp.linalg.eigh` (measured error 0.98 vs. Kato's 4e-10). Promoted to Dense-Evolution as `dense_evolution.physics.spectral`.
+- **`scripts/qmmm_region_partitioning_mmff_correction.py`**: QM/MM region partitioning + link-atom H-capping + an ONIOM-style MMFF94 mechanical correction, on 1-hexanol's O-C1 bond. Correction roughly halves the truncation error at every radius (best: 0.48 kcal/mol at radius 3, vs. 1.84 uncorrected).
+- **`scripts/qmmm_electrostatic_embedding_charge_shifting.py`**: Electrostatic embedding (MM point charges in the QM Hamiltonian) and a charge-shifting fix attempt. Honest open result: embedding measurably helps only when the truncated MM region has real charge, but then makes results worse (likely near-boundary overpolarization), and the charge-shifting fix attempted here does not resolve it.
+- **`scripts/qmmm_bond_order_partition_vs_radius.py`**: Bond-order-weighted region partitioning (Diffuse2Seg-inspired, real Mayer bond order as the edge-preserving affinity) vs. fixed-radius BFS, on an aliphatic chain. Negative result there (no bond-strength heterogeneity to exploit) -- see the next script for the reversal.
+- **`scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py`**: Same method, re-tested on a molecule with a real aromatic-vs-alkyl branch point. Reverses the negative result: the aromatic branch retains 40-70% more propagated relevance than the alkyl branch at the same hop distance, something fixed-radius BFS cannot represent.
