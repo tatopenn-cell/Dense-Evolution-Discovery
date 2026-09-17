@@ -1,6 +1,7 @@
 dense-evolution
 dense-armor
 pennylane
+plotly
 pytest
 numpy
 jax
