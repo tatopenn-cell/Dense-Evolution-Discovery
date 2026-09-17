@@ -1,14 +1,12 @@
 """
 Reusable QM/MM region-partitioning utilities for Dense-Evolution issue
-#283, consolidating everything steps 1-4/5 actually validated into one
-importable module instead of duplicating this logic in every new
-experiment script.
-
-Two real bugs already found and fixed live here permanently:
+#283 -- consolidates the two real bugs already found and fixed while
+building steps 1-4, so new experiment scripts don't duplicate this logic
+(or its bugs) from scratch.
 
 1. Hydrogens must always follow their own heavy atom, never be
    independently BFS-expanded -- doing so spuriously cuts terminal C-H
-   bonds and leaves an empty MM fragment (found on hexanol).
+   bonds and leaves an empty MM fragment (found on 1-hexanol).
 
 2. A boundary bond that would cut INTO an aromatic ring must instead pull
    the WHOLE ring into the QM region -- otherwise RDKit's FragmentOnBonds
@@ -16,40 +14,35 @@ Two real bugs already found and fixed live here permanently:
    a valid molecule (`AtomKekulizeException: non-ring atom marked
    aromatic`, found on OCC(c1ccccc1)CCC at radius=2).
 
-A third, more subtle failure is guarded against rather than silently
-"fixed", since there is no correct number to substitute: the MMFF94
-ONIOM-style correction (`dE_MMFF94(whole) - dE_MMFF94(QM-region)`) is
-only meaningful when the whole molecule and the small QM-region-sized
-fragment have the SAME aromatic ring content. On OCC(c1ccccc1)CCC at
-radius=1, the whole molecule has one aromatic ring and the small fragment
-has none -- subtracting their MMFF94 energies compares a resonance-
-stabilized system against one that never had that resonance to begin
-with, since MMFF94's classical parameters cannot represent quantum
-resonance stabilization energy. Measured effect: a 0.68 kcal/mol
-uncorrected error became -7.05 kcal/mol corrected -- worse than doing
-nothing. At radius>=2 (ring included on both sides) the same correction
-behaved exactly like it did on 1-hexanol (small, genuinely halves the
-error). `mmff94_correction` below refuses the correction (returns
-`applied=False`) whenever the aromatic ring counts on the two sides
-differ, instead of silently returning a number known to sometimes be
-catastrophically wrong.
+Deliberately NOT included here, both real negative results with the full
+record in docs/qmmm_bond_order_and_embedding.md:
 
-Electrostatic embedding (issue #283 point 5) is deliberately NOT included
-here: five different treatments were tried (plain point charge,
-charge-shifting, Gaussian-smeared over the whole MM region, Gaussian-
-smeared on just the M1 boundary atom, M1 charge deletion) and every one
-made the isodesmic-energy error worse than no embedding at all, on the
-one molecule with a real MM charge to embed (5-amino-1-pentanol). The
-sign convention was independently verified correct (a minimal He-atom
-test: E(+1 charge nearby) < E(isolated) < E(-1 charge nearby), exactly as
-physics requires) -- the failure is not a bug in this codebase. See
-docs/qmmm_bond_order_and_embedding.md for the full record. Plain
-truncation (no embedding) remains the right default until this is
-understood.
+- The MMFF94 ONIOM-style correction (`dE_MMFF94(whole) - dE_MMFF94(QM-
+  region)`) originally looked like it halved 1-hexanol's error, but that
+  used a cruder geometry (each fragment independently re-embedded by
+  RDKit instead of sliced from one shared conformer). Once corrected to
+  use the same shared-conformer geometry as everything else here, plain
+  truncation is already accurate to <0.2 kcal/mol on every radius tested
+  on BOTH 1-hexanol and a branched-aromatic molecule -- and applying the
+  MMFF94 correction on top makes it WORSE in every single case (up to
+  -1.5 kcal/mol off). The correction was compensating for a geometry
+  artifact of the OLD embedding choice, not for truncation itself; it
+  does not survive the more careful geometry treatment, so it is not
+  included here at all.
+
+- Electrostatic embedding (issue #283 point 5): five different
+  treatments were tried (plain point charge, charge-shifting,
+  Gaussian-smeared over the whole MM region, Gaussian-smeared on just the
+  M1 boundary atom, M1 charge deletion) and every one made the isodesmic-
+  energy error worse than no embedding at all, on the one molecule with a
+  real MM charge to embed (5-amino-1-pentanol). The sign convention was
+  independently verified correct (a minimal He-atom test: E(+1 charge
+  nearby) < E(isolated) < E(-1 charge nearby), exactly as physics
+  requires) -- the failure is not a bug in this codebase, just genuinely
+  unsolved. Plain truncation remains the right default.
 """
 import numpy as np
 from rdkit import Chem
-from rdkit.Chem import AllChem
 
 ANGSTROM_TO_BOHR = 1.8897259886
 CH_BOND_BOHR = 1.09 * ANGSTROM_TO_BOHR
@@ -109,9 +102,10 @@ def partition_qm_mm_region(mol, seed_heavy_atoms, radius):
 def sliced_geometry(atomic_numbers, geom_bohr, keep_idx, boundary_pairs):
     """A coordinate SUBSET of one whole-molecule conformer (never an
     independently re-embedded fragment -- that would give unrelated 3D
-    structures across fragments, wrong for anything electrostatic).
-    Boundary bonds get a capping H placed along the kept->cut bond
-    direction at a standard C-H bond length."""
+    structures across fragments, and was the real cause of the MMFF94
+    correction's apparent benefit turning out to be a geometry artifact,
+    see module docstring). Boundary bonds get a capping H placed along
+    the kept->cut bond direction at a standard C-H bond length."""
     keep_idx = sorted(keep_idx)
     new_numbers = [atomic_numbers[i] for i in keep_idx]
     new_geom = [geom_bohr[i] for i in keep_idx]
@@ -121,130 +115,3 @@ def sliced_geometry(atomic_numbers, geom_bohr, keep_idx, boundary_pairs):
         new_geom.append(geom_bohr[kept] + vec * CH_BOND_BOHR)
         new_numbers.append(1)
     return new_numbers, np.array(new_geom)
-
-
-def _region_mol_capped(mol, qm_atoms, boundary_pairs):
-    """The QM region as its own RDKit molecule, boundary bonds capped
-    with H, for MMFF94 energy evaluation (a fresh embedding is fine here
-    -- MMFF94 correction only needs consistent topology, not real
-    relative QM/MM distances, unlike electrostatic embedding).
-
-    Also returns `old_to_new`, a dict mapping each ORIGINAL atom index
-    (from `mol`) that survived into this fragment to its new index here
-    -- needed to re-locate the reactive bond inside the fragment after
-    RDKit's RemoveAtom has renumbered everything."""
-    em = Chem.RWMol(mol)
-    for kept, cut in boundary_pairs:
-        for bond in list(em.GetBonds()):
-            if {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()} == {kept, cut}:
-                em.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-                cap = em.AddAtom(Chem.Atom(1))
-                em.AddBond(kept, cap, Chem.BondType.SINGLE)
-    n_after_caps = em.GetNumAtoms()
-    keep = set(qm_atoms) | set(range(n_after_caps - len(boundary_pairs), n_after_caps))
-    old_to_new = {old: new for new, old in enumerate(sorted(keep))}
-
-    frag = Chem.RWMol(em)
-    remove = sorted((i for i in range(frag.GetNumAtoms()) if i not in keep), reverse=True)
-    for i in remove:
-        frag.RemoveAtom(i)
-    frag = frag.GetMol()
-    Chem.SanitizeMol(frag)
-    frag = Chem.AddHs(frag)
-    params = AllChem.ETKDGv3()
-    params.randomSeed = 2026
-    AllChem.EmbedMolecule(frag, params)
-    AllChem.MMFFOptimizeMolecule(frag)
-    return frag, old_to_new
-
-
-def _cap_dummies_with_hydrogen(mol):
-    """RDKit's FragmentOnBonds(addDummies=True) marks the cut point with
-    an isotope-tagged dummy atom, not a bare [*] -- naive string
-    replacement silently fails. Patch the RWMol directly instead."""
-    rw = Chem.RWMol(mol)
-    for atom in rw.GetAtoms():
-        if atom.GetAtomicNum() == 0:
-            atom.SetAtomicNum(1)
-            atom.SetIsotope(0)
-            atom.SetNoImplicit(False)
-            atom.SetFormalCharge(0)
-    capped = rw.GetMol()
-    Chem.SanitizeMol(capped)
-    return capped
-
-
-def _embed_and_mmff_energy(mol):
-    mol = Chem.AddHs(mol)
-    params = AllChem.ETKDGv3()
-    params.randomSeed = 2026
-    AllChem.EmbedMolecule(mol, params)
-    AllChem.MMFFOptimizeMolecule(mol)
-    props = AllChem.MMFFGetMoleculeProperties(mol)
-    return AllChem.MMFFGetMoleculeForceField(mol, props).CalcEnergy()
-
-
-def _aromatic_ring_count(mol):
-    ring_info = mol.GetRingInfo()
-    return sum(1 for ring in ring_info.AtomRings()
-               if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring))
-
-
-def mmff94_correction(whole_mol, qm_atoms, boundary_pairs, reactive_bond, e_qm_kcal, mmff_delta_whole_kcal):
-    """ONIOM-style correction `dE_MMFF94(whole reaction) - dE_MMFF94(QM-
-    region-only reaction)`, added to `e_qm_kcal`. Both deltas are the SAME
-    kind of quantity: sum(fragment MMFF94 energies after splitting at
-    `reactive_bond`) minus the intact molecule's own MMFF94 energy -- one
-    evaluated on the real whole molecule (by the caller, once, passed in
-    as `mmff_delta_whole_kcal`), one evaluated here on the smaller
-    QM-region-sized molecule. An earlier version of this function
-    subtracted the region's fragment energy directly from the WHOLE
-    molecule's energy -- comparing two differently-sized systems' bare
-    MMFF94 energies is not a reaction delta at all, and produced
-    corrections off by several kcal/mol even on 1-hexanol (a real bug
-    caught only by re-deriving the arithmetic and testing, not by reading
-    the code).
-
-    GUARDED against the aromatic-ring mismatch failure described in the
-    module docstring: refuses to apply (`applied=False`) when the whole
-    molecule and the QM-region fragment don't have the same number of
-    aromatic rings, since that comparison is not physically meaningful
-    (MMFF94 cannot represent the quantum resonance energy a ring
-    difference implies).
-
-    `reactive_bond`: (atom_idx_a, atom_idx_b) in `whole_mol`'s own
-    numbering -- the same bond `mmff_delta_whole_kcal` was computed
-    across.
-    """
-    ring_count_whole = _aromatic_ring_count(whole_mol)
-    region_mol, old_to_new = _region_mol_capped(whole_mol, qm_atoms, boundary_pairs)
-    ring_count_region = _aromatic_ring_count(region_mol)
-
-    if ring_count_whole != ring_count_region:
-        return {
-            "correction_kcal": 0.0,
-            "corrected_kcal": e_qm_kcal,
-            "applied": False,
-            "reason": (f"aromatic ring count mismatch (whole={ring_count_whole}, "
-                       f"region={ring_count_region}) -- MMFF94 correction not trusted "
-                       f"across a ring boundary"),
-        }
-
-    props_region_whole = AllChem.MMFFGetMoleculeProperties(region_mol)
-    e_region_whole = AllChem.MMFFGetMoleculeForceField(region_mol, props_region_whole).CalcEnergy()
-
-    a, b = reactive_bond
-    new_a, new_b = old_to_new[a], old_to_new[b]
-    bond_idx = region_mol.GetBondBetweenAtoms(new_a, new_b).GetIdx()
-    frag_mol = Chem.FragmentOnBonds(region_mol, [bond_idx], addDummies=True)
-    frags = Chem.GetMolFrags(frag_mol, asMols=True, sanitizeFrags=False)
-    frag_energies = [_embed_and_mmff_energy(_cap_dummies_with_hydrogen(frag)) for frag in frags]
-    mmff_delta_region = sum(frag_energies) - e_region_whole
-
-    correction = mmff_delta_whole_kcal - mmff_delta_region
-    return {
-        "correction_kcal": correction,
-        "corrected_kcal": e_qm_kcal + correction,
-        "applied": True,
-        "reason": None,
-    }
