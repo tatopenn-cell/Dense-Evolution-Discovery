@@ -7,8 +7,15 @@ reversed from negative to positive on a second test.
 
 ## Step 5: electrostatic embedding (open, not solved)
 
-MM point charges (MMFF94 partial charges) entering the QM Hamiltonian
-directly as an external potential, via PySCF's `int1e_rinv` integral.
+```python
+V_ext = external_point_charge_potential(atomic_numbers, geometry_bohr, basis, mm_charges, mm_positions)
+result = run_scf(S, H_core + V_ext, repulsion, n_electrons, nuclear_charges, geometry_bohr)
+```
+
+`mm_charges`/`mm_positions` are the truncated-away atoms' real MMFF94
+partial charges and positions. Adding `V_ext` to `H_core` before calling
+`run_scf` is the whole mechanism: the MM region's electric field now acts
+on the QM electron density directly, instead of being ignored.
 
 **First test (1-hexanol)**: plain vs. embedded gave identical numbers at
 every radius. Not a bug -- MMFF94 assigns real charge only to the polar
@@ -39,23 +46,27 @@ hydrogens) can be just as close to the boundary as the atom being zeroed.
 **Left open** -- a correct fix needs a more careful redistribution scheme
 than this first attempt.
 
-Scripts: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`.
+![Embedding helps only with real MM charge, but overpolarizes; charge-shifting doesn't fix it](assets/qmmm_bond_order_and_embedding/qmmm_embedding_charge_shifting.png)
 
 ## Bond-order-weighted region partitioning: reversed by a second test
 
-Inspired by Diffuse2Seg (arXiv:2609.06491, Hümmer et al. 2026):
-propagate seed relevance through pairwise affinities in an
-edge-preserving manner instead of a fixed hop-count radius. The affinity
-here is real Mayer/Wiberg bond order from an actual HF density matrix
-(`D = 2P`, from `run_scf`'s own `density_matrix`) -- no diffusion model
-exists for molecules in this codebase, so real chemistry substitutes for
-a learned affinity.
+Instead of a fixed hop-count radius, propagate a relevance score
+outward from the reactive bond, weighted at each step by the real
+Mayer/Wiberg bond order between the two atoms:
 
-Verified throughout: bond orders are chemically sensible (O-H ~0.95, C-C
-~1.0, non-bonded pairs ~0.01), and the propagation is isomorphism
-invariant -- confirmed numerically, not just architecturally, by randomly
-relabeling atoms and checking the selected region maps back to the same
-atoms regardless.
+```python
+bond_order = real_mayer_bond_order(density_matrix, overlap_matrix, ao_atom_map)
+relevance = propagate(bond_order, seeds=(o_idx, c_idx), decay=0.3)
+qm_atoms = [i for i in range(n_atoms) if relevance[i] > threshold]
+```
+
+`bond_order` comes from an actual HF density matrix (`D = 2P`, from
+`run_scf`'s own `density_matrix`) -- no diffusion model exists for
+molecules in this codebase, so real chemistry substitutes for a learned
+affinity (inspired by Diffuse2Seg, arXiv:2609.06491, Hümmer et al. 2026,
+which propagates through a diffusion model's own attention weights
+instead). A stronger bond lets relevance travel further before `decay`
+shrinks it below `threshold`.
 
 **First test (5-amino-1-pentanol, aliphatic chain): negative.** Every
 backbone bond has similar bond order (~0.97-0.99) -- no heterogeneity to
@@ -75,6 +86,8 @@ the alkyl branch's (e.g. decay=0.7: 0.551 vs. 0.322 relevance) -- a real
 difference fixed-radius BFS structurally cannot represent, since it
 always includes or excludes both branches together at a given radius.
 
+![Real bond order differentiates the aromatic and alkyl branches; fixed-radius BFS cannot](assets/qmmm_bond_order_and_embedding/qmmm_bond_order_aromatic_vs_alkyl.png)
+
 **Conclusion**: the method has no advantage on uniform aliphatic chains,
 but a real, demonstrated one on molecules with real bond-order
 heterogeneity near the reactive site -- aromatic/conjugated groups are
@@ -83,13 +96,21 @@ an edge case. Worth a second look for promotion once it's validated on
 an actual reaction-energy comparison (this test only validated the
 partitioning signal itself, not yet the resulting isodesmic energy).
 
-Scripts: `scripts/qmmm_bond_order_partition_vs_radius.py` (first,
+## Details
+
+Bond orders were checked for chemical sanity throughout (O-H ~0.95, C-C
+~1.0, non-bonded pairs ~0.01), and the propagation was verified
+isomorphism-invariant -- not just assumed from its structure -- by
+randomly relabeling every atom and checking the selected region maps
+back to the same atoms regardless.
+
+**Status**: neither promoted to Dense-Evolution yet. Step 5 remains
+genuinely unsolved. The bond-order partitioning idea has a real positive
+signal (above) but still needs a full reaction-energy comparison against
+steps 1-4's MMFF94-corrected result, at a matched atom budget, before
+promotion is warranted.
+
+**Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`
+(step 5), `scripts/qmmm_bond_order_partition_vs_radius.py` (first,
 negative test), `scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py`
 (second, positive test).
-
-## Status
-
-Neither promoted to Dense-Evolution yet. Step 5 remains genuinely
-unsolved. The bond-order partitioning idea now has a real positive
-signal worth extending to a full reaction-energy comparison (like steps
-1-4's MMFF94 correction test) before considering promotion.
