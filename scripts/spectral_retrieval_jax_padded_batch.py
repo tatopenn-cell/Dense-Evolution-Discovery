@@ -22,10 +22,13 @@ PREREGISTERED EXPECTATIONS, stated before running this:
 2. A real multi-batch run (fresh random batch every step) should no longer
    OOM now that every batch has one fixed shape -- if it still does, that
    is a second, different real bug, not expected.
-3. Held-out retrieval accuracy (same precursor-tolerance protocol as
-   armatura-spectral-retrieval-test) is the real generalization question
-   Step 3/4 of the real-data run could not answer -- no claim in advance
-   about whether it beats the binned-cosine baseline.
+3. Held-out retrieval accuracy is the real generalization question Step
+   3/4 of the real-data run could not answer. v1 of this script's own
+   protocol had a real bug (candidate pools from a too-small library,
+   never checked for containing the true molecule) -- v2 (this version)
+   fixes it: a much larger real candidate library, discarding queries
+   whose true molecule isn't verifiably in the pool, reporting real pool
+   sizes, and a random baseline conditioned on evaluability.
 """
 import subprocess
 import sys
@@ -43,12 +46,20 @@ from rdkit.Chem import AllChem
 
 TRAIN_PATH = "/kaggle/input/competitions/enveda-CASMI26-molecule-id-mass-spectra/train.parquet"
 D_MODEL, N_FREQS, FP_SIZE = 64, 16, 256
-N_SUBSET = 6000
+N_SUBSET = 60000      # up from 6000 -- see Step 5's real-candidate-pool bug fix: a 6000-row
+                       # subsample gave near-empty precursor-tolerance pools (mean ~1.6 candidates),
+                       # not a real retrieval task. Training config (N_TRAIN/BATCH_SIZE/N_STEPS)
+                       # deliberately UNCHANGED from the previous run -- isolating the eval-protocol
+                       # fix as the one variable, not also changing how much the model is trained.
+N_TRAIN = 4800
+N_QUERY_HOLDOUT = 300  # held out from the candidate library entirely, so a query never trivially matches its own spectrum
 BATCH_SIZE = 32
 N_STEPS = 500
 PRECURSOR_TOL_PPM = 20.0
 MAX_PEAKS_PERCENTILE = 90
 MAX_PEAKS_CEILING = 256  # bounds attention cost (O(max_peaks^2)) regardless of the percentile
+N_CAPACITY_MOLECULES = 100  # Step 6: small-pool memorization capacity check
+N_CAPACITY_STEPS = 5000
 
 
 def layer_norm(x, gain, bias, eps=1e-5):
@@ -199,9 +210,13 @@ def main():
     mol_ids_all = df["inchikey14"].to_numpy()
     print(f"  {len(df)} spectra remain")
 
-    split = int(len(df) * 0.8)
-    train_idx_pool, eval_idx_pool = np.arange(split), np.arange(split, len(df))
-    print(f"  train_pool={len(train_idx_pool)}  eval_pool={len(eval_idx_pool)}")
+    all_idx = np.arange(len(df))
+    query_idx = rng.choice(all_idx, size=min(N_QUERY_HOLDOUT, len(all_idx)), replace=False)
+    query_set = set(query_idx.tolist())
+    remaining_idx = np.array([i for i in all_idx if i not in query_set])
+    train_idx_pool = rng.choice(remaining_idx, size=min(N_TRAIN, len(remaining_idx)), replace=False)
+    library_idx = remaining_idx  # candidate pool for retrieval -- everything NOT held out as a query
+    print(f"  train_pool={len(train_idx_pool)}  library={len(library_idx)}  query_holdout={len(query_idx)}")
 
     key = jax.random.PRNGKey(2026)
     params = init_params(key, D_MODEL, N_FREQS, FP_SIZE)
@@ -237,38 +252,116 @@ def main():
         if step % 50 == 0 or step == N_STEPS - 1:
             print(f"  step {step:4d}  loss={loss_val:.4f}")
     if losses:
-        print(f"\n  loss[0]={losses[0]:.4f} -> loss[-1]={losses[-1]:.4f}")
+        chance_loss = float(np.log(BATCH_SIZE))
+        print(f"\n  loss[0]={losses[0]:.4f} -> loss[-1]={losses[-1]:.4f}  "
+              f"(log({BATCH_SIZE})={chance_loss:.4f} = in-batch InfoNCE loss for a uniform-random guesser)")
 
-    print(f"\n[Step 5] REAL held-out retrieval accuracy (precursor-tolerance protocol, "
-          f"same as armatura-spectral-retrieval-test)")
-    library_preds = np.array(encode_batched(p, jnp.array(all_mzs), jnp.array(all_inten),
-                                             jnp.array(precursor_all), jnp.array(all_mask), N_FREQS))
-    library_preds = library_preds / np.maximum(np.linalg.norm(library_preds, axis=-1, keepdims=True), 1e-8)
+    print(f"\n[Step 5] REAL held-out retrieval accuracy -- FIXED protocol (v2), against a "
+          f"{len(library_idx)}-item real candidate library (not the {N_QUERY_HOLDOUT}-item "
+          f"query set itself, which never overlaps it). Fixes a real bug found in the v1 run: "
+          f"a query only counts as evaluable if (a) its precursor-tolerance pool is non-empty "
+          f"AND (b) the true molecule is actually IN that pool -- v1 checked neither, and its "
+          f"random-baseline formula (mean of 1/pool_size) came out to 0.6248, revealing pools "
+          f"averaging ~1.6 real candidates from a too-small 6000-row library, most of which "
+          f"could not possibly contain the true molecule. Candidates are compared against their "
+          f"REAL ground-truth Morgan fingerprints directly (not another spectrum's predicted "
+          f"fingerprint) -- also removes the need to JAX-encode the whole library, only the "
+          f"{N_QUERY_HOLDOUT} queries need encoding.")
+    library_fps = fps[library_idx]
+    library_fps_norm = library_fps / np.maximum(np.linalg.norm(library_fps, axis=-1, keepdims=True), 1e-8)
+    library_mol_ids = mol_ids_all[library_idx]
+    library_precursor = precursor_all[library_idx]
 
-    n_query = min(300, len(eval_idx_pool))
-    query_idx = rng.choice(eval_idx_pool, size=n_query, replace=False)
-    top1_hits, top25_hits, n_scored = 0, 0, 0
-    for qi in query_idx:
-        tol = precursor_all[qi] * PRECURSOR_TOL_PPM / 1e6
-        cand_mask = np.abs(precursor_all - precursor_all[qi]) <= tol
-        cand_mask[qi] = False
+    query_preds = np.array(encode_batched(p, jnp.array(all_mzs[query_idx]), jnp.array(all_inten[query_idx]),
+                                           jnp.array(precursor_all[query_idx]), jnp.array(all_mask[query_idx]), N_FREQS))
+    query_preds = query_preds / np.maximum(np.linalg.norm(query_preds, axis=-1, keepdims=True), 1e-8)
+
+    RANKS = (1, 5, 10, 25)
+    hits = {k: 0 for k in RANKS}
+    n_scored = 0
+    n_empty_pool = 0
+    n_true_absent = 0
+    pool_sizes = []
+    random_baseline_sum = 0.0
+    freq_baseline_hits = 0
+    for qi_local, qi_global in enumerate(query_idx):
+        true_id = mol_ids_all[qi_global]
+        tol = precursor_all[qi_global] * PRECURSOR_TOL_PPM / 1e6
+        cand_mask = np.abs(library_precursor - precursor_all[qi_global]) <= tol
         cand_indices = np.where(cand_mask)[0]
         if len(cand_indices) == 0:
+            n_empty_pool += 1
+            continue
+        if true_id not in library_mol_ids[cand_indices]:
+            n_true_absent += 1
             continue
         n_scored += 1
-        sims = library_preds[cand_indices] @ library_preds[qi]
-        order = np.argsort(-sims)
-        ranked_mol_ids = mol_ids_all[cand_indices][order]
-        true_id = mol_ids_all[qi]
-        if len(ranked_mol_ids) > 0 and ranked_mol_ids[0] == true_id:
-            top1_hits += 1
-        if true_id in ranked_mol_ids[:25]:
-            top25_hits += 1
+        pool_sizes.append(len(cand_indices))
 
-    print(f"  n_query={n_query}  n_scored(has candidates)={n_scored}")
+        sims = library_fps_norm[cand_indices] @ query_preds[qi_local]
+        order = np.argsort(-sims)
+        ranked_mol_ids = library_mol_ids[cand_indices][order]
+        for k in RANKS:
+            if true_id in ranked_mol_ids[:k]:
+                hits[k] += 1
+
+        random_baseline_sum += 1.0 / len(cand_indices)
+        uniq, counts = np.unique(library_mol_ids[cand_indices], return_counts=True)
+        if uniq[np.argmax(counts)] == true_id:
+            freq_baseline_hits += 1
+
+    print(f"  query_holdout={len(query_idx)}  empty_pool={n_empty_pool}  "
+          f"true_molecule_absent_from_pool={n_true_absent}  evaluable(n_scored)={n_scored}")
+    if pool_sizes:
+        pool_sizes = np.array(pool_sizes)
+        print(f"  pool size among evaluable queries: mean={pool_sizes.mean():.1f}  "
+              f"median={np.median(pool_sizes):.0f}  min={pool_sizes.min()}  max={pool_sizes.max()}")
     if n_scored:
-        print(f"  top1={top1_hits/n_scored:.4f}  top25={top25_hits/n_scored:.4f}")
-    print("  compare against armatura-spectral-retrieval-test's binned-cosine baseline for the same competition")
+        rank_str = "  ".join(f"top{k}={hits[k]/n_scored:.4f}" for k in RANKS)
+        print(f"  encoder:          {rank_str}")
+        print(f"  random baseline:  top1={random_baseline_sum/n_scored:.4f}  "
+              f"(mean of 1/pool_size, conditioned on the true molecule being IN the pool)")
+        print(f"  most-frequent-in-pool baseline: top1={freq_baseline_hits/n_scored:.4f}")
+    else:
+        print("  [FATAL for interpretation] zero evaluable queries -- library still too small/sparse")
+
+    print(f"\n[Step 5b] representation-collapse check: distribution of pairwise cosine "
+          f"similarities across the query set's predicted fingerprints -- if these cluster "
+          f"near 1.0 regardless of molecule identity, the encoder has collapsed to mapping "
+          f"every spectrum near the same point instead of separating them")
+    sim_matrix = query_preds @ query_preds.T
+    off_diag = sim_matrix[~np.eye(len(query_preds), dtype=bool)]
+    print(f"  pairwise cosine similarity (n={len(query_preds)} spectra, {len(off_diag)} pairs): "
+          f"mean={off_diag.mean():.4f}  std={off_diag.std():.4f}  "
+          f"min={off_diag.min():.4f}  max={off_diag.max():.4f}")
+
+    print(f"\n[Step 6] capacity diagnostic: can the SAME architecture memorize a SMALL real pool "
+          f"({N_CAPACITY_MOLECULES} molecules) given many more steps? Distinguishes "
+          f"'needs more training' from 'architecture/features can't separate real spectra'")
+    cap_pool_size = min(N_CAPACITY_MOLECULES, len(train_idx_pool))
+    cap_idx_pool = rng.choice(train_idx_pool, size=cap_pool_size, replace=False)
+    key_cap = jax.random.PRNGKey(7)
+    params_cap = init_params(key_cap, D_MODEL, N_FREQS, FP_SIZE)
+    opt_state_cap = optimizer.init(params_cap)
+    p_cap = params_cap
+    cap_batch_size = min(BATCH_SIZE, cap_pool_size)
+    cap_losses = []
+    for step in range(N_CAPACITY_STEPS):
+        idx = rng.choice(cap_idx_pool, size=cap_batch_size, replace=False)
+        p_cap, opt_state_cap, loss_val = _step(p_cap, opt_state_cap, all_mzs[idx], all_inten[idx],
+                                                precursor_all[idx], all_mask[idx], fps[idx])
+        cap_losses.append(float(loss_val))
+        if step % 1000 == 0 or step == N_CAPACITY_STEPS - 1:
+            print(f"  step {step:5d}  loss={cap_losses[-1]:.4f}")
+    cap_preds = np.array(encode_batched(p_cap, jnp.array(all_mzs[cap_idx_pool]), jnp.array(all_inten[cap_idx_pool]),
+                                         jnp.array(precursor_all[cap_idx_pool]), jnp.array(all_mask[cap_idx_pool]), N_FREQS))
+    cap_preds = cap_preds / np.maximum(np.linalg.norm(cap_preds, axis=-1, keepdims=True), 1e-8)
+    cap_fps = fps[cap_idx_pool] / np.maximum(np.linalg.norm(fps[cap_idx_pool], axis=-1, keepdims=True), 1e-8)
+    cap_sims = cap_preds @ cap_fps.T
+    cap_top1 = int(np.sum(np.argmax(cap_sims, axis=1) == np.arange(cap_pool_size)))
+    print(f"  in-pool top1 after {N_CAPACITY_STEPS} steps on {cap_pool_size} molecules: "
+          f"{cap_top1}/{cap_pool_size} = {cap_top1/cap_pool_size:.4f} "
+          f"(chance = 1/{cap_pool_size} = {1.0/cap_pool_size:.4f})")
 
 
 if __name__ == "__main__":

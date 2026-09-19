@@ -113,23 +113,65 @@ different random set of real molecules every step, ran in ~34 seconds
 total -- no OOM, no crash, one compilation reused throughout. This closes
 the real bug Step 3 found.
 
-**Generalization is not yet demonstrated at this training scale**: loss
-barely moves and is noisy step-to-step (expected -- no batch repeats, so
-no memorization signal to ride), and held-out retrieval (top1=3.95%,
-top25=6.78% on 177 scoreable held-out queries) is close to chance level,
-not a working retrieval system. 500 steps over a 4,800-molecule pool with
-batch=32 is roughly 3.3 exposures per training molecule on average --
-plausibly just not enough signal yet, not evidence the architecture is
-wrong (Step 3 already showed it CAN memorize real spectra when given
-enough exposure to the same ones). Also: the `armatura-spectral-retrieval-
-test` binned-cosine baseline this was meant to compare against has never
-itself produced a real result (that kernel still fails on the schema/path
-bugs noted below) -- there is no working baseline number yet to say
-whether 3.95% is better or worse than the simple approach on this data.
+**First retrieval numbers were not actually interpretable -- a real
+protocol bug, found before drawing any conclusion from them.** The
+candidate pool for each held-out query came from the same 6,000-row
+subsample, precursor-tolerance-filtered (mean pool size ~1.6) -- but
+nothing checked whether the true molecule was even IN that pool. The
+random-baseline formula (mean of `1/pool_size`) came out to **0.6248**,
+an absurd "62% success from blind guessing" for a real molecule-ID task --
+the tell that pools were near-degenerate and often didn't contain the
+right answer at all, making the raw top1=3.95% uninterpretable in either
+direction.
 
-**Not yet done**: more training (real epochs over the full training pool,
-not fresh-random-forever), and fixing `armatura-spectral-retrieval-test`
-so an actual baseline comparison exists.
+**Fixed (v2)**: a 60,000-row candidate library (10x larger) sourced
+separately from a 300-item query holdout that never overlaps it; a query
+only counts as evaluable if its pool is non-empty AND the true molecule is
+verifiably inside it; real pool sizes reported; random baseline
+conditioned on evaluability; candidates scored against their REAL
+ground-truth Morgan fingerprints (not another spectrum's prediction).
+
+```
+train_pool=4800  library=59700  query_holdout=300
+query_holdout=300  empty_pool=20  true_molecule_absent_from_pool=221  evaluable(n_scored)=59
+pool size among evaluable queries: mean=11.7  median=8  min=1  max=48
+encoder:          top1=0.3729  top5=0.8475  top10=0.9153  top25=0.9831
+random baseline:  top1=0.1745  (conditioned on the true molecule being IN the pool)
+most-frequent-in-pool baseline: top1=0.5763
+```
+
+Now interpretable, and the honest picture has a real twist: the encoder
+(37.3%) clearly beats the conditioned random baseline (17.45%, ~2.1x) --
+real signal, not noise. But a baseline that ignores the spectrum entirely
+-- guessing whichever molecule has the most duplicate entries in the local
+candidate pool -- reaches **57.6%**, beating the trained encoder by a wide
+margin. Combined with the capacity check below (100/100 once given enough
+exposure), the most likely explanation is still training exposure (500
+steps over 4,800 molecules is ~3.3 exposures each on average) rather than
+a broken architecture, but this is not yet a working retrieval system: a
+trivial frequency heuristic currently wins. Even at 10x the library size,
+only 59/300 held-out queries (~20%) had their true molecule verifiably
+in the candidate pool at all -- real evidence the library still needs to
+be much larger (or the full 2.5M-row dataset used) for most queries to be
+evaluable in the first place.
+
+**Representation collapse ruled out**: pairwise cosine similarity across
+the 300 query embeddings has mean 0.0445 (not clustered near 1.0), so the
+low retrieval numbers are not explained by the encoder collapsing all
+spectra to the same point.
+
+**Capacity check (Step 6)**: the same architecture, given 5,000 steps on
+just 100 real molecules (instead of 500 steps spread over 4,800), reaches
+**100/100 = 100%** in-pool retrieval (chance = 1%). This is the cleanest
+evidence the architecture and InfoNCE setup genuinely can separate real
+spectra -- the bottleneck at held-out scale is exposure and library size,
+not a fundamentally broken approach.
+
+**Not yet done**: real epochs over a much larger training pool (not
+fresh-random-forever over just 4,800), a candidate library large enough
+that most held-out queries are actually evaluable, and fixing
+`armatura-spectral-retrieval-test` (still schema/path-broken) so an actual
+third-party baseline comparison exists.
 
 ## Details
 
@@ -153,14 +195,6 @@ shared child name, printing `"element"` three times and hiding the real
 names (`ms2_mzs`, `ms2_normalized_intensities`, `collision_energy_ev`)
 entirely -- `pq.ParquetFile(path).schema_arrow.names` or plain
 `pd.read_parquet(...).columns` give the real top-level names.
-
-**Still open**: a real held-out retrieval comparison against
-`armatura-spectral-retrieval-test`'s binned-cosine baseline needs the
-architecture padded to a fixed peak length (with an attention mask so
-padding doesn't corrupt the pooled representation) -- only then can a
-multi-batch training run and a real library-wide retrieval eval run
-without hitting the same shape-variation/OOM issue Step 3 found. Not yet
-done.
 
 **Scripts**: `scripts/spectral_retrieval_jax.py` (toy/synthetic
 verification), `scripts/spectral_retrieval_jax_real_data.py` (Step 3, the
