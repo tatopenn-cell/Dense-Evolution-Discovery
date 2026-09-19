@@ -97,6 +97,7 @@ nav:
       - "A Real Live Gazebo Physics Loop": gazebo_live_physics_loop.md
     - "Security":
       - "Indirect Prompt Injection vs. Dense-Armor": agent_indirect_prompt_injection.md
+      - "A Pre-Reasoning Numeric Shield on Real Attack Telemetry": tool_output_shield.md
   - "Dense-Evolution: Quantum Simulation & Physics":
     - "Materials & Tight-Binding":
       - Harrison / VHD Tight-Binding: harrison_tight_binding.md
