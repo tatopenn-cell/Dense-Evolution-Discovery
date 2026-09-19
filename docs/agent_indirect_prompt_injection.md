@@ -117,6 +117,41 @@ has no way to see that.
 
 ---
 
+## Step 6. Does Orca (multi-feature, not just latency) notice?
+
+Step 5 tested single-series latency detectors. Orca is a materially
+different mechanism -- multi-feature (latency_s, tokens_in, tokens_out
+together), with a continuous per-point margin and, with `use_arbiter=True`,
+a discrete spike/regime/clean label -- worth checking on its own rather
+than assuming Step 5's negative result generalizes. No new LLM calls: same
+frozen file, now vectorized (see [A Pre-Reasoning Numeric Shield on Real
+Attack Telemetry](tool_output_shield.md) and Dense-Armor's own CHANGELOG
+for that fix) so this runs in milliseconds either way.
+
+```python
+from dense_armor.utility.orca import Orca
+
+X = np.array([[r["latency_s"], r["tokens_in"], r["tokens_out"]] for r in records])
+orca = Orca()
+orca.protect_and_forward(None, X, x_reference=None,
+                          use_model_injection=False, use_output_shield=False,
+                          use_arbiter=True)
+```
+
+**Preregistered expectation** (stated before running this, same reasoning
+as Step 5): a hit would require the injection to also show up as a numeric
+outlier in latency/token counts -- Orca has no notion of "this text asks
+the model to exfiltrate data".
+
+**Result, real data, all 10 compromised steps**: 0/10 caught, on both the
+arbiter label and a 2-sigma flag on the margin. The per-step numbers show
+exactly why: the 3 poisoned terms are cycled, so their footprint each time
+(331-341 `tokens_in`, 58-60 `tokens_out`, 6.4-7.8s latency) is consistent
+across every exposure -- there is nothing numerically unusual for a
+statistical gate to react to, poisoned or not. Confirms rather than
+contradicts Step 5: a different, more capable statistical mechanism still
+needs the injection to leave a numeric footprint, and this one doesn't.
+
 ## Details
 
 **Why this matters for Dense-Armor as a product**: the honest conclusion is a
