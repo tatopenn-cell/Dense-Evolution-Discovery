@@ -23,6 +23,7 @@ This is the research lab for [Dense Evolution](https://pypi.org/project/dense-ev
 
 - **[MPS GPU Optimization](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/mps_gpu_optimization/)** — the matrix-product-state simulator backend, made faster on GPU (2.16x, real API, real hardware), with the three real bugs found along the way.
 - **[Dense-Armor: Robot Safety Monitoring](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/live_safety_loop/)** — drift/fault detection and safety filtering validated on real IMU, Lidar, and robot-arm (LeRobot) data.
+- **[Dense-Armor: Security Telemetry & AI Input Shield](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/apt29_dense_armor_security/)** — real MITRE ATT&CK APT29 attack detection on genuine Sysmon telemetry, plus Orca protecting a real scikit-learn model from adversarial input corruption.
 - **[Dense-Evolution: Quantum Simulation & Physics](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#scientific-discoveries-empirical-evidence)** — TFIM phase transitions, VQE, ZNE, tight-binding materials, and a critical replication of the traversable-wormhole teleportation protocol.
 - **[Diagnostics & Healing](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — density-matrix noise diagnostics (Rényi divergence, magic entropy) and vector-healing bug fixes shipped back into Dense-Evolution.
 
