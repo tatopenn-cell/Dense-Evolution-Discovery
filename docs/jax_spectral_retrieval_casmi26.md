@@ -84,6 +84,53 @@ schema, fingerprinting, forward pass, gradients, optimizer) -- it is
 model was trained on is expected once loss is this low, closer to a
 memorization check than a retrieval benchmark.
 
+## Step 4: padding + attention mask closes the OOM, opens real multi-batch training
+
+Fix for the gap Step 3 left open: pad every spectrum to one fixed peak
+count (`MAX_PEAKS`, chosen from a real percentile of this dataset's
+`num_peaks`, not guessed) with an attention mask so padding contributes
+exactly zero to both the self-attention and the final pooling softmax.
+Correctness verified locally before touching real data: the padded+masked
+encoder is numerically identical (max abs diff ~1e-7) to the original on a
+no-padding-needed case, and invariant to how much extra padding is added.
+Every batch now has one fixed shape regardless of which real molecules get
+sampled, so `jax.vmap` + `jax.jit` compile once and a fresh random batch
+every step no longer grows JAX's shape-keyed compilation cache.
+
+```
+[Step 1] num_peaks percentiles (n=6000): p50=44 p90=420 p95=615 p99=1250 max=36080
+  MAX_PEAKS = 256 (p90, capped at 256)
+[Step 4] real multi-batch training, 500 steps, batch=32, FRESH random real batch every step
+  step    0  loss=3.5928
+  step  499  loss=3.0273
+[Step 5] REAL held-out retrieval accuracy (precursor-tolerance protocol)
+  n_query=300  n_scored(has candidates)=177
+  top1=0.0395  top25=0.0678
+```
+
+**The fix works completely**: 500 steps of true multi-batch training, a
+different random set of real molecules every step, ran in ~34 seconds
+total -- no OOM, no crash, one compilation reused throughout. This closes
+the real bug Step 3 found.
+
+**Generalization is not yet demonstrated at this training scale**: loss
+barely moves and is noisy step-to-step (expected -- no batch repeats, so
+no memorization signal to ride), and held-out retrieval (top1=3.95%,
+top25=6.78% on 177 scoreable held-out queries) is close to chance level,
+not a working retrieval system. 500 steps over a 4,800-molecule pool with
+batch=32 is roughly 3.3 exposures per training molecule on average --
+plausibly just not enough signal yet, not evidence the architecture is
+wrong (Step 3 already showed it CAN memorize real spectra when given
+enough exposure to the same ones). Also: the `armatura-spectral-retrieval-
+test` binned-cosine baseline this was meant to compare against has never
+itself produced a real result (that kernel still fails on the schema/path
+bugs noted below) -- there is no working baseline number yet to say
+whether 3.95% is better or worse than the simple approach on this data.
+
+**Not yet done**: more training (real epochs over the full training pool,
+not fresh-random-forever), and fixing `armatura-spectral-retrieval-test`
+so an actual baseline comparison exists.
+
 ## Details
 
 Inspired by MSAlign (arXiv:2605.19752, indexed in quantumrag) and a
@@ -116,5 +163,6 @@ without hitting the same shape-variation/OOM issue Step 3 found. Not yet
 done.
 
 **Scripts**: `scripts/spectral_retrieval_jax.py` (toy/synthetic
-verification), `scripts/spectral_retrieval_jax_real_data.py` (the real-data
-run above).
+verification), `scripts/spectral_retrieval_jax_real_data.py` (Step 3, the
+fixed-batch memorization check), `scripts/spectral_retrieval_jax_padded_batch.py`
+(Step 4, padding/masking + real multi-batch training and held-out eval).
