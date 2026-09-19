@@ -11,3 +11,4 @@ matplotlib
 optax
 osqp
 xacro
+rdkit
