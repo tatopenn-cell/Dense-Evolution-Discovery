@@ -167,6 +167,61 @@ evidence the architecture and InfoNCE setup genuinely can separate real
 spectra -- the bottleneck at held-out scale is exposure and library size,
 not a fundamentally broken approach.
 
+## Step 7: a second stage closes part of the gap -- real search engines don't rely on one flat similarity score either
+
+Every result above is Stage 1 alone: encode a spectrum, compare its
+predicted fingerprint against real candidate fingerprints by cosine
+similarity -- one flat score per candidate, computed independently of
+every other candidate. Real large-scale retrieval (the same principle
+behind modern web search, and directly behind MS/MS structure elucidation
+tools) never stops there: a fast approximate Stage 1 narrows millions of
+candidates to a shortlist, then a second, more expensive model looks at
+the QUERY and EACH CANDIDATE **together** to re-rank that shortlist.
+Goldman, Bradshaw, Xin & Coley, "Prefix-Tree Decoding for Predicting Mass
+Spectra from Molecules" (NeurIPS 2023, arXiv:2303.06470) and its ICEBERG
+successor (Goldman et al. 2024) use exactly this generate-then-score
+structure for this same MS/MS structure-elucidation problem.
+
+Stage 2 here: a small MLP over `[pred_fp, cand_fp, |pred-cand|,
+pred*cand]` (1024 -> 128 -> 1), trained with a listwise softmax over each
+query's REAL Stage-1 top-25 shortlist -- the true candidate should get
+the highest score. Critically, the shortlist's negatives are the
+HARDEST, most informative ones available (near neighbors in fingerprint
+space that Stage 1 already confused for the right answer), not random
+in-batch negatives like Stage 1's own InfoNCE training.
+
+**First attempt, same 60k library as Step 4/5**: only 56 real
+(query, shortlist) examples available to train the re-ranker on (out of
+300 attempted) -- the same too-small-library problem again, now hitting
+Stage 2. Result: stage1-only top1 = stage1+2 top1 = 24/70, identical --
+no measurable effect, but with 56 training examples this is underpowered,
+not evidence the approach fails.
+
+**Scaled library, 300,000 rows (5x)**: more real candidates per query
+pool means MORE queries are evaluable (102/300 vs 70/300) but also a
+HARDER task for Stage 1 alone (more real distractors per pool) -- Stage
+1's own top1 drops from 37.3%/34.3% (smaller libraries) to **20.6%**, as
+expected for a genuinely bigger haystack.
+
+```
+train_pool=4800  library=299400  rerank_train=300  query_holdout=300
+stage1 top1:   21/102 evaluable (0.2059)
+102 usable (query,shortlist) training examples for the re-ranker
+stage1+2 top1: 25/102 evaluable (0.2451)
+```
+
+**Real, positive result this time**: Stage 1+2 (24.5%) beats Stage 1
+alone (20.6%) on the exact same 102 evaluable queries -- a ~19% relative
+improvement, with nearly double the re-ranker training data (102 vs 56).
+Honest caveat: 102 examples is still a small training set for a 1024-dim
+input MLP: this is real, motivating evidence for the two-stage pattern on
+this task, not yet a large-sample-confirmed result -- the natural next
+step (not yet done) is the same library scale-up applied to
+`rerank_train`/`query_holdout` themselves, which needs more of the full
+2.5M-row dataset than explored so far.
+
+**Script**: `scripts/spectral_retrieval_jax_two_stage_reranker.py`.
+
 **Not yet done**: real epochs over a much larger training pool (not
 fresh-random-forever over just 4,800), a candidate library large enough
 that most held-out queries are actually evaluable, and fixing
