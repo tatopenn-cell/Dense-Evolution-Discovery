@@ -262,9 +262,8 @@ Three things that have no business resembling each other &mdash; a two-and-a-hal
   </defs>
 
   <g transform="translate(120,150)">
-    <circle r="62" fill="#141a2b" stroke="#3a4568" stroke-width="1.5"/>
-    <path d="M0,-62 A31,31 0 0 1 0,0 A31,31 0 0 0 0,62 A62,62 0 0 1 0,-62 Z" fill="#e6e6e6"/>
-    <path d="M0,-62 A31,31 0 0 0 0,0 A31,31 0 0 1 0,62 A62,62 0 0 0 0,-62 Z" fill="#232338"/>
+    <circle r="62" fill="#e6e6e6" stroke="#3a4568" stroke-width="1.5"/>
+    <path d="M0,-62 A62,62 0 0 1 0,62 A31,31 0 0 1 0,0 A31,31 0 0 0 0,-62 Z" fill="#232338"/>
     <circle cy="-31" r="9" fill="#232338"/>
     <circle cy="31" r="9" fill="#e6e6e6"/>
     <text y="98" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#c8d0e8">yin &#8596; yang</text>
