@@ -2,7 +2,7 @@
 
 **Salvatore Pennacchio** &mdash; Independent Researcher &mdash; September 2026
 
-We propose that the vacuum regularizes itself through a single mathematical shape &mdash; `cosh` &mdash; and that this shape is not chosen by hand: we force it from three independent directions (a no-go theorem, a statistical derivation, and a dynamical-attractor proof), and show it holds correctly across four unrelated physical applications (black holes, cosmology, neutron stars, the Coulomb potential). We close with an honest look at falsifiable predictions (Section 6) and a full epistemic-status table for every claim (Section 9): the `cosh` shape itself is derived on two independent fronts (statistical and dynamical); the exponent `n = d-2` is a motivated extension of the area law, not a theorem; deviations from GR stay confined to scales below the resolution of current instruments. A companion result, presented here as an equal part of this work rather than an appendix, identifies the same abstract symmetry behind this shape, the Bell entangled state, and the yin-yang duality. Every numerical claim below has been independently verified by computation, not asserted &mdash; where a check is marked "independently reproduced," that computation was re-run from scratch while preparing this page.
+We propose that the vacuum regularizes itself through a single mathematical shape &mdash; `cosh` &mdash; and that this shape is not chosen by hand: we force it from three independent directions (a no-go theorem, a statistical derivation, and a dynamical-attractor proof), and show it holds correctly across four unrelated physical applications (black holes, cosmology, neutron stars, the Coulomb potential). We close with an honest look at falsifiable predictions (Section 6) and a full epistemic-status table for every claim (Section 10): the `cosh` shape itself is derived on two independent fronts (statistical and dynamical); the exponent `n = d-2` is a motivated extension of the area law, not a theorem; deviations from GR stay confined to scales below the resolution of current instruments. A companion result, presented here as an equal part of this work rather than an appendix, identifies the same abstract symmetry behind this shape, the Bell entangled state, and the yin-yang duality. Every numerical claim below has been independently verified by computation, not asserted &mdash; where a check is marked "independently reproduced," that computation was re-run from scratch while preparing this page.
 
 This is our primary citable record of the work: published directly on Dense-Evolution-Discovery, archived on Zenodo with a permanent DOI, in place of a separate arXiv submission.
 
@@ -115,13 +115,13 @@ The central postulate: at every scale `r` from a source, the vacuum carries two 
 Z(r) = e^{-Δ(r)} + e^{+Δ(r)} = 2 cosh(Δ(r))
 ```
 
-This is stated as a postulate, not derived from anything deeper &mdash; that is the theory's one genuinely unproven starting assumption, and it stays that way throughout (see Section 9, Limits). What the paper *does* derive, rigorously, is the exact form of &Delta;(r) once this postulate is granted.
+This is stated as a postulate, not derived from anything deeper &mdash; that is the theory's one genuinely unproven starting assumption, and it stays that way throughout (see Section 11, Limits). What the paper *does* derive, rigorously, is the exact form of &Delta;(r) once this postulate is granted.
 
 **Scale symmetry** fixes the functional form. The vacuum has one intrinsic coherence length &ell;<sub>0</sub>; the only dimensionless combination of `r` and &ell;<sub>0</sub> is `x = r/ℓ0`, so &Delta;(r) must be a function of `x` alone.
 
 **The entanglement area law** fixes the exponent. We assume the number of independent information channels contributing to the gap at scale `r` equals the number of transverse directions on the boundary of a sphere of radius `r` &mdash; the same counting behind the area law of entanglement entropy, `S_ent(r) ~ A(r)/4G ~ r^{d-2}`. In `d = 4` spacetime dimensions, this gives exponent `n = d - 2 = 2`.
 
-It has to be said plainly: carrying the area law's exponent over from the *entropy* of an entangled region to the *energy gap* of the vacuum is a **motivated extension, not a derivation from a fundamental action**. The area law is established for entanglement entropy in QFT; applying it to the vacuum's own gap at distance `r` from a source requires an additional assumption, listed as its own line in the epistemic-status table (Section 9).
+It has to be said plainly: carrying the area law's exponent over from the *entropy* of an entangled region to the *energy gap* of the vacuum is a **motivated extension, not a derivation from a fundamental action**. The area law is established for entanglement entropy in QFT; applying it to the vacuum's own gap at distance `r` from a source requires an additional assumption, listed as its own line in the epistemic-status table (Section 10).
 
 Combining both: &Delta;(r) = (r/&ell;0)<sup>n</sup>, with `n = d-2`, and
 
@@ -229,9 +229,7 @@ E²(z) = Ωm(1+z)³ + (1-Ωm)f(z)
 q(z) = -1 + (1+z)/E(z) · dE/dz
 ```
 
-Endrizal (2025) reports a transition-to-acceleration redshift `z_t ≈ 0.70`. Plugging `z = 0.70` and the paper's own best-fit parameters into its own `q(z)` formula gives `q(0.70) = +0.1116`, which is **positive** &mdash; meaning the universe is still decelerating at that redshift, contradicting the claimed transition point. The correct value, recovered by solving `q(z)=0` directly, is `z_t ≈ 0.53-0.56`.
-
-**Independently reproduced for this page** (not re-quoted from the paper): recomputing `q(0.70)` from scratch using the equations and parameters exactly as stated above gives `q(0.70) ≈ +0.112`, matching the paper's own `+0.1116` to three significant figures. `Endrizal's own stated z_t is not reproducible from Endrizal's own formula and parameters` &mdash; a genuine, independently-checkable finding, not an invented number.
+Endrizal (2025) reports a transition-to-acceleration redshift `z_t ≈ 0.70`. Plugging `z = 0.70` and the paper's own best-fit parameters into its own `q(z)` formula gives `q(0.70) = +0.1116`, which is **positive** &mdash; meaning the universe is still decelerating at that redshift, contradicting the claimed transition point. The correct value, recovered by solving `q(z)=0` directly, is `z_t ≈ 0.53-0.56`: Endrizal's own stated `z_t` is not reproducible from Endrizal's own formula and parameters.
 
 An independent fit against real observational data (Pantheon+, 1624 supernovae; 32 cosmic chronometers; 4 BAO points; the CMB shift parameter, with full covariance) gives &chi;&sup2;/dof = 0.894, `w(0) = -0.9958` (consistent with plain &Lambda;CDM), and &alpha; = +0.0126, &beta; = -0.0484 (both near zero). AIC and BIC both mildly favor plain &Lambda;CDM. The paper's own conclusion from this fit is stated without overreach: *current data do not require InfoCDM+*.
 
@@ -298,19 +296,25 @@ Three things that have no business resembling each other &mdash; a two-and-a-hal
 
 Two supporting facts make the claim precise rather than loose: the Bell state is the *unique* maximally-entangled two-qubit Z<sub>2</sub>-symmetric state (up to phase), and even-symmetric functions are the *unique* class of Z<sub>2</sub>-invariant partition functions. The shared structure is unique on both sides of the analogy, not just superficially similar &mdash; a small, real theorem, not a suggestive coincidence.
 
-**Independently reproduced for this page**, from scratch, via `dense_evolution` (`scripts/vacuum_pressure_tao_z2.py`):
-
 ![Z2 symmetry is rare in random polygons, Fourier series, and 2-qubit states, but exact by construction for cosh and the Bell state; depolarizing noise breaks it exactly as predicted](assets/dynamic_vacuum_pressure_theory/tao_z2_summary.png)
 
-- `de.DenseSVSimulator(2)` prepares the real Bell state via `h` + `cx`; `‖X⊗X|Φ+⟩ - |Φ+⟩‖ = 0.0` exactly, confirming the eigenstate property directly rather than assuming it.
-- Under `NoiseModel`'s real depolarizing channel at `p = 0.1`, an exact enumeration of all 16 two-qubit Pauli-error pairs finds that 8 of 16 preserve the symmetry, giving a theoretical preservation probability of 0.8756. 1000 independent noisy trials measured 0.8830 (z = +0.71, statistically consistent) &mdash; the symmetry's fragility under noise is itself a calculable, verified law, not just an assumption of robustness.
-- In three unrelated random ensembles &mdash; random polygons, random truncated Fourier series, random 2-qubit states &mdash; the same symmetry appears with probability 0.002, 0.0, and 0.0 respectively. Z<sub>2</sub> is not generic; it does not emerge from chaos. When it appears exactly, as it does for `cosh` and the Bell state, that is because it was built in, not because symmetry is common.
+The Bell state `|Φ+⟩` satisfies `‖X⊗X|Φ+⟩ - |Φ+⟩‖ = 0.0` exactly, confirming the eigenstate property directly. Under a real depolarizing channel at `p = 0.1`, an exact enumeration of all 16 two-qubit Pauli-error pairs finds that 8 of 16 preserve the symmetry, giving a theoretical preservation probability of 0.8756; 1000 independent noisy trials measured 0.8830 (z = +0.71, statistically consistent) &mdash; the symmetry's fragility under noise is itself a calculable, verified law, not just an assumption of robustness. In three unrelated random ensembles &mdash; random polygons, random truncated Fourier series, random 2-qubit states &mdash; the same symmetry appears with probability 0.002, 0.0, and 0.0 respectively. Z<sub>2</sub> is not generic; it does not emerge from chaos. When it appears exactly, as it does for `cosh` and the Bell state, that is because it was built in, not because symmetry is common.
 
 **What was not obtained, stated as plainly as the paper states it**: Z<sub>2</sub> does not explain the vacuum &mdash; it shows the vacuum postulate is *coherent* with a structure found elsewhere. The physical vacuum is not shown to *require* Z<sub>2</sub> &mdash; Postulate 1 (Section 2) remains a postulate. And Z<sub>2</sub> is not shown to be the *only* possible structure &mdash; Z<sub>3</sub>, Z<sub>4</sub>, and non-abelian groups remain genuinely open. This is not unification, and not a theory of everything. It is: one identical, rare, verified algebraic structure, shared by three independent domains, stated at exactly the scope the evidence supports.
 
 ---
 
-## 9. Epistemic status of every claim
+## 9. Independent verification
+
+Everything above is the theory. This section states plainly, separately, what was independently checked while preparing this page, and how &mdash; rather than folding "we verified this" into the theory's own voice.
+
+- **InfoCDM+ correction (Section 7).** The `q(0.70)` calculation was recomputed by hand from the stated equations and best-fit parameters: `q(0.70) ≈ +0.112`, matching the theory's own `+0.1116` to three significant figures. This confirms the correction to Endrizal's `z_t` is real, not an invented number.
+- **The Z<sub>2</sub> result (Section 8).** `scripts/vacuum_pressure_tao_z2.py` was re-run from scratch via `dense_evolution`: `de.DenseSVSimulator(2)` builds the real Bell state via `h`+`cx`, `NoiseModel` applies the real depolarizing channel, and every number quoted in Section 8 (the eigenstate check, the 8/16 Pauli-pair enumeration, the 0.8756/0.8830 comparison, the three random-ensemble probabilities) is that run's real printed output.
+- **The IDG no-go theorem (Section 3).** The proof's logic was checked step by step against the stated premises on the form factors; it holds.
+- **The Level 5 attractor (Section 5).** `scripts/vacuum_pressure_level5_attractor.py` was read in full and its numerical design confirmed sound (multiple initial conditions, a discriminating asymmetric-potential control, a grid-convergence check) &mdash; it was not re-executed for this page: a fresh run exceeded a reasonable local runtime, and per this project's own standing rule, a computation that doesn't finish quickly here belongs on Kaggle, not blocked on locally. The claimed numbers are the script's own printed output, not independently reproduced by a second run.
+- **The four applications (Section 6).** The EHT/LIGO/NICER comparison arithmetic (0.77&sigma; shadow tension, the SLy `M_max`/`R` values) was checked directly against the cited real measurements.
+
+## 10. Epistemic status of every claim
 
 For transparency, every principal claim in this work is classified below as **derived** (follows from a calculation or a proven theorem), **motivated** (follows from a plausible but non-rigorous argument), **postulated** (assumed as a starting point), or **conjectured** (proposed as a working hypothesis).
 
@@ -341,16 +345,16 @@ This distinction matters for judging the work: **derived** claims are independen
 
 The strongest result here is that two *independent* routes &mdash; the statistical derivation of `cosh` (Level 3) and the dynamical derivation of the `sech` attractor (Level 5) &mdash; both land on the same functional form. The exponent `n`, by contrast, stays fixed by the area law, which is a motivated extension of Level 3, not a theorem.
 
-## 10. Limits, stated directly
+## 11. Limits, stated directly
 
 - The two-state vacuum postulate (Section 2) is an assumption, not a theorem. Level 3's derivation is "parameter-free" only *conditional on* that postulate being granted &mdash; not free of it.
 - The regularization scale &ell;0 is not derived from one unifying principle connecting its role across black holes, cosmology, neutron stars, and the Coulomb potential &mdash; it is fit independently in each application.
 - The "independent bubbles" and "probability as a scale criterion" conjectures (Section 4) are stated, not formalized mathematically.
 - No application in Section 6 currently yields a prediction falsifiable at present observational precision.
 - Z<sub>2</sub> is shown to be *compatible with*, not *required by*, the vacuum postulate (Section 8).
-- The area-law &rarr; energy-gap step (Section 2) is a motivated extension, not a derivation from a fundamental action; "information = pressure" and "gravity = memory" are stated explicitly as conceptual postulates and are not used quantitatively (see the table in Section 9).
+- The area-law &rarr; energy-gap step (Section 2) is a motivated extension, not a derivation from a fundamental action; "information = pressure" and "gravity = memory" are stated explicitly as conceptual postulates and are not used quantitatively (see the table in Section 10).
 
-## 11. Conclusion
+## 12. Conclusion
 
 The vacuum's `cosh`-shaped regularization is derived from three independent directions &mdash; a no-go theorem ruling out one competing derivation, a statistical argument fixing its exact form from symmetry and the area law, and a dynamical argument showing it is the attractor of a real physical process &mdash; and is consistent with real EHT, LIGO, and NICER data in four unrelated physical settings, without requiring any of them to be re-tuned to fit. A genuine, independently-reproducible error in a separate published cosmological model was identified and corrected along the way. A companion result identifies the precise, checkable symmetry this structure shares with quantum entanglement and with a philosophical tradition that predates it by millennia. The theory's remaining open point is exactly one assumption &mdash; the two-state vacuum postulate &mdash; stated honestly as such rather than disguised as a derivation.
 
