@@ -26,6 +26,7 @@ This is the research lab for [Dense Evolution](https://pypi.org/project/dense-ev
 - **[Dense-Armor: Security Telemetry & AI Input Shield](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/apt29_dense_armor_security/)** — real MITRE ATT&CK APT29 attack detection on genuine Sysmon telemetry, plus Orca protecting a real scikit-learn model from adversarial input corruption.
 - **[Dense-Evolution: Quantum Simulation & Physics](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/#scientific-discoveries-empirical-evidence)** — TFIM phase transitions, VQE, ZNE, tight-binding materials, and a critical replication of the traversable-wormhole teleportation protocol.
 - **[Diagnostics & Healing](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — density-matrix noise diagnostics (Rényi divergence, magic entropy) and vector-healing bug fixes shipped back into Dense-Evolution.
+- **[Dynamic Vacuum Pressure Theory](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/dynamic_vacuum_pressure_theory/)** — independent re-check of an external theoretical-physics paper, including a reproduced correction to a published cosmology result and a `dense_evolution`-verified Z₂ symmetry linking `cosh`, the Bell state, and Taoist duality.
 
 ## Quick Start
 

@@ -18,6 +18,7 @@ The newest work has its own dedicated page per topic (see the sidebar); everythi
 - **Vector Healing** — [Stratonovich-Projection Vector Healing](stratonovich_vector_healing.md) · [Healing Trigger False-Positive Audit](healing_trigger_false_positive_audit.md) · [Leaky-Switch Differentiable Healing](leaky_differentiable_healing.md)
 - **[Dense-Armor: Robot Safety Monitoring](live_safety_loop.md)** — drift/fault detection and safety filtering on real IMU, Lidar, and LeRobot data.
 - **Dense-Evolution: Quantum Simulation & Physics** — [Harrison / VHD Tight-Binding](harrison_tight_binding.md) · [Traversable-Wormhole Teleportation](wormhole_syk_teleportation.md) · [Photonic Predictive ZNE](photonic_predictive_zne.md) · [Quantum Many-Body Scar Investigation](quantum_scar_investigation.md)
+- **[Dynamic Vacuum Pressure Theory](dynamic_vacuum_pressure_theory.md)** — independent re-check of an external theory paper: a reproduced correction to a published cosmology result, an IDG no-go theorem, an attractor-dynamics test, and a `dense_evolution`-verified Z₂ symmetry linking `cosh`, the Bell state, and Taoist duality.
 
 ---
 
