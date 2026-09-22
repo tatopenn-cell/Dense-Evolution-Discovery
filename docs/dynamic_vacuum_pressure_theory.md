@@ -2,7 +2,7 @@
 
 **Salvatore Pennacchio** &mdash; Independent Researcher &mdash; September 2026
 
-We propose that the vacuum regularizes itself through a single mathematical shape &mdash; `cosh` &mdash; and that this shape is not chosen by hand: we force it from three independent directions (a no-go theorem, a statistical derivation, and a dynamical-attractor proof), and show it holds correctly across four unrelated physical applications (black holes, cosmology, neutron stars, the Coulomb potential). A companion result, presented here as an equal part of this work rather than an appendix, identifies the same abstract symmetry behind this shape, the Bell entangled state, and the yin-yang duality. Every numerical claim below has been independently verified by computation, not asserted &mdash; where a check is marked "independently reproduced," that computation was re-run from scratch while preparing this page.
+We propose that the vacuum regularizes itself through a single mathematical shape &mdash; `cosh` &mdash; and that this shape is not chosen by hand: we force it from three independent directions (a no-go theorem, a statistical derivation, and a dynamical-attractor proof), and show it holds correctly across four unrelated physical applications (black holes, cosmology, neutron stars, the Coulomb potential). We close with an honest look at falsifiable predictions (Section 6) and a full epistemic-status table for every claim (Section 9): the `cosh` shape itself is derived on two independent fronts (statistical and dynamical); the exponent `n = d-2` is a motivated extension of the area law, not a theorem; deviations from GR stay confined to scales below the resolution of current instruments. A companion result, presented here as an equal part of this work rather than an appendix, identifies the same abstract symmetry behind this shape, the Bell entangled state, and the yin-yang duality. Every numerical claim below has been independently verified by computation, not asserted &mdash; where a check is marked "independently reproduced," that computation was re-run from scratch while preparing this page.
 
 This is our primary citable record of the work: published directly on Dense-Evolution-Discovery, archived on Zenodo with a permanent DOI, in place of a separate arXiv submission.
 
@@ -26,11 +26,15 @@ A companion result (Section 8, its own major finding) then asks whether this `co
 
 ## The vacuum's story
 
-The vacuum is not a static "nothing." But dynamics is not an original property of the vacuum either &mdash; the vacuum, as vacuum, is simply empty. Dynamics appears only when the vacuum perfects itself into cosmic space. That act of perfecting generates a symmetry: two mirror-image energies, opposite in sign, equal in weight. There are no real "points" in the geometric sense &mdash; only energies and opposite energies. The language of points is a convenience for the observer, not a fact about the vacuum itself.
+Start from pure cosmic vacuum. No dynamics at all &mdash; dynamics is not an original property of the vacuum; the vacuum, as vacuum, is simply empty.
 
-When two opposite energies meet, one of two things happens. They can annihilate. Or they can entangle, and in entangling, give rise to a configuration of pressure. Entanglement here is not a late consequence of vacuum fluctuations &mdash; it is more fundamental than that: it is born from the very first symmetry that creates space. We exist at a point of entanglement, because without entanglement there would be no pressure to exist in.
+The vacuum touches its own limits. That limit creates a force opposed to the vacuum. The opposing force creates convexity in the vacuum itself. Convexity creates the dynamics that was not there before. This is the whole mechanism in one line: dynamics is not original, it is born from the limit &mdash; before the limit, the vacuum has no dynamics, because nothing opposes it; the limit is what introduces opposition, and opposition is what introduces movement.
 
-In the vacuum, matter as we ordinarily picture it does not exist. What exists is energy, energy density, and pressure. Pressure is the one thing that is actually real; matter, particles, and dark matter are all causal dynamics of pressure &mdash; different modes in which pressure organizes itself. Information itself is pressure: there is no separation between the two.
+That dynamics is the dimensional tear: vacuum waves &rarr; pressure points &rarr; semi-particles &rarr; particles. The opposition born from the limit is what the rest of this story calls two mirror-image energies, opposite in sign, equal in weight. There are no real "points" in the geometric sense &mdash; only energies and opposite energies. The language of points is a convenience for the observer, not a fact about the vacuum itself.
+
+When two opposite energies meet, one of two things happens. They can annihilate. Or they can entangle, and in entangling, give rise to a configuration of pressure. Entanglement here is not a late consequence of vacuum fluctuations &mdash; it is more fundamental than that: it is born from the very same opposition that the limit introduced. We exist at a point of entanglement, because without entanglement there would be no pressure to exist in.
+
+In the vacuum, matter as we ordinarily picture it does not exist. What exists is energy, energy density, and pressure. Pressure is the one thing that is actually real; matter, particles, and dark matter are all causal dynamics of pressure &mdash; different modes in which pressure organizes itself. Information itself is pressure: there is no separation between the two. **This identification is a conceptual postulate, not a mathematical derivation** &mdash; it supplies the language for this framework, but is not used quantitatively anywhere in the sections that follow.
 
 The vacuum's waves rarely settle into a stable combination. When they do, a pressure point is born &mdash; a configuration of energy that manages to concentrate and hold itself in tension. What happens next depends entirely on how long that configuration lasts. If it persists, it stabilizes into a visible particle. If it does not, the information it carried is not lost &mdash; it falls back into pressure. That fallen, unstabilized pressure-information is dark matter: not a particle that remains, but what remains once a configuration fails to.
 
@@ -115,7 +119,9 @@ This is stated as a postulate, not derived from anything deeper &mdash; that is 
 
 **Scale symmetry** fixes the functional form. The vacuum has one intrinsic coherence length &ell;<sub>0</sub>; the only dimensionless combination of `r` and &ell;<sub>0</sub> is `x = r/ℓ0`, so &Delta;(r) must be a function of `x` alone.
 
-**The entanglement area law** fixes the exponent. The vacuum is treated as an entangled system: the number of independent information channels contributing to the gap at scale `r` equals the number of transverse directions on the boundary of a sphere of radius `r` &mdash; the same counting behind the area law of entanglement entropy, `S_ent(r) ~ A(r)/4G ~ r^{d-2}`. In `d = 4` spacetime dimensions, this gives exponent `n = d - 2 = 2`.
+**The entanglement area law** fixes the exponent. We assume the number of independent information channels contributing to the gap at scale `r` equals the number of transverse directions on the boundary of a sphere of radius `r` &mdash; the same counting behind the area law of entanglement entropy, `S_ent(r) ~ A(r)/4G ~ r^{d-2}`. In `d = 4` spacetime dimensions, this gives exponent `n = d - 2 = 2`.
+
+It has to be said plainly: carrying the area law's exponent over from the *entropy* of an entangled region to the *energy gap* of the vacuum is a **motivated extension, not a derivation from a fundamental action**. The area law is established for entanglement entropy in QFT; applying it to the vacuum's own gap at distance `r` from a source requires an additional assumption, listed as its own line in the epistemic-status table (Section 9).
 
 Combining both: &Delta;(r) = (r/&ell;0)<sup>n</sup>, with `n = d-2`, and
 
@@ -161,7 +167,9 @@ Which convex function, specifically? Two opposing tendencies are already in play
 
 That equilibrium is dynamic, not static: a static equilibrium would mean &Delta;=0 everywhere, which is exactly the condition under which the pressure point vanishes back into undifferentiated vacuum. Since Section 2 already established &Delta;(r) &ne; 0 for every `r > 0`, the two opposing tendencies never cancel &mdash; they stay in permanent tension. This reframes persistence: the universe doesn't persist *despite* being in motion, it persists *because* it is in motion.
 
-Gravity, in this picture, is the memory of which configurations stabilized: each stabilized pressure point generates a local curvature, that curvature shapes subsequent pressure points, and the cumulative effect is a historical memory encoded directly in spacetime's own dynamical configuration &mdash; not a separate force layered on top of it. A configuration that fails to stabilize generates insufficient curvature to anchor itself and decays; one that stabilizes generates curvature and persists.
+**Postulate (Gravity as memory).** Gravity is the physical memory of stabilized configurations: a configuration that fails to stabilize does not generate enough gravity to anchor itself and decays; one that stabilizes generates curvature and persists.
+
+This is stated as a postulate, not a proposition with a proof: it offers an *interpretation* of cosmological persistence, but no equation in this work connects the number of stabilized configurations to the curvature tensor. The link is conceptual, not operational, and it is not used quantitatively anywhere in Levels 3, 5, or the applications in Section 6.
 
 Two further conjectures are proposed at this level, explicitly labeled as conjectures rather than proven results: that every independent "tear" in the cosmic vacuum produces an independent, causally disconnected bubble/universe sharing only the cosmic vacuum as background (**independent bubbles**), and that the same underlying dynamics produces stable structures at every scale with a probability that depends on that scale &mdash; cosmological bubbles least likely, elementary particles least likely to *fail*, semi-particles in between (**probability as a scale criterion**). Neither is formalized mathematically here; both remain open.
 
@@ -302,15 +310,47 @@ Two supporting facts make the claim precise rather than loose: the Bell state is
 
 ---
 
-## 9. Limits, stated directly
+## 9. Epistemic status of every claim
+
+For transparency, every principal claim in this work is classified below as **derived** (follows from a calculation or a proven theorem), **motivated** (follows from a plausible but non-rigorous argument), **postulated** (assumed as a starting point), or **conjectured** (proposed as a working hypothesis).
+
+<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
+<thead><tr>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11px;text-transform:uppercase">Claim</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11px;text-transform:uppercase">Status</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11px;text-transform:uppercase">Section</th>
+<th style="text-align:left;font-weight:500;color:#57606a;padding:8px 10px;border-bottom:1px solid #d7dbe0;font-size:11px;text-transform:uppercase">Comment</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">IDG no-go theorem</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">3</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Proposition + corollary, proven</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>ℓ(r) = ℓ0/cosh((r/ℓ0)^n)</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2, 5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">From Boltzmann (Lvl.3) and from Prigogine (Lvl.5), independently</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>Z(r) = 2cosh(ε)</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Entropy maximization under an energy constraint</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Vacuum convexity is obligatory</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Topological argument, not a theorem</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Equilibrium is dynamic, not static</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Physical argument, not an equation</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>n = d-2</code> from the area law</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Extends the area law to the energy gap; not derived from a fundamental action</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Information = pressure</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Story</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conceptual postulate, not operational</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Gravity = memory</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretive postulate, not operational</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Two-state vacuum</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Base postulate of Level 3</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Independent bubbles</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Working hypothesis, not formalized</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Probability as a scale criterion</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Working hypothesis, not formalized</td></tr>
+<tr><td style="padding:8px 10px">EHT / LIGO / NICER consistency</td><td style="padding:8px 10px">Derived</td><td style="padding:8px 10px">6</td><td style="padding:8px 10px">From explicit calculation; not yet falsifiable at current precision</td></tr>
+</tbody>
+</table>
+
+This distinction matters for judging the work: **derived** claims are independently checkable; **motivated** claims require the reader to accept an argument; **postulated** claims are starting points of principle; **conjectured** claims are open invitations for future work.
+
+The strongest result here is that two *independent* routes &mdash; the statistical derivation of `cosh` (Level 3) and the dynamical derivation of the `sech` attractor (Level 5) &mdash; both land on the same functional form. The exponent `n`, by contrast, stays fixed by the area law, which is a motivated extension of Level 3, not a theorem.
+
+## 10. Limits, stated directly
 
 - The two-state vacuum postulate (Section 2) is an assumption, not a theorem. Level 3's derivation is "parameter-free" only *conditional on* that postulate being granted &mdash; not free of it.
 - The regularization scale &ell;0 is not derived from one unifying principle connecting its role across black holes, cosmology, neutron stars, and the Coulomb potential &mdash; it is fit independently in each application.
 - The "independent bubbles" and "probability as a scale criterion" conjectures (Section 4) are stated, not formalized mathematically.
 - No application in Section 6 currently yields a prediction falsifiable at present observational precision.
 - Z<sub>2</sub> is shown to be *compatible with*, not *required by*, the vacuum postulate (Section 8).
+- The area-law &rarr; energy-gap step (Section 2) is a motivated extension, not a derivation from a fundamental action; "information = pressure" and "gravity = memory" are stated explicitly as conceptual postulates and are not used quantitatively (see the table in Section 9).
 
-## 10. Conclusion
+## 11. Conclusion
 
 The vacuum's `cosh`-shaped regularization is derived from three independent directions &mdash; a no-go theorem ruling out one competing derivation, a statistical argument fixing its exact form from symmetry and the area law, and a dynamical argument showing it is the attractor of a real physical process &mdash; and is consistent with real EHT, LIGO, and NICER data in four unrelated physical settings, without requiring any of them to be re-tuned to fit. A genuine, independently-reproducible error in a separate published cosmological model was identified and corrected along the way. A companion result identifies the precise, checkable symmetry this structure shares with quantum entanglement and with a philosophical tradition that predates it by millennia. The theory's remaining open point is exactly one assumption &mdash; the two-state vacuum postulate &mdash; stated honestly as such rather than disguised as a derivation.
 
