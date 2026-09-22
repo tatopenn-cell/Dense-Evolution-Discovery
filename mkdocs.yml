@@ -111,6 +111,7 @@ nav:
       - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
       - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
       - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
+      - Dynamic Vacuum Pressure Theory: dynamic_vacuum_pressure_theory.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
       - "Chunk: GPU Dynamic-Cap Finding": chunk_gpu_cap_finding.md
