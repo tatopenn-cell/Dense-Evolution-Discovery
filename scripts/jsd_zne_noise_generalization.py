@@ -51,9 +51,21 @@ never trigger the nudge at all (exactly 0.0 diff, zero risk), and only
 active seeds are a meaningful comparison. At 200 seeds: 63/200 active
 (31.5%), and among those, 63/63 positive -- mean +0.014892, one-sample
 t-test p=1.07e-08, permutation test (20000 resamples) p<0.00005. This is
-a real, large-sample-confirmed result, not yet promoted to the main
-library -- see this repo's own README for the draft/verification
-distinction that governs when promotion happens.
+a real, large-sample-confirmed result.
+
+PART 5 -- confirmation sweep, matching the scope of the photon-loss
+validation before it was promoted (a noise-level sweep and a second
+circuit family). Noise-level sweep on GHZ-4 (100 seeds/level): the effect
+holds, significant by both tests, at base_p in (0.03, 0.05, 0.08, 0.10)
+-- 100% win rate among active points at every one of those levels. At
+base_p=0.15 the effect is no longer significant (p=0.288 t-test, p=0.301
+permutation) -- a real, honest upper boundary of validity, not universal.
+A second circuit family (hardware-efficient VQE-style ansatz, 2 layers,
+same construction as photonic_zne_multi_circuit_postselection.py) at
+base_p=0.05: 69/150 active (46%, higher activation than GHZ), 67/69
+positive, p=4.4e-06 -- confirms the effect is not GHZ-specific. Promoted
+to dense_evolution.mitigation as `coherence_predictive_zne_density_matrix`,
+scope declared: phaseflip/dephasing-dominated noise, base_p<=0.10.
 
     python scripts/jsd_zne_noise_generalization.py
 """
@@ -148,6 +160,46 @@ def coherence_predictive_zne_core(rho_at_scales, nudge_scale=0.5):
     return project_to_physical((a * e1 + b * e2 + c * e3) / (a + b + c)), float(rectified)
 
 
+def vqe_ansatz_ops(n_qubits, params, n_layers=2):
+    """Hardware-efficient VQE-style ansatz: RY layer + linear CX entangling
+    layer, repeated n_layers times -- identical construction to
+    photonic_zne_multi_circuit_postselection.py's own, reused rather than
+    reinvented so the second circuit family is a real independent check,
+    not a new shape that happens to be convenient."""
+    ops = []
+    idx = 0
+    for _ in range(n_layers):
+        for q in range(n_qubits):
+            ops.append(("ry", q, float(params[idx])))
+            idx += 1
+        for q in range(n_qubits - 1):
+            ops.append(("cx", q, q + 1))
+    return ops
+
+
+def build_statevector_from_ops(n_qubits, ops):
+    sim = de.DenseSVSimulator(n_qubits)
+    sim.run_circuit(ops)
+    return jnp.asarray(sim.get_statevector(), dtype=jnp.complex128)
+
+
+def coherence_active_diffs(sv_ideal, rho_ideal, n_qubits, model, base_p, n_trials, n_seeds, seed_offset):
+    diffs = []
+    for seed in range(n_seeds):
+        master_key = jax.random.PRNGKey(seed_offset + seed)
+        rhos = []
+        for factor in FACTORS:
+            master_key, sub = jax.random.split(master_key)
+            rhos.append(density_matrix_stochastic(sv_ideal, n_qubits, model, base_p, factor, n_trials, sub))
+        rhos = jnp.stack(rhos)
+        rho_baseline = _jsd_predictive_zne_density_matrix_core(rhos, nudge_scale=0.0)
+        rho_coh, _ = coherence_predictive_zne_core(rhos, nudge_scale=0.5)
+        fb = float(uhlmann_fidelity(rho_ideal, rho_baseline))
+        fc = float(uhlmann_fidelity(rho_ideal, rho_coh))
+        diffs.append(fc - fb)
+    return np.array(diffs)
+
+
 def run_one_seed_all_signals(sv_ideal, rho_ideal, n_qubits, model, base_p, n_trials, seed):
     master_key = jax.random.PRNGKey(seed)
     rhos = []
@@ -233,6 +285,35 @@ if __name__ == "__main__":
     print(f"one-sample t-test p={p_t:.3e}   permutation test (20000 resamples) p={p_perm:.5f}")
     rows.append({"part": 4, "model": "phaseflip_large_sample", "base_p": 0.05,
                   "n_active": n_active, "n_total": K_SEEDS_LARGE, "coherence_mean": m,
+                  "coherence_p_ttest": p_t, "coherence_p_permutation": p_perm, "wins": w})
+
+    print("\n=== Part 5: confirmation sweep -- noise levels + a second circuit family ===\n")
+    for base_p in (0.03, 0.05, 0.08, 0.10, 0.15):
+        diffs = coherence_active_diffs(sv_ideal, rho_ideal, N_QUBITS, "phaseflip", base_p, N_TRIALS,
+                                        n_seeds=100, seed_offset=700000 + int(base_p * 1000) * 100)
+        active = diffs[diffs != 0.0]
+        if len(active) > 1:
+            m, sem, p_t, w, n_active = paired_stats(active)
+            p_perm = permutation_p(active)
+            print(f"base_p={base_p:.2f}  n_active={n_active}/100  mean={m:+.6f}  wins={w}/{n_active}  "
+                  f"t-test p={p_t:.3e}  perm p={p_perm:.5f}")
+            rows.append({"part": 5, "model": "phaseflip_noise_sweep", "base_p": base_p,
+                          "n_active": n_active, "n_total": 100, "coherence_mean": m,
+                          "coherence_p_ttest": p_t, "coherence_p_permutation": p_perm, "wins": w})
+
+    rng = np.random.default_rng(100 + N_QUBITS)
+    vqe_params = rng.uniform(0, 2 * np.pi, size=N_QUBITS * 2)
+    sv_vqe = build_statevector_from_ops(N_QUBITS, vqe_ansatz_ops(N_QUBITS, vqe_params, n_layers=2))
+    rho_vqe = jnp.outer(sv_vqe, jnp.conj(sv_vqe))
+    diffs_vqe = coherence_active_diffs(sv_vqe, rho_vqe, N_QUBITS, "phaseflip", 0.05, N_TRIALS,
+                                        n_seeds=150, seed_offset=800000)
+    active_vqe = diffs_vqe[diffs_vqe != 0.0]
+    m, sem, p_t, w, n_active = paired_stats(active_vqe)
+    p_perm = permutation_p(active_vqe)
+    print(f"\nVQE-4q (2 layers) base_p=0.05  n_active={n_active}/150  mean={m:+.6f}  wins={w}/{n_active}  "
+          f"t-test p={p_t:.3e}  perm p={p_perm:.5f}")
+    rows.append({"part": 5, "model": "phaseflip_vqe_4q", "base_p": 0.05,
+                  "n_active": n_active, "n_total": 150, "coherence_mean": m,
                   "coherence_p_ttest": p_t, "coherence_p_permutation": p_perm, "wins": w})
 
     pd.DataFrame(rows).to_csv(_DATA_DIR / "jsd_zne_noise_generalization.csv", index=False)

@@ -1,14 +1,15 @@
 # Does the Shipped JSD-Predictive ZNE Generalize? And a Real Extension
 
 !!! note
-    `jsd_predictive_zne_density_matrix` (the classical-JSD signal) is
-    promoted and lives in the main library:
-    [`dense_evolution.mitigation`](https://tatopenn-cell.github.io/Dense-Evolution/),
-    validated on photon-loss/amplitude-damping (see
-    [Photonic Predictive ZNE](photonic_predictive_zne.md)). Everything on
-    this page is draft-stage: a coherence-L1 signal with a real,
-    large-sample-confirmed result on phase-flip noise, not yet promoted --
-    see this repo's own README for the draft/verification distinction.
+    Both signals on this page are now in the main library:
+    [`dense_evolution.mitigation`](https://tatopenn-cell.github.io/Dense-Evolution/) --
+    `jsd_predictive_zne_density_matrix` (classical JSD, validated on
+    photon-loss/amplitude-damping, see
+    [Photonic Predictive ZNE](photonic_predictive_zne.md)) and
+    `coherence_predictive_zne_density_matrix` (coherence-L1, validated
+    here on phase-type noise, `base_p<=0.10`). This page is the
+    experimental log for both, including the negative results (QJSD, the
+    coherent-error case) kept in rather than discarded.
 
 **In plain terms**: the shipped method nudges the standard zero-noise-extrapolation formula only when it detects something "surprising" happening between noise levels, using a signal built from the *populations* of a quantum state. That works well for photon loss. This page asks whether it works for other kinds of noise too, finds a real, structural reason it can't see one entire category (dephasing), and finds a different signal that can.
 
@@ -39,9 +40,25 @@ The `l1`-norm of coherence (`Σ|ρ_ij|`, `i≠j` -- Baumgratz, Cramér & Plenio,
 
 At 200 seeds on phaseflip (`base_p=0.05`): **63/200 active (31.5%)**, and among those, **63/63 positive** -- mean fidelity gain `+0.014892`, one-sample t-test `p=1.07×10⁻⁸`, a permutation test (20,000 resamples) finding no resample matching or exceeding the observed effect (`p<0.00005`). Effect sizes among active points range from `+0.0001` to `+0.074`, median `+0.0094`.
 
+## Part 5: confirmation sweep, matching the bar the promoted method met
+
+Before treating this as more than a single lucky configuration, the same scope the photon-loss signal was validated against before promotion -- a noise-level sweep and a second circuit family:
+
+| `base_p` | active/100 | wins | t-test `p` | permutation `p` |
+|---|---|---|---|---|
+| 0.03 | 35 | 33/35 | 8.8×10⁻⁵ | <0.00001 |
+| 0.05 | 23 | 23/23 | 2.0×10⁻³ | <0.00001 |
+| 0.08 | 21 | 21/21 | 5.7×10⁻³ | <0.00001 |
+| 0.10 | 11 | 11/11 | 4.6×10⁻³ | 0.00100 |
+| **0.15** | 17 | 14/17 | 0.288 | 0.301 |
+
+The effect is real and significant by both tests from `base_p=0.03` through `0.10`, with a 100% win rate among active points at every one of those levels. At `base_p=0.15` it is **no longer significant** -- a real, honest upper boundary, not a universal effect at any noise strength.
+
+A second circuit family (hardware-efficient VQE-style ansatz, 2 layers, identical construction to [`photonic_zne_multi_circuit_postselection.py`](photonic_predictive_zne.md)'s own) at `base_p=0.05`: **69/150 active (46%, a higher activation rate than GHZ)**, **67/69 positive**, `p=4.4×10⁻⁶` -- confirms the effect is not specific to GHZ states.
+
 ## Honest conclusion
 
-The shipped classical-JSD signal is genuinely blind to phase-type noise, for a specific, verified, structural reason -- not a gap left uninvestigated. A coherence-based signal covers exactly that gap, with a large-sample result stronger than the original photon-loss validation (`p=1.07×10⁻⁸` vs. `p=0.0003`). Deterministic coherent errors remain out of reach for this entire family of methods: detecting *nonlinearity between noise scales* cannot work on a noise process that has none by construction, regardless of which divergence measures it. This is a real, useful extension, held here in draft rather than promoted -- see [`Draft and Verification`](https://github.com/tatopenn-cell/quantum-rag/blob/main/docs/draft_verification_methodology.md) for why that distinction is deliberate, not a delay.
+The shipped classical-JSD signal is genuinely blind to phase-type noise, for a specific, verified, structural reason -- not a gap left uninvestigated. A coherence-based signal covers exactly that gap, with a large-sample result stronger than the original photon-loss validation (`p=1.07×10⁻⁸` vs. `p=0.0003`), confirmed across a noise-level sweep and a second circuit family with the same scope the original validation required before promotion. Deterministic coherent errors remain out of reach for this entire family of methods: detecting *nonlinearity between noise scales* cannot work on a noise process that has none by construction, regardless of which divergence measures it. `coherence_predictive_zne_density_matrix` was promoted to `dense_evolution.mitigation` with its validated scope stated directly, not glossed over: phaseflip/dephasing-dominated noise, `base_p<=0.10` -- see [`Draft and Verification`](https://github.com/tatopenn-cell/quantum-rag/blob/main/docs/draft_verification_methodology.md) for the process this promotion followed.
 
 ## Reproducing this
 
