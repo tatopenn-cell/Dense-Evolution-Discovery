@@ -28,6 +28,10 @@ This is the research lab for [Dense Evolution](https://pypi.org/project/dense-ev
 - **[Diagnostics & Healing](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/sandwiched_renyi_density_matrix/)** — density-matrix noise diagnostics (Rényi divergence, magic entropy) and vector-healing bug fixes shipped back into Dense-Evolution.
 - **[Dynamic Vacuum Pressure Theory](https://tatopenn-cell.github.io/Dense-Evolution-Discovery/dynamic_vacuum_pressure_theory/)** — Salvatore Pennacchio's own theoretical-physics paper, published here as its primary citable record: a `cosh`-shaped vacuum regularization derived from three independent directions, checked against real EHT/LIGO/NICER data, with a `dense_evolution`-verified Z₂ symmetry linking `cosh`, the Bell state, and Taoist duality.
 
+## Related tool
+
+**[quantum-rag](https://github.com/tatopenn-cell/quantum-rag)** — the retrieval-augmented-generation tool used to ground the research above in its own source papers rather than an AI's memory of them, standalone and separately citable ([DOI: 10.5281/zenodo.22914813](https://doi.org/10.5281/zenodo.22914813)).
+
 ## Quick Start
 
 ```bash
