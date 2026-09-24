@@ -15,7 +15,7 @@
 
 ## Part 1: screening across every standard noise channel
 
-Same fairness discipline as [`jsd_zne_oscillating_noise.py`](jsd_zne_oscillating_noise.md): both methods see the identical 3 noise scales, the baseline is the library's own plain 3-point Richardson (not a reimplementation), and the treatment is the real, shipped function. Screened across `depolarizing`, `bitflip`, `phaseflip`, `amplitude_damping`, `combined`, and a deterministic coherent (Rz over-rotation) error, 6 seeds per configuration:
+Same fairness discipline as `jsd_zne_oscillating_noise.py` (its own screening results are Part 1 of this page): both methods see the identical 3 noise scales, the baseline is the library's own plain 3-point Richardson (not a reimplementation), and the treatment is the real, shipped function. Screened across `depolarizing`, `bitflip`, `phaseflip`, `amplitude_damping`, `combined`, and a deterministic coherent (Rz over-rotation) error, 6 seeds per configuration:
 
 - **amplitude_damping and combined** show a lead at low noise (`base_p=0.05`) -- both already inside the shipped signal's validated domain.
 - **bitflip, depolarizing, phaseflip, and the coherent case** show no reliable effect at 6 seeds.
