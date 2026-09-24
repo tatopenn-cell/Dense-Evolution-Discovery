@@ -16,7 +16,7 @@ The result rests on four independent lines of argument, checked in a fifth again
 
 1. A **no-go theorem** ruling out one entire class of quantum-gravity actions as a source of the `cosh` shape.
 2. A **statistical derivation** identifying `cosh` as the partition function of a two-state vacuum, with its exponent fixed by symmetry, not fit to data.
-3. A **geometric interpretation**: the vacuum's lack of an "inside" forces convexity, and gravity is reinterpreted as the memory of stabilized configurations.
+3. A **geometric interpretation**: the emergence of spacetime from distinction. Let us assume, per absurdum, an initial state where the resultant of every force is null: a purely atopological universe—the absolute, static nothingness of the vacuum. In this scenario, placing two previously unidentified entities in relation to one another constitutes, in itself, a primordial act of indication: the relation itself is the first geometric differentiation.Two unique stochastic outcomes follow from this act. If the difference is perfectly symmetric, the counterparts annihilate, collapsing back into nothingness (echoing the annihilation-or-entanglement bifurcation from Section 1). If, however, an asymmetry persists—the very imperfection that the \[\alpha _{G}\] floor in Section 2 corrects, where the gradient \[\Delta \] is never exactly zero—this difference generates dynamicity. It is precisely this intrinsic asymmetry that structures the vacuum into a dynamic, topological spacetime..
 4. A **dynamical derivation**: `cosh` is independently shown to be the attractor of a minimum-entropy-production dynamics.
 5. Four **applications** cross-checked against real EHT, LIGO, and NICER data.
 
