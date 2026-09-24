@@ -105,6 +105,7 @@ nav:
       - Germanium iSWAP Validation: germanium_iswap_validation.md
     - "Noise, Error Mitigation & Validation":
       - Photonic Predictive ZNE: photonic_predictive_zne.md
+      - JSD-ZNE Noise Generalization: jsd_zne_noise_generalization.md
       - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
       - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
     - "Exotic Physics":
