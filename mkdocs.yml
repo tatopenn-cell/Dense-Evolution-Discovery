@@ -106,6 +106,7 @@ nav:
     - "Noise, Error Mitigation & Validation":
       - Photonic Predictive ZNE: photonic_predictive_zne.md
       - JSD-ZNE Noise Generalization: jsd_zne_noise_generalization.md
+      - Pink-Noise ZNE Windowed Coherence: pink_noise_zne_windowed_coherence.md
       - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
       - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
     - "Exotic Physics":
