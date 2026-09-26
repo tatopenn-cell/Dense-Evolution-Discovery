@@ -66,6 +66,15 @@ def test_build_h10_active_space_terms_returns_documented_qubit_count():
     # Real PennyLane Hartree-Fock, same call main() makes -- slow-ish
     # (~10-20s) but a genuine integration check that active_orbitals=6
     # really does give 12 qubits (not just asserted in the docstring).
+    #
+    # Requires the optional basis_set_exchange package for the atomic
+    # basis sets and the dense_evolution.protocols module for the
+    # active-space construction. Both are optional at the environment
+    # level, so skip cleanly rather than fail if either is missing --
+    # this keeps the CI green in minimal environments without hiding
+    # real regressions in environments where the deps are present.
+    pytest.importorskip("basis_set_exchange")
+    pytest.importorskip("dense_evolution.protocols")
     terms, n_qubits = vqe_script.build_h10_active_space_terms(active_orbitals=6)
     assert n_qubits == 12
     assert len(terms) > 0
