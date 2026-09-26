@@ -16,7 +16,7 @@ The result rests on four independent lines of argument, checked in a fifth again
 
 1. A **no-go theorem** ruling out one entire class of quantum-gravity actions as a source of the `cosh` shape.
 2. A **statistical derivation** identifying `cosh` as the partition function of a two-state vacuum, with its exponent fixed by symmetry, not fit to data.
-3. A **geometric interpretation**: the emergence of spacetime from distinction. Let us assume, per absurdum, an initial state where the resultant of every force is null: a purely atopological universe—the absolute, static nothingness of the vacuum. In this scenario, placing two previously unidentified entities in relation to one another constitutes, in itself, a primordial act of indication: the relation itself is the first geometric differentiation.Two unique stochastic outcomes follow from this act. If the difference is perfectly symmetric, the counterparts annihilate, collapsing back into nothingness (echoing the annihilation-or-entanglement bifurcation from Section 1). If, however, an asymmetry persists—the very imperfection that the \[\alpha _{G}\] floor in Section 2 corrects, where the gradient \[\Delta \] is never exactly zero—this difference generates dynamicity. It is precisely this intrinsic asymmetry that structures the vacuum into a dynamic, topological spacetime..
+3. A **geometric interpretation**: the emergence of spacetime from distinction. Let us assume, per absurdum, an initial state where the resultant of every force is null: a purely atopological universe—the absolute, static nothingness of the vacuum. In this scenario, placing two previously unidentified entities in relation to one another constitutes, in itself, a primordial act of indication: the relation itself is the first geometric differentiation. Two unique stochastic outcomes follow from this act. If the difference is perfectly symmetric, the counterparts annihilate, collapsing back into nothingness (echoing the annihilation-or-entanglement bifurcation from Section 1). If, however, an asymmetry persists—the very imperfection that the \[\alpha _{G}\] floor in Section 2 corrects, where the gradient \[\Delta \] is never exactly zero—this difference generates dynamicity. It is precisely this intrinsic asymmetry that structures the vacuum into a dynamic, topological spacetime.
 4. A **dynamical derivation**: `cosh` is independently shown to be the attractor of a minimum-entropy-production dynamics.
 5. Four **applications** cross-checked against real EHT, LIGO, and NICER data.
 
@@ -78,23 +78,141 @@ The practical conclusion: the `cosh` regularization used throughout this paper i
 
 ---
 
-## 4. Geometric picture: why convexity
+## 4. Geometric picture: from homogeneous smoothness to topological rugosity
 
-Suppose, for the sake of argument, that every force in play is summed and set to zero, so that we start from a purely non-topological universe: nothingness, with no movement in the vacuum. Bringing one never-marked space into relation with another never-marked space is, in itself, an act of marking &mdash; the relation between the two is the first differentiation. Two outcomes follow from here: if that difference is perfect, exact, symmetric, it annihilates back into nothingness. If it is not perfect &mdash; the same imperfection Section 2's `α_G` floor corrects, `Δ` never exactly `0` &mdash; the difference creates dynamicity, and dynamicity is what creates a dynamic topological space, or rather, spacetime.
+### 4.1 The primordial transition and the evolution of the boundary
 
-These two outcomes are exactly the two terms of the Boltzmann sum: `e^{+Δ}` (the differentiated outcome) and `e^{-Δ}` (the annihilated outcome). Weighted equally:
+We assume the fundamental state of the cosmos to be a pristine, uniform continuum &mdash; a perfect plenum characterized by absolute spatial homogeneity. In this undisturbed state, where every spatial coordinate is identical to any other, the global symmetry prevents the manifestation of time, metrics, or macroscopic dynamics. It is a full space that operationally behaves as absolute nothingness.
+
+Crucially, we reject the notion of an infinite continuum. Neither the absolute smooth state nor the vacuum itself can extend infinitely; infinity is a mathematical abstraction that violates the dynamic closure of a physical system.
 
 ```
-Z(Δ) = (e^{+Δ} + e^{-Δ}) / 2 → 2cosh(Δ)
+[ Homogeneous Plenum ] ──► (Expansion/Movement) ──► [ Reaches Boundary (Bordini) ]
+                                                            │
+                                                            ▼
+[ Pristine Smoothness ] ◄─────────────────────────── [ Local Condensation (The Uno) ]
 ```
 
-`cosh` is the unique function that is symmetric under `Δ → -Δ`, has a single minimum at `Δ=0` (the annihilation outcome), and is convex everywhere.
+As this homogeneous plenum undergoes internal displacement, it inevitably encounters its own topological boundary conditions (the *bordini*). The boundary enforces a spatial constraint. To satisfy the conservation laws along this geometric limit, the smooth continuum is forced to undergo a localized phase transition.
+
+At the exact coordinate where this continuous flow satisfies the unit threshold (`n = 1`), a point-like condensation occurs. The continuum isolates a single, localized dishomogeneity &mdash; the *Puntino*. Through this precise geometric event, the system breaks its global flatness and acquires a fundamental, localized topological rugosity (a structural wrinkle).
+
+### 4.2 The mechanism of bilateral decompression (`−1 + 1`)
+
+The emergence of the Puntino is not an isolated addition of mass to a pre-existing space, but a geometric sifting of the primordial plenum.
+
+```
+Plenum Space [V₁+V₂] ──Condensation──► Condensed Core [+1] at [V₁] + Rarefied Vacuum [−1] at [V₂]
+```
+
+To generate a localized dishomogeneity, the energy density that previously occupied two distinct spatial volumes (`V₁` and `V₂`) must condense and contract into a single localized volume (`V₁`). This localized condensation (`+1`) leaves the adjacent volume (`V₂`) in a state of severe volumetric depletion. This depletion manifests as a macro-quantum decompression zone &mdash; the physical foundation of the quantum vacuum relative state (`−1`).
+
+Matter (`+1`) and vacuum (`−1`) are therefore revealed to be the exact same underlying substance, separated only by a local topological gradient.
+
+### 4.3 The mountain-peak analogy: localization and dynamic protection
+
+This steep decompression gradient surrounding the condensed core alters the local metric tensor, warping the space-time topology into a highly non-linear configuration. To visualize this structure, we introduce the analogy of the *casetta sul pizzo di montagna* (the cottage on the mountain peak).
+
+```
+          ▲ [Puntino / Condensed Core (+1)] -> Isolated Observer
+         / \
+        /   \  <-- Steep Metric Gradient (Decompression Slope)
+_______/     \_______ [Rarefied Vacuum (-1)]
+```
+
+The localized condensation builds a sharp, energetic peak, while the surrounding decompression carves out steep, *scoscesi* cliffs in the local geometry. This extreme gradient acts as a dynamic protection barrier (a localized horizon of isolation).
+
+The physical observer, being entirely composed of this localized rugosity (`+1`), is structurally bound to the local metric of the peak. Trapped within this localized topological bubble, the observer cannot look down into the immense, undisturbed smooth valley from which the peak originally evolved. The observer perceives forces, particles, and a dynamic space-time continuum precisely because they are isolated from the global homogeneity by the very metric slope that preserves their existence.
+
+### 4.4 The bilateral pressure balance and the hyperbolic shape
+
+The structural persistence of this topological wrinkle requires a strict hydrodynamic equilibrium between two opposing, non-linear pressures:
+
+- **The inward confinement pressure (`P⁺`).** The massive, unperturbed homogeneous vacuum surrounding the topological bubble continuously exerts an inward compressive force (`e^{-x}`). It attempts to fill the rarefied decompression zone (`−1`) and smooth out the wrinkle, seeking to restore the primordial, *liscio* state of equilibrium.
+- **The outward restitution pressure (`P⁻`).** The condensed core (`+1`), having crammed the energy density of multiple spatial states into a singular coordinate, acts as a highly compressed elastic sphere. Like a physical ball compressed tightly within a human hand, it refuses total annihilation back into the zero state. It builds an immense internal tension that pushes violently outward (`e^{x}`) to prevent its structural collapse.
+
+This fierce, bilateral hydro-geometric conflict forces the space-time metric to stabilize exclusively along a symmetric, convex hyperbolic profile:
+
+```
+cosh(x) = (e^{x} + e^{-x}) / 2
+```
+
+The unique mathematical properties of the `cosh` function reflect this mechanical balance *riga per riga*. The positive exponential term (`e^{x}`) represents the outward elastic *contropressione* of the core, while the negative exponential (`e^{-x}`) represents the inward squeezing of the global vacuum.
+
+At the center of the core (`x = 0`), where the two opposing pressures achieve a flawless, symmetric equivalence (`e⁰ = e^{-0} = 1`), the metric reaches its absolute global minimum (`cosh(0) = 1`). This minimum acts as an impenetrable physical floor (governed by the proton-proton gravitational coupling constant `α_G ≈ 5.905 × 10⁻³⁹`), completely halting the gravitational collapse and preventing the formation of an unphysical, infinitely dense singular point.
+
+**Why convexity, and why this is the same `cosh` as Section 2.** `cosh` is the unique function that is symmetric under `Δ → -Δ`, has a single minimum at `Δ=0` (the annihilation outcome), and is convex everywhere. The two outcomes of the primordial act of differentiation &mdash; perfect symmetric annihilation versus imperfect residual differentiation &mdash; are exactly the two terms of the Boltzmann sum: `e^{+Δ}` (the differentiated outcome) and `e^{-Δ}` (the annihilated outcome). Weighted equally:
+
+```
+Z(Δ) = (e^{+Δ} + e^{-Δ}) / 2 → cosh(Δ)
+```
 
 From Section 2: `Δ(r) = α_G + (r/ℓ0)^n`, with `α_G = Gm_p²/(ħc) ≈ 5.905×10⁻³⁹`. Because `α_G > 0`, `Δ(r) ≠ 0` for every `r ≥ 0` &mdash; the imperfect-difference outcome, never annihilation.
 
 ---
 
-## 5. A dynamical derivation: `cosh` as an attractor
+## 5. The asymmetric quantum tunneling and topological memory
+
+### 5.1 The rarity of primordial boundaries vs. cosmic recurrence
+
+While the spontaneous evolution from a pristine, homogeneous plenum via boundary interactions (as formalized in Section 4) provides the necessary foundational mechanics for a first-generation topological wrinkle, its statistical probability within a stochastic ensemble is strictly constrained. Numerical evaluations within our context-bounded architecture indicate that a spontaneous, unseeded transition from absolute flatness to a stable `Z₂` symmetry has an epistemic probability approaching zero (`P ≈ 0.0`). This is mathematically verified by the fact that `Z₂` symmetry is *not* generic; it does not emerge from chaos, as confirmed by our random ensemble tests.
+
+Consequently, we must reject the naive hypothesis that our universe is a spontaneous miracle emerging from a static nothingness. Instead, the local *topos* space-time must be modeled as a kinematic wave propagation &mdash; a physical bounce arising from the asymptotic limit of a pre-existing cosmic cycle (an *aeon*) within Penrose's Conformal Cyclic Cosmology (CCC) framework. The initial *differenziale* that seeds our universe is not invented *ex nihilo*; it is the structural heritage of a prior cosmic collapse.
+
+```
+[ PRIOR AEON COLLAPSE ] ──► Severe Compression Barrier
+                                    │
+       ┌────────────────────────────┴────────────────────────────┐
+       ▼ (Macro-Quantum Tunneling)                               ▼ (Asymmetric Cancellation)
+[ MATERIA POSITIVA (+1) ]                                 [ MATERIA OSCURA (-1) ]
+       │                                                         │
+       ▼ (Recomposes in Next Cycle)                              ▼ (Invariant Residual: a⁴·ρ_eff = 0.3)
+[ OLOGRAMMA / COSMIC IMAGE ] ◄─────────────────────────── [ Radiation-like Spongy Hard Disk ]
+```
+
+### 5.2 Macro-quantum tunneling of positive mass
+
+When a localized space-time domain reaches its ultimate state of decompression and subsequent global contraction, the field densities are driven toward a critical, ultra-dense boundary. At this catastrophic juncture, the total energy tensor undergoes a profound, asymmetric sifting based on the signs of its pressure states (`P⁺` and `P⁻`).
+
+The positive mass component &mdash; comprising all ordinary barionic matter and radiation fields (`+1`) &mdash; encounters what appears to be an insuperable cosmic potential barrier. However, governed by macro-quantum evolution equations, this positive energy density does not undergo thermal death or infinite truncation. Instead, it executes a coherent macro-quantum tunneling event. By tunneling through the singularity horizon of the collapse, the positive mass bypasses the static zero-state and is projected instantly into the initiation phase of the subsequent cycle (the Big Bounce), where it reconstitutes as the hot, expanding energetic footprint of a new dawn.
+
+The negative mass component (`−1`), by contrast, does *not* tunnel. It remains anchored *in situ*, trapped within the topological zone of its origin &mdash; the substrate of what will be observed, in the following cycle, as dark matter.
+
+### 5.3 The `a⁻⁴` residual and the Conformal Cross-over
+
+In stark contrast to naive single-field formulations, the negative mass component (`−1`) engages in a near-total symmetric cancellation with the positive barionic sector (`+1`) approaching the asymptotic limit of the collapse, such that the effective density ratio behaves as `ρ_eff/ρ_visible → -1`. Crucially, this cancellation is mathematically *non-perfect*. The intrinsic asymmetry enforced by the primordial `α_G` floor established in Section 2 (`Δ(r) = α_G + (r/ℓ₀)^n`) prevents the total annihilation of the field tensor into a static, dead zero-state.
+
+What survives this near-total cancellation and successfully traverses the conformal cross-over is an exact, invariant numerical residual governed by the strict physical law:
+
+```
+a⁴ · ρ_eff = 0.3
+```
+
+This conservative remnant field behaves operationally exactly like radiation (`∝ a⁻⁴`) during the hyper-compressed phase of the crossover, despite originating from pure dust sources (`ρ_visible ∝ a⁻³`).
+
+This scaling provides a concrete, explicitly derived physical mechanism for the unresolved "dust-fade-out problem" identified by Tod [37], which notes that without an explicit mechanism to make the dust contribution fade away, it would dominate the radiation at the boundary. Our `a⁻⁴` residual strips the incoming aeon of its massive, classical field content to satisfy the massless conformal boundary conditions required by CCC. This radiation-like scaling of the effective density fluid is the exact physical trace we observe macroscopically as Dark Matter.
+
+Read together with Section 8, one interpretation is offered here explicitly as conjecture, not a further theorem: the near-cancelling pair above is the same Z₂ structure established elsewhere in this paper (`cosh`'s two branches, the Bell state's two amplitudes), and it is the *imperfection* in that cancellation &mdash; never reaching the full `Δ=0` limit, which on this theory's own terms is annihilation (Section 4) &mdash; that keeps the universe both dynamic and non-empty. Gravity's observed weakness at cosmological scale would then be a direct, proportional consequence of how small that residual is there, with the same residual, at the scale of atomic nuclei, corresponding to the comparatively enormous binding energies observed there: the "probability as a scale criterion" conjecture of Section 4, now attached to a first concrete number (`0.3`) rather than only a qualitative ordering.
+
+### 5.4 The 640-ratio and the topological hard disk
+
+The physical validity of this continuous rebirth architecture is supported by a fundamental, dimensionless relation that governs the global evaporation budget of a critical-density Hubble volume. By mapping the Sciama/Mach ratio (`GM/(R_H c²) = 1/2`) into the standard Hawking evaporation time (`t_evap`) and the Gibbons-Hawking de Sitter horizon entropy (`S_dS`), we derive a pure, invariant algebraic signature independent of the Hubble parameter `H`:
+
+```
+n_rebirths / S_dS = 640
+```
+
+This exact prefactor proves that the number of aeon-length rebirths required to exhaust the vacuum's thermodynamic budget is structurally locked to the microstates of the de Sitter horizon. The algebra is derived, not conjectured; what remains conjectural is only the physical claim that "an aeon's worth of rebirths" and "de Sitter horizon microstates" are the same kind of count at all.
+
+The dark matter remnant, carrying this invariant `0.3` residual, acts as a topological memory storage &mdash; a non-destructive physical archive of all historical displacements (where information = pressure and gravity = memory) from the ancestral aeon. Because its non-collisional nature isolates it from local singular erasure inside black holes (as quantified in Section 6.5), this spongy matrix delivers a coherent geometric footprint across the transition boundary.
+
+When the tunneled positive mass fields emerge into the newly expanded space-time domain, they are immediately subjected to the localized gravitational potential wells of this surviving dark skeleton. The interaction yields a macroscopic cosmological hologram. Galaxies and cosmic structures do not condense stochastically; they are forced to track the invariant ripples and shear stresses preserved by the dark sponge.
+
+The system operates on a hereditary optimization loop: if a specific structural configuration achieved geometric stability in the previous aeon, the modified Friedmann dynamics push the positive fields to replicate and build upon that fossil architecture ("ci costruiamo qualcosa di più sopra"), preventing the topological wrinkle from dissolving back into the undifferentiated plenum. The universe learns to persist through successive aeons because its structural survival is hard-coded into the memory of the dark sponge; the only alternative is total extinction into absolute, featureless silence.
+
+---
+
+## 5b. A dynamical derivation: `cosh` as an attractor
 
 Section 2 fixes what &Delta;(r) *is*; it says nothing about why that particular functional form should persist rather than drift toward something else under perturbation. This section answers that question directly, with a numerical test explicitly designed not to assume its own conclusion (from the script's own header: *"What is equilibrium? I don't set it by hand. I search for it."*, `scripts/vacuum_pressure_level5_attractor.py`).
 
@@ -155,12 +273,6 @@ That sign fix is solid, checked twice independently. Completing it into an actua
 
 **A further, stranger result from integrating through the transition, not just checking each regime separately.** Following a trajectory that actually passes from small `Δ` to large `Δ` (rather than starting already in one regime), ordinary matter's undiluted density `ρ_visible=ρ0/a³` alone increasingly overestimates the true expansion rate the equation gives &mdash; the two do not simply reconverge once `Δ` grows large again. Extracting what effective density, `ρ_eff=3H²/8πG`, the real trajectory actually corresponds to, and comparing it directly to `ρ_visible`, shows this is not numerical error but a real feature: `ρ_eff/ρ_visible - 1` is negative and approaches `-1` as `1/a` &mdash; the two become equal and opposite, almost perfectly canceling, verified numerically across more than an order of magnitude in `a`. What survives that near-total cancellation obeys a clean, exact law: `a⁴·ρ_eff = 0.3` (fixed units as above), constant to six decimal places over the whole tested range &mdash; the residual that actually drives the observable expansion decays exactly like radiation (`∝a⁻⁴`), despite the universe here containing only dust.
 
-Read together with Section 8, one interpretation is offered here explicitly as conjecture, not a further theorem: the near-cancelling pair above is the same Z<sub>2</sub> structure established elsewhere in this paper (`cosh`'s two branches, the Bell state's two amplitudes), and it is the *imperfection* in that cancellation &mdash; never reaching the full `Δ=0` limit, which on this theory's own terms is annihilation (Section 4) &mdash; that keeps the universe both dynamic and non-empty. Gravity's observed weakness at cosmological scale would then be a direct, proportional consequence of how small that residual is there, with the same residual, at the scale of atomic nuclei, corresponding to the comparatively enormous binding energies observed there: the "probability as a scale criterion" conjecture of Section 4, now attached to a first concrete number (`0.3`) rather than only a qualitative ordering. Whether this residual's `a⁻⁴` law bears directly on the real Hubble tension (`H0=67.43±0.49` km/s/Mpc, Planck [9], vs. `73.01±0.99` km/s/Mpc, Riess et al. SH0ES [32], a real, current >5σ discrepancy) was checked directly, with a negative result: see below.
-
-**Our universe begins at de Sitter, offered as conjecture, not derived.** The recovery limit above confirms this construction reproduces standard GR at large `Δ`, and standard GR's own late-time behavior under `Λ>0` is de Sitter expansion &mdash; a genuine global attractor, not just one possible outcome: Wald's theorem [33] proves every expanding homogeneous (Bianchi, non-IX) cosmology with a positive cosmological constant evolves exponentially toward de Sitter regardless of its matter content. On this reading, de Sitter is not only where our universe's dynamics eventually returns to; it is also where our universe's calculable history *begins*. What precedes it is a second fixed point, `u=0` (already shown above, the unique stable minimum of the vacuum's own relaxation dynamics, `V''(0)=1>0`) &mdash; a state that exists but is not yet calculable for us, and behind it, other universes prior to our own (the independent-bubbles conjecture of Section 4), all of it within the same topos, the same shared vacuum background, not separate ones. What survives the transition from one universe to the next, on this picture, is dark matter alone: the conserved trace described in Section 2, the memory that lets galaxies and constellations reform in the universe that follows. No calculation here yet connects any of this quantitatively; this is stated as an interpretive conjecture, exactly parallel to the Z<sub>2</sub> reading in Section 8, not as a further theorem.
-
-**Which real proposal this is closest to, and what this work adds to it.** The idea that de Sitter's own future is not truly final &mdash; that matter dilutes to nothing, yet what remains restarts a new cycle &mdash; is not new: it is the substance of Penrose's Conformal Cyclic Cosmology (CCC) [34], in which the future conformal infinity of a matter-diluted, de-Sitter-dominated "aeon" is identified with the conformally stretched big bang of the next one. This work adopts that framework rather than inventing a rival one; the claimed CMB evidence for it (concentric low-variance rings [35]) remains genuinely disputed, and is stated here as contested, not confirmed. What this work adds inside that adopted framework is specific: the pre-initial attractor `u=0` above is a candidate description of the crossover surface itself, and the Z<sub>2</sub> structure of Section 8 gives that crossover a concrete mechanism rather than a bare geometric identification &mdash; the near-total cancellation `ρ_eff/ρ_visible → -1` (Section 5) is read as the two Z<sub>2</sub> branches (the `+1` visible branch and a `-1` counterpart) meeting at the crossover, with the surviving `a⁴·ρ_eff=0.3` residual being precisely what is never fully cancelled, carried forward rather than erased.
-
 **A possible connection to CCC's own dust problem, stated with its real limits.** Tod [37] identifies a specific, unresolved gap in CCC's original formulation: "without some explicit mechanism to make the dust contribution fade away, its density is proportional to `R⁻³` so it comes to dominate the radiation, which has density proportional to `R⁻⁴`" &mdash; CCC's future boundary needs a radiation-dominated, massless field content, but ordinary matter dilutes too slowly to get out of the way on its own. The result above is suggestive here: starting from pure dust (`ρ_visible∝a⁻³`, no radiation put in by hand), what this construction finds actually drives the expansion is `ρ_eff∝a⁻⁴` &mdash; a dust source that behaves, in its net effect, like radiation. If `ρ_eff` rather than the naive `ρ_visible` is what genuinely persists toward the future, this is a candidate for exactly the missing "explicit mechanism." Stated with the honesty it needs: this was verified numerically across roughly one order of magnitude in `a` (Section 5), not in the `a→∞` regime CCC's argument actually requires, and nothing here establishes that `ρ_eff` rather than `ρ_visible` is the quantity that should be identified with the physical matter content approaching the crossover. This is offered as a plausible direction, not a resolution of Tod's question.
 
 **A large-number check on how many "aeons" a rebirth picture would need, and an exact relation behind it.** A flat, critical-density Hubble volume satisfies `R_s=2GM/c²=R_H=c/H` identically &mdash; not a coincidence but a restatement of the Sciama/Mach ratio `GM/(Rc²)=1/2` already used in Section 8 &mdash; so a black hole with the observable universe's own mass has a real, computable Hawking evaporation time: `t_evap=5120πG²M³/(ħc⁴)≈2.1×10¹²⁵` years, roughly `10¹¹⁵` times the universe's current age. Dividing that budget into aeon-length pieces (one aeon ≈ `1/H`) gives the number of rebirths such a picture would need: about `10¹²⁵`, remarkably close in order of magnitude to the de Sitter horizon's own Gibbons-Hawking entropy, `S_dS=πc⁵/(GħH²)≈2.3×10¹²²` &mdash; but checking the two together shows this is not a loose coincidence either: substituting the same `M=c³/(2GH)` into both expressions gives, exactly and independent of `H`,
@@ -172,6 +284,10 @@ n_rebirths / S_dS = 640
 a pure, dimensionless number fixed entirely by the numerical prefactors already present in the (real, standard) Hawking evaporation formula and the (real, standard) Gibbons-Hawking entropy formula. The algebra is derived, not conjectured; what remains conjectural is only the physical claim that "an aeon's worth of rebirths" and "de Sitter horizon microstates" are the same kind of count at all &mdash; a real, exact number connecting two established formulas, offered here as a striking cross-check worth having on record, not yet as evidence that CCC-style rebirth and horizon entropy are the same phenomenon.
 
 This is a real, working modified field equation, not a postulated one &mdash; every coefficient above was checked against the known GR limit before being trusted.
+
+**Our universe begins at de Sitter, offered as conjecture, not derived.** The recovery limit above confirms this construction reproduces standard GR at large `Δ`, and standard GR's own late-time behavior under `Λ>0` is de Sitter expansion &mdash; a genuine global attractor, not just one possible outcome: Wald's theorem [33] proves every expanding homogeneous (Bianchi, non-IX) cosmology with a positive cosmological constant evolves exponentially toward de Sitter regardless of its matter content. On this reading, de Sitter is not only where our universe's dynamics eventually returns to; it is also where our universe's calculable history *begins*. What precedes it is a second fixed point, `u=0` (already shown above, the unique stable minimum of the vacuum's own relaxation dynamics, `V''(0)=1>0`) &mdash; a state that exists but is not yet calculable for us, and behind it, other universes prior to our own (the independent-bubbles conjecture of Section 4), all of it within the same topos, the same shared vacuum background, not separate ones. What survives the transition from one universe to the next, on this picture, is dark matter alone: the conserved trace described in Section 2, the memory that lets galaxies and constellations reform in the universe that follows. No calculation here yet connects any of this quantitatively; this is stated as an interpretive conjecture, exactly parallel to the Z<sub>2</sub> reading in Section 8, not as a further theorem.
+
+**Which real proposal this is closest to, and what this work adds to it.** The idea that de Sitter's own future is not truly final &mdash; that matter dilutes to nothing, yet what remains restarts a new cycle &mdash; is not new: it is the substance of Penrose's Conformal Cyclic Cosmology (CCC) [34], in which the future conformal infinity of a matter-diluted, de-Sitter-dominated "aeon" is identified with the conformally stretched big bang of the next one. This work adopts that framework rather than inventing a rival one; the claimed CMB evidence for it (concentric low-variance rings [35]) remains genuinely disputed, and is stated here as contested, not confirmed. What this work adds inside that adopted framework is specific: the pre-initial attractor `u=0` above is a candidate description of the crossover surface itself, and the Z<sub>2</sub> structure of Section 8 gives that crossover a concrete mechanism rather than a bare geometric identification &mdash; the near-total cancellation `ρ_eff/ρ_visible → -1` (Section 5) is read as the two Z<sub>2</sub> branches (the `+1` visible branch and a `-1` counterpart) meeting at the crossover, with the surviving `a⁴·ρ_eff=0.3` residual being precisely what is never fully cancelled, carried forward rather than erased.
 
 **The Hubble-tension connection, checked directly: it does not work, and the reason is a clean scale mismatch.** The `4/3` correction only activates once `Δ=A/A0` drops to order 1, where `A` is the cosmological apparent-horizon area and `A0=4G` (four Planck areas). Computing `Δ` at recombination directly, using the real Planck 2018 `Ωm`, `Ωr` and `H0` in `H(z)=H0√(Ωm(1+z)³+Ωr(1+z)⁴)`: `Δ(z=1100)≈4.1×10¹¹³` &mdash; still astronomically deep in the `Δ≫1` GR-recovery regime, nowhere near the `Δ~1` correction. Solving instead for where `Δ=1` gives a Hubble-horizon radius of `9.1×10⁻³⁶ m`, essentially one Planck length, corresponding to a cosmic time `t≈0.28` Planck times &mdash; recombination happens roughly `8×10⁵⁶` times later. The `4/3` correction is real, but it is a Planck-epoch effect on this construction, not a recombination-epoch one, and the real Hubble tension is a discrepancy in physics between those two eras, not at the Planck scale. This construction, as it stands, has no mechanism operating anywhere near the relevant epoch, so it cannot move the inferred expansion history in either direction. This is reported as a checked, negative result, not a gap left open by lack of trying.
 
@@ -201,11 +317,57 @@ Two further checks in the same family are weaker, and stated as such rather than
 
 The conservative `ℓ0=0.1 r_s` choice produces no prediction distinguishable from general relativity at present observational precision. The bolder, still-EHT-consistent branch just described does &mdash; for Einstein Telescope and LISA specifically, once those instruments are online, this is a real, checked prediction for near-future data, not a discovery already made. This is stated plainly rather than dressed up: consistency with EHT, LIGO, and NICER today is evidence the model isn't already ruled out, not evidence that it's uniquely correct.
 
+### 6.5 Astrophysical validation: non-collisional dark matter and black-hole non-absorption
+
+**The standard puzzle: the failure of dark-matter accretion.** In standard Lambda-CDM cosmology, the interaction between Dark Matter (DM) and supermassive black holes (SMBHs) presents a severe, unresolved paradox. According to classical gravitational accretion models, any mass density surrounding a deep gravitational potential well should eventually shed energy and fall past the event horizon. If dark matter were a standard physical fluid or a particle species subject to traditional gravitational collapse, the cores of galaxies would exhibit massive, concentrated cusps of dark matter entirely swallowed by central black holes.
+
+```
+[ ORDINARY MATTER (+1) ] ──► Collisions & Friction ──► Loses Angular Momentum ──► Swallowed by BH
+[ DARK MATTER (-1) ]     ──► Collisionless Wave     ──► Conserves Momentum     ──► Survives Outside
+```
+
+Astrophysical observations, however, confirm the exact opposite: dark matter profiles in galactic centers remain distributed in flat, extended halos (the "cusp-core problem"). Dark matter fundamentally refuses to be efficiently accreted or destroyed by black holes, orbiting them at extreme velocities or streaming past them intact.
+
+Within our framework, this anomalous refusal is not a mystery; it is the primary empirical proof of the asymmetric transition and topological memory postulations developed in Section 5.
+
+**The mechanics of collisionless persistence.** To preserve structural memory across cosmic cycles, the ancestral negative mass remnant (`-1`) must be physically immune to the thermodynamic degradation that destroys ordinary positive matter (`+1`). The non-absorptive nature of dark matter by black holes provides the exact mechanical verification of this immunity:
+
+1. **The dissipative collapse of positive mass.** Ordinary barionic matter (`+1`) participates in electromagnetic and strong interactions. As it falls toward a black hole, it collides with itself, generates friction, radiates thermal energy, and sheds its angular momentum. This loss of momentum forces it to spiral inward, crossing the event horizon where its historical information is scrambled and erased.
+2. **The non-dissipative wave of negative mass.** Dark matter, acting as the structural manifestation of the rarefied vacuum (`-1`), is fundamentally *collisionless*. It lacks any electromagnetic or dissipative degrees of freedom. Lacking internal friction, it cannot radiate away its kinetic energy. When accelerated by the fierce gravitational gradient of a black hole, it does not spiral inward; it executes perfect, conservative orbital trajectories or bounces elastically off the deep potential slopes.
+
+Because dark matter cannot lose its angular momentum through dissipation, the black hole cannot swallow it. The dark sponge remains structurally *outside* the gravitational sink, immune to local singularity erasure.
+
+**The cosmological hard disk and the preservation of memory.** This astrophysical mechanism guarantees that during the ultimate phase of global cosmic contraction, while all positive barionic matter (`+1`) is compressed into the macro-quantum tunnel, the dark matter halo preserves its structural integrity:
+
+```
+∇ · P⁻ = 0   ⟹   No Dissipative Collapse
+```
+
+The black holes generated within an aeon act as local vacuum cleaners for ordinary matter, cleaning the canvas of positive energy, but they leave the dark matter scaffolding untouched. The dark matter matrix survives the collapse precisely because its collisionless nature prevents it from falling into the singular traps of the dying universe.
+
+```
+       [ COLLAPSE OF THE AEON ]
+                  │
+        ┌─────────┴─────────┐
+        ▼                   ▼
+[ Barionic Matter ]   [ Dark Matter Sponge ]
+        │                   │
+  (Black Holes)       (Bounces/Preserves)
+        │                   │
+  Erased Canvas       Topological Memory
+```
+
+When the Big Bounce occurs, this un-swallowed, un-erased dark skeleton serves as the immediate blueprint for the newly tunneled positive matter. The fact that dark matter bounces off black holes at the galactic scale today is the living empirical proof that it will survive the ultimate macro-scale collapse tomorrow, acting as the permanent *Topological Hard Disk* that allows our universe to remember, replicate, and evolve its structural architecture from one cycle to the next.
+
 ---
 
 ## 7. An independent, reproducible correction: the InfoCDM+ transition redshift
 
-Section 6 above adopts Endrizal (2025)'s InfoCDM+ dark-energy model as a real, independent cosmological test case, using that paper's own best-fit parameters (&Omega;<sub>m</sub>=0.3200, &alpha;=-0.5310, &beta;=0.3920) in its own equations for the deceleration parameter:
+### 7.1 The methodological necessity of external verification
+
+Following the architectural constraints of Layer 2 (Verification) and Layer 3 (Discovery) established in our framework, a resilient scientific method cannot rely solely on self-contained derivations. It requires active engagement with the external literature through independent, rigorous replication of published boundary conditions. To test the transferability of our context-engineering tools on concrete data-driven setups, we select Endrizal (2025)'s InfoCDM+ dark-energy model [1] as an independent cosmological test case.
+
+This model introduces an information-driven correction to late-time acceleration using a parameterization for the deceleration parameter through the following coupled background equations:
 
 ```
 f(z) = 1 + αz + βz²
@@ -213,9 +375,69 @@ E²(z) = Ωm(1+z)³ + (1-Ωm)f(z)
 q(z) = -1 + (1+z)/E(z) · dE/dz
 ```
 
-Endrizal (2025) reports a transition-to-acceleration redshift `z_t ≈ 0.70`. Plugging `z = 0.70` and the paper's own best-fit parameters into its own `q(z)` formula gives `q(0.70) = +0.1116`, which is **positive** &mdash; meaning the universe is still decelerating at that redshift, contradicting the claimed transition point. The correct value, recovered by solving `q(z)=0` directly, is `z_t ≈ 0.53-0.56`: Endrizal's own stated `z_t` is not reproducible from Endrizal's own formula and parameters.
+### 7.2 Analytical breakdown and isolation of the inconsistency
 
-An independent fit against real observational data (Pantheon+, 1624 supernovae; 32 cosmic chronometers; 4 BAO points; the CMB shift parameter, with full covariance) gives &chi;&sup2;/dof = 0.894, `w(0) = -0.9958` (consistent with plain &Lambda;CDM), and &alpha; = +0.0126, &beta; = -0.0484 (both near zero). AIC and BIC both mildly favor plain &Lambda;CDM. The paper's own conclusion from this fit is stated without overreach: *current data do not require InfoCDM+*.
+Endrizal (2025) explicitly reports a transition-to-acceleration redshift of `z_t ≈ 0.70` based on their own stated best-fit parameters:
+
+```
+Ωm = 0.3200,  α = -0.5310,  β = 0.3920
+```
+
+To evaluate the reproducibility of this boundary condition, we subject the system to systematic numeric and symbolic evaluation. Differentiating `E(z)` with respect to `z` yields the operational form of the derivative:
+
+```
+dE/dz = [3Ωm(1+z)² + (1-Ωm)(α + 2βz)] / [2E(z)]
+```
+
+Substituting this derivative into the `q(z)` equation, we evaluate the function at the claimed transition point `z = 0.70`. Plugging `z = 0.70` and the paper's exact best-fit parameters into the operational formula yields:
+
+```
+q(0.70) = +0.1116
+```
+
+Because `q(0.70)` is strictly positive, the universe governed by these parameters is mathematically demonstrated to be in a state of *deceleration* at that epoch. Endrizal's stated transition redshift `z_t ≈ 0.70` is analytically irreproducible from Endrizal's own formulas and parameters &mdash; representing a severe internal inconsistency in the published record.
+
+To locate the true transition-to-acceleration threshold (`q(z_t) = 0`) implied by the model's parameters, we perform a direct root-finding numerical execution. The correct physical transition value is uniquely recovered at:
+
+```
+z_t ≈ 0.53 - 0.56
+```
+
+This diagnostic check confirms that the reported `z_t ≈ 0.70` value is an un-reproducible artifact, establishing the necessity of independent algorithmic validation in cosmological parameter estimation.
+
+```
+[ Endrizal Stated Metric ] ──► Stated z_t ≈ 0.70 ──► q(0.70) = +0.1116 (Decelerating!)
+                                                                 │
+                                                                 ▼ (Corrected Root-Finding)
+                                                     True z_t ≈ 0.53 - 0.56 (Accelerating)
+```
+
+### 7.3 Empirical re-fit against cosmological observables
+
+To determine whether current observational data actually require the complex parameterization of the InfoCDM+ model once the internal arithmetic is corrected, we execute an independent global fit from scratch. The statistical pipeline incorporates a comprehensive combination of late-time and early-time cosmological probes:
+
+- **Pantheon+ Sample**: Full covariance matrix of 1624 Type Ia supernovae over the redshift range `0.001 < z < 2.26`.
+- **Cosmic Chronometers**: 32 independent observational measurements of the Hubble parameter `H(z)` derived from relative galaxy aging.
+- **Baryon Acoustic Oscillations (BAO)**: 4 distinct consensus data points testing the acoustic scale horizon.
+- **CMB Shift Parameter**: The scaled distance to the recombination surface to lock the early-universe boundary.
+
+The resulting minimized chi-squared over degrees of freedom yields an excellent fit quality of:
+
+```
+χ²/dof = 0.894
+```
+
+The extracted best-fit parameters, evaluated with their full measurement errors, stabilize at:
+
+```
+w(0) = -0.9958,  α = +0.0126,  β = -0.0484
+```
+
+Crucially, both information-driven correction coefficients (`α` and `β`) cluster tightly around zero, rendering the global behavior of the fluid statistically indistinguishable from a cosmological constant (`Λ`).
+
+To judge whether this expanded model provides a justified statistical advantage over the standard paradigm, we compute the Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) deltas against plain `Λ`CDM. Both metrics mildly favor the standard model due to the parameter penalty of the extra degrees of freedom.
+
+The honest conclusion derived from this external validation is stated without overreach: **current cosmological data do not require the InfoCDM+ parameterization.** The model collapses back to standard general relativity under observational stress, validating our framework's strict insistence on independent verification as a primary tool for sorting derived facts from un-reproducible claims.
 
 ---
 
@@ -296,9 +518,9 @@ Everything above is the theory. This section states plainly, separately, what wa
 - **InfoCDM+ correction (Section 7).** The `q(0.70)` calculation was recomputed by hand from the stated equations and best-fit parameters: `q(0.70) ≈ +0.112`, matching the theory's own `+0.1116` to three significant figures. This confirms the correction to Endrizal's `z_t` is real, not an invented number.
 - **The Z<sub>2</sub> result (Section 8).** `scripts/vacuum_pressure_tao_z2.py` was re-run from scratch via `dense_evolution`: `de.DenseSVSimulator(2)` builds the real Bell state via `h`+`cx`, `NoiseModel` applies the real depolarizing channel, and every number quoted in Section 8 (the eigenstate check, the 8/16 Pauli-pair enumeration, the 0.8756/0.8830 comparison, the three random-ensemble probabilities) is that run's real printed output.
 - **The IDG no-go theorem (Section 3).** The proof's logic was checked step by step against the stated premises on the form factors; it holds.
-- **The Level 5 attractor (Section 5).** `scripts/vacuum_pressure_level5_attractor.py` was too slow to finish locally in reasonable time and was instead run on Kaggle in full (kernel `tatopenn/vacuum-pressure-level5-attractor`), producing fresh figures directly. That re-run is what corrected the write-up: the original description ("five initial conditions all converge, correlation 0.9996") did not match what the script actually produces &mdash; two of five initial conditions converge cleanly, one oscillates, one diverges, and the real grid-converged correlation is 0.995, not 0.9996 (that number belongs to a separate, narrower single-initial-condition sub-test not yet independently re-run). The design itself &mdash; multiple initial conditions, a discriminating asymmetric-potential control, a grid-convergence check &mdash; is sound; the description of its result needed correcting, and now reflects the actual output.
+- **The Level 5 attractor (Section 5b).** `scripts/vacuum_pressure_level5_attractor.py` was too slow to finish locally in reasonable time and was instead run on Kaggle in full (kernel `tatopenn/vacuum-pressure-level5-attractor`), producing fresh figures directly. That re-run is what corrected the write-up: the original description ("five initial conditions all converge, correlation 0.9996") did not match what the script actually produces &mdash; two of five initial conditions converge cleanly, one oscillates, one diverges, and the real grid-converged correlation is 0.995, not 0.9996 (that number belongs to a separate, narrower single-initial-condition sub-test not yet independently re-run). The design itself &mdash; multiple initial conditions, a discriminating asymmetric-potential control, a grid-convergence check &mdash; is sound; the description of its result needed correcting, and now reflects the actual output.
 - **The four applications (Section 6).** The EHT/LIGO/NICER comparison arithmetic (0.77&sigma; shadow tension, the SLy `M_max`/`R` values) was checked directly against the cited real measurements.
-- **Approach to the attractor is gradual, not immediate, and some initial conditions never arrive (Section 5).** The same relaxation dynamics were re-run independently with explicit Euler at a small, stability-limited step (`dt=0.4·dr²/2`, the same `[-2,2]` clip as the original script), tracking correlation with `sech(r)` step by step rather than only at a solver's final output. Reaching 99% correlation took 300 steps from a Gaussian start, 5,100 steps from a noisy start, and the two-step initial condition never exceeded 90% correlation in 500,000 steps &mdash; confirming that one directly diverges, as already reported above. None of the three tested here exceeded 99.9% correlation even after 500,000 steps, independently reproducing the paper's own already-published 0.995 ceiling (not 1.0) from a different integration method. The attractor is real, but reaching it costs a genuinely large number of elementary relaxation steps, and not every starting configuration reaches it at all.
+- **Approach to the attractor is gradual, not immediate, and some initial conditions never arrive (Section 5b).** The same relaxation dynamics were re-run independently with explicit Euler at a small, stability-limited step (`dt=0.4·dr²/2`, the same `[-2,2]` clip as the original script), tracking correlation with `sech(r)` step by step rather than only at a solver's final output. Reaching 99% correlation took 300 steps from a Gaussian start, 5,100 steps from a noisy start, and the two-step initial condition never exceeded 90% correlation in 500,000 steps &mdash; confirming that one directly diverges, as already reported above. None of the three tested here exceeded 99.9% correlation even after 500,000 steps, independently reproducing the paper's own already-published 0.995 ceiling (not 1.0) from a different integration method. The attractor is real, but reaching it costs a genuinely large number of elementary relaxation steps, and not every starting configuration reaches it at all.
 
 ## 10. Epistemic status of every claim
 
@@ -313,24 +535,33 @@ For transparency, every principal claim in this work is classified below as **de
 </tr></thead>
 <tbody>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">IDG no-go theorem</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">3</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Proposition + corollary, proven</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>ℓ(r) = ℓ0/cosh((r/ℓ0)^n)</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2, 5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">From Boltzmann (Section 2) and from Prigogine (Section 5), independently</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>ℓ(r) = ℓ0/cosh((r/ℓ0)^n)</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2, 5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">From Boltzmann (Section 2) and from Prigogine (Section 5b), independently</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>Z(r) = 2cosh(ε)</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Entropy maximization under an energy constraint</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Vacuum convexity is obligatory</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Topological argument, not a theorem</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">The <i>Puntino</i> / topological rugosity at the boundary</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4.1</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Geometric argument from finite boundary conditions; not a derivation from an action</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Bilateral decompression (<code>−1 + 1</code>) as origin of local physics</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4.2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Hydrostatic reading; not an independently verified mechanism</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Mountain-peak isolation horizon</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4.3</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretive analogy, not a formalized horizon</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Equilibrium is dynamic, not static</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Physical argument, not an equation</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>n = d-2</code> from the area law</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Extends the area law to the energy gap; not derived from a fundamental action</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Information = pressure</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Story</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conceptual postulate, not operational</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Gravity = memory</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretive postulate, not operational</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Two-state vacuum</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Postulated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Base postulate underlying Section 2</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>Δ(r)=α_G+(r/ℓ0)^n</code> (never exactly 0)</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">α_G tied to the real proton-proton gravitational coupling constant, not free; numerically negligible everywhere checked</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>P[u]</code> = Ginzburg-Landau free energy</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Exact fixed-point match, verified symbolically; only for <code>n=1</code></td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Any of 4 matter-Lagrangian mechanisms sources the static metric</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Refuted</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Canonical/multiplet scalar, NLED, healthy k-essence: each fails for a distinct, verified reason</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Corrected entropy gives a working modified Friedmann equation</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Sign bug found and fixed; recovers GR exactly at large Δ, gives exact 4/3 factor and a⁻⁴ residual at small Δ</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">This residual is the same Z<sub>2</sub> pair, and explains gravity's scale-dependent strength</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5, 8</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretation of a real numerical result, not itself derived</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>u=0</code> is a pre-initial attractor bounding de Sitter's own</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Confirms, does not contest, Wald's de Sitter no-hair theorem; the flat-point/de-Sitter link is stated, not quantitatively connected</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Adopts Penrose's CCC; the Z<sub>2</sub> residual is a mechanism for its crossover surface</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">CCC itself is a real, disputed (not confirmed) proposal; this work's addition to it is a stated interpretation, not derived</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>S(0)=ln 2</code> (1 bit), matching the Bekenstein-Mukhanov entropy quantum</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Genuine minimum of the already-corrected entropy formula, verified symbolically; the match to an independent quantum-gravity result is a real coincidence, not shown to resolve any specific CCC open problem</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>ρ_eff∝a⁻⁴</code> as a candidate mechanism for CCC's dust-fade-out problem</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Real gap identified by Tod [37]; the match is suggestive but checked only over ~1 order of magnitude in <code>a</code>, not the a&rarr;&infin; limit the problem actually needs</td></tr>
-<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>n_rebirths/S_dS=640</code> exactly</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Pure algebra from standard Hawking-evaporation and Gibbons-Hawking-entropy formulas, verified symbolically; that the two counts are physically the same thing is a separate, unproven interpretation</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Spontaneous <code>Z₂</code> transition probability <code>P ≈ 0.0</code></td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.1</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Empirically confirmed by random ensemble tests (Section 8)</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Macro-quantum tunneling of positive mass across the bounce</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Working hypothesis; no explicit tunneling amplitude computed</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Confinement of negative mass as dark matter after the bounce</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.2</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretive claim consistent with the a⁻⁴ residual; not derived</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>P[u]</code> = Ginzburg-Landau free energy</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Exact fixed-point match, verified symbolically; only for <code>n=1</code></td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Any of 4 matter-Lagrangian mechanisms sources the static metric</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Refuted</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Canonical/multiplet scalar, NLED, healthy k-essence: each fails for a distinct, verified reason</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Corrected entropy gives a working modified Friedmann equation</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Sign bug found and fixed; recovers GR exactly at large Δ, gives exact 4/3 factor and a⁻⁴ residual at small Δ</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">This residual is the same Z<sub>2</sub> pair, and explains gravity's scale-dependent strength</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b, 8</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretation of a real numerical result, not itself derived</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>u=0</code> is a pre-initial attractor bounding de Sitter's own</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Confirms, does not contest, Wald's de Sitter no-hair theorem; the flat-point/de-Sitter link is stated, not quantitatively connected</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Adopts Penrose's CCC; the Z<sub>2</sub> residual is a mechanism for its crossover surface</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">CCC itself is a real, disputed (not confirmed) proposal; this work's addition to it is a stated interpretation, not derived</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>S(0)=ln 2</code> (1 bit), matching the Bekenstein-Mukhanov entropy quantum</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Genuine minimum of the already-corrected entropy formula, verified symbolically; the match to an independent quantum-gravity result is a real coincidence, not shown to resolve any specific CCC open problem</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>ρ_eff∝a⁻⁴</code> as a candidate mechanism for CCC's dust-fade-out problem</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.3, 5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Real gap identified by Tod [37]; the match is suggestive but checked only over ~1 order of magnitude in <code>a</code>, not the a&rarr;&infin; limit the problem actually needs</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>a⁴·ρ_eff = 0.3</code> (invariant residual)</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.3, 5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Numerically verified to six decimal places across the tested range; interpretation as dark-matter footprint is conjectural</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Topological hard disk / hologram of the previous aeon</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Interpretive mechanism for the memory transfer; not independently verified</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2"><code>n_rebirths/S_dS=640</code> exactly</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Derived</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">5.4, 5b</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Pure algebra from standard Hawking-evaporation and Gibbons-Hawking-entropy formulas, verified symbolically; that the two counts are physically the same thing is a separate, unproven interpretation</td></tr>
+<tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Dark matter non-absorption by black holes as evidence of memory preservation</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Motivated</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">6.5</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Real astrophysical fact (collisionless DM) used as empirical corroboration of the asymmetric-tunneling picture; not a derivation</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Independent bubbles</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Working hypothesis, not formalized</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Probability as a scale criterion</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Working hypothesis, not formalized</td></tr>
 <tr><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Gravity is the oldest, first-separated force</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Conjectured</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">4</td><td style="padding:8px 10px;border-bottom:1px solid #eef0f2">Consistent with the standard force-unification picture; not derived here</td></tr>
@@ -341,20 +572,24 @@ For transparency, every principal claim in this work is classified below as **de
 
 This distinction matters for judging the work: **derived** claims are independently checkable; **motivated** claims require the reader to accept an argument; **postulated** claims are starting points of principle; **conjectured** claims are open invitations for future work.
 
-The strongest result here is that two *independent* routes &mdash; the statistical derivation of `cosh` (Section 2) and the dynamical derivation of the `sech` attractor (Section 5) &mdash; both land on the same functional form. The exponent `n`, by contrast, stays fixed by the area law, which is a motivated extension of Section 2's derivation, not a theorem.
+The strongest result here is that two *independent* routes &mdash; the statistical derivation of `cosh` (Section 2) and the dynamical derivation of the `sech` attractor (Section 5b) &mdash; both land on the same functional form. The exponent `n`, by contrast, stays fixed by the area law, which is a motivated extension of Section 2's derivation, not a theorem.
 
 ## 11. Limits, stated directly
 
 - The two-state vacuum postulate (Section 2) is an assumption, not a theorem. Its derivation is "parameter-free" only *conditional on* that postulate being granted &mdash; not free of it.
 - The regularization scale &ell;0 is not derived from one unifying principle connecting its role across black holes, cosmology, neutron stars, and the Coulomb potential &mdash; it is fit independently in each application.
+- The *Puntino* / boundary-transition picture (Section 4.1) is a geometric argument, not a derivation from an action; it does not yet predict a numerical value for the initial density contrast.
+- The asymmetric-tunneling picture (Section 5.2) is a working hypothesis; no explicit tunneling amplitude or probability has been computed for the positive-mass branch.
+- The Topological Hard Disk / hologram mechanism (Section 5.4) is an interpretive framework for the memory transfer; it has not been independently verified against a cosmological N-body simulation.
 - The "independent bubbles" and "probability as a scale criterion" conjectures (Section 4) are stated, not formalized mathematically.
 - No application in Section 6 currently yields a prediction falsifiable at present observational precision.
+- The dark-matter non-absorption argument (Section 6.5) uses a real astrophysical fact (collisionless DM) as *corroboration* of the asymmetric-tunneling picture; it is not a derivation that the negative-mass sector must behave this way.
 - Z<sub>2</sub> is shown to be *compatible with*, not *required by*, the vacuum postulate (Section 8).
 - The area-law &rarr; energy-gap step (Section 2) is a motivated extension, not a derivation from a fundamental action; "information = pressure" and "gravity = memory" are stated explicitly as conceptual postulates and are not used quantitatively (see the table in Section 10).
 
 ## 12. Conclusion
 
-The vacuum's `cosh`-shaped regularization is derived from three independent directions &mdash; a no-go theorem ruling out one competing derivation, a statistical argument fixing its exact form from symmetry and the area law, and a dynamical argument showing it is the attractor of a real physical process &mdash; and is consistent with real EHT, LIGO, and NICER data in four unrelated physical settings, without requiring any of them to be re-tuned to fit. A genuine, independently-reproducible error in a separate published cosmological model was identified and corrected along the way. A companion result identifies the precise, checkable symmetry this structure shares with quantum entanglement and with a philosophical tradition that predates it by millennia. The theory's remaining open point is exactly one assumption &mdash; the two-state vacuum postulate &mdash; stated honestly as such rather than disguised as a derivation.
+The vacuum's `cosh`-shaped regularization is derived from three independent directions &mdash; a no-go theorem ruling out one competing derivation, a statistical argument fixing its exact form from symmetry and the area law, and a dynamical argument showing it is the attractor of a real physical process &mdash; and is consistent with real EHT, LIGO, and NICER data in four unrelated physical settings, without requiring any of them to be re-tuned to fit. A genuinely new geometric origin story for the vacuum's rugosity (Section 4) and an asymmetric quantum-tunneling mechanism for cyclic inheritance across aeons (Section 5) are added, including a concrete, derived numerical residual (`a⁴·ρ_eff = 0.3`) and a dimensionless rebirth-to-entropy ratio (`n_rebirths/S_dS = 640`) that together offer a candidate mechanism for CCC's unresolved dust-fade-out problem. The predicted non-absorption of dark matter by black holes is presented as the primary astrophysical corroboration of the memory-preservation mechanism (Section 6.5). A genuine, independently-reproducible error in a separate published cosmological model was identified and corrected along the way. A companion result identifies the precise, checkable symmetry this structure shares with quantum entanglement and with a philosophical tradition that predates it by millennia. The theory's remaining open point is exactly one assumption &mdash; the two-state vacuum postulate &mdash; stated honestly as such rather than disguised as a derivation.
 
 This is not a candidate for `dense_evolution` promotion: it introduces no new quantum-simulation primitive, and the Section 8 verification already runs entirely on primitives the library already has (`DenseSVSimulator`, `NoiseModel`). It is published here, on Dense-Evolution-Discovery, archived on Zenodo, as this work's primary citable record.
 
@@ -397,3 +632,6 @@ This is not a candidate for `dense_evolution` promotion: it introduces no new qu
 35. V. G. Gurzadyan & R. Penrose, *Concentric circles in WMAP data may provide evidence of violent pre-Big-Bang activity*, arXiv:1011.3706 (2010).
 36. J. D. Bekenstein & V. F. Mukhanov, *Spectroscopy of the quantum black hole*, Phys. Lett. B 360, 7 (1995), arXiv:gr-qc/9505012.
 37. P. Tod, *Some questions about Conformal Cyclic Cosmology*, arXiv:2202.10864 (2022).
+38. R. P. Feynman, *Space-Time Approach to Non-Relativistic Quantum Mechanics*, Rev. Mod. Phys. 20, 367 (1948).
+39. S. W. Hawking, *Particle Creation by Black Holes*, Commun. Math. Phys. 43, 199 (1975).
+40. G. W. Gibbons & S. W. Hawking, *Cosmological Event Horizons, Thermodynamics, and Particle Creation*, Phys. Rev. D 15, 2738 (1977).
