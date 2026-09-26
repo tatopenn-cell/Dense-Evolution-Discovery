@@ -12,3 +12,4 @@ optax
 osqp
 xacro
 rdkit
+basis_set_exchange
