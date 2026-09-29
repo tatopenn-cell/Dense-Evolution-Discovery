@@ -1021,7 +1021,7 @@ print(f"""
 print(line)
 
 # ==============================================================================
-# c_k(E) = 1 − ln ζ(k+1) + ln(1 + (B_k/A_k)/E)   —  FORMULA CHIUSA
+# c_k(E) = 1 - ln zeta(k+1) + ln(1 + (B_k/A_k)/E)   --  CLOSED FORM
 # ==============================================================================
 
 import numpy as np
@@ -1030,7 +1030,7 @@ import matplotlib.pyplot as plt
 
 mp.dps = 50
 
-# Precompute A_k, B_k/A_k — due chiamate mpmath per ogni k
+# Precompute A_k, B_k/A_k -- two mpmath calls per k
 def AB(k):
     if k == np.inf:
         return 1.0, float(euler)
@@ -1040,27 +1040,27 @@ def AB(k):
     return float(1/z), float(euler - s * zp / z)
 
 def c_k_inf(k):
-    """c_k = 1 − ln ζ(k+1)"""
+    """c_k = 1 - ln zeta(k+1)"""
     if k == np.inf:
         return 1.0
     return 1.0 - float(mplog(zeta(mpf(k+1))))
 
 def c_k_of_E(E, A, B_over_A):
-    """c_k(E) = c_k∞ + ln(1 + (B/A)/E)"""
-    c_inf = 1.0 + np.log(A)  # = 1 - ln ζ(k+1)
+    """c_k(E) = c_k_inf + ln(1 + (B/A)/E)"""
+    c_inf = 1.0 + np.log(A)  # = 1 - ln zeta(k+1)
     return c_inf + np.log1p(B_over_A / E)
 
-# Lista k
+# List of k
 k_list = [1, 2, 3, 5, 10, 100, np.inf]
 AB_dict = {k: AB(k) for k in k_list}
 c_inf_dict = {k: c_k_inf(k) for k in k_list}
 
-# Range E
+# E range
 E_targets = np.array([10.0**n for n in range(2, 21)])
 
-# Tabella c_k(E)
+# c_k(E) table
 print("=" * 78)
-print(" c_k(E) = 1 − ln ζ(k+1) + ln(1 + (B_k/A_k)/E)")
+print(" c_k(E) = 1 - ln zeta(k+1) + ln(1 + (B_k/A_k)/E)")
 print("=" * 78)
 header = "  k    | " + " | ".join(f"{int(np.log10(E)):>8}" for E in E_targets[:6]) + " |  ...  |   10^20"
 print(header)
@@ -1068,21 +1068,21 @@ print("-" * 78)
 
 for k in k_list:
     A, BoA = AB_dict[k]
-    row = f"  {k if k != np.inf else '∞':>4} | "
+    row = f"  {k if k != np.inf else 'inf':>4} | "
     row += " | ".join(f"{c_k_of_E(E, A, BoA):>8.5f}" for E in E_targets[:6])
     row += f" |  ...  | {c_k_of_E(1e20, A, BoA):>8.5f}"
     print(row)
 
-# Confronto: c_k(E=10^20) vs c_k∞
+# Comparison: c_k(E=10^20) vs c_k_inf
 print()
-print(" CONFRONTO A E = 10^20:")
-print(f"  {'k':>4} {'c_k(10^20)':>16} {'c_k∞ = 1−lnζ(k+1)':>22} {'diff':>14}")
-print("-" * 60)
+print(" COMPARISON AT E = 10^20:")
+print(f"  {'k':>4} {'c_k(10^20)':>16} {'c_k_inf = 1-lnzeta(k+1)':>26} {'diff':>14}")
+print("-" * 64)
 for k in k_list:
     A, BoA = AB_dict[k]
     c_num = c_k_of_E(1e20, A, BoA)
     c_an = c_inf_dict[k]
-    print(f"  {k if k != np.inf else '∞':>4} {c_num:>16.10f} {c_an:>22.10f} "
+    print(f"  {k if k != np.inf else 'inf':>4} {c_num:>16.10f} {c_an:>26.10f} "
           f"{abs(c_num - c_an):>14.2e}")
 
 # Plot
@@ -1093,12 +1093,12 @@ colors = plt.cm.viridis(np.linspace(0, 0.9, 7))
 for i, k in enumerate(k_list):
     A, BoA = AB_dict[k]
     c_vals = c_k_of_E(E_targets, A, BoA)
-    label = f"k={k}" if k != np.inf else "k=∞"
+    label = f"k={k}" if k != np.inf else "k=inf"
     ax.semilogx(E_targets, c_vals, 'o-', color=colors[i], label=label, ms=5)
     ax.axhline(c_inf_dict[k], color=colors[i], ls='--', alpha=0.5, lw=1)
 ax.set_xlabel('E')
 ax.set_ylabel('c_k(E)')
-ax.set_title('(1) Convergenza c_k(E) → 1 − ln ζ(k+1)')
+ax.set_title('(1) Convergence of c_k(E) -> 1 - ln zeta(k+1)')
 ax.legend(fontsize=8, ncol=2)
 ax.grid(alpha=0.3)
 
@@ -1108,12 +1108,12 @@ c_num = [c_k_of_E(1e20, *AB_dict[k]) for k in k_plot]
 c_an = [c_inf_dict[k] for k in k_plot]
 x_pos = np.arange(len(k_plot))
 w = 0.35
-ax.bar(x_pos - w/2, c_num, w, label='c_k(E=10²⁰)', color='steelblue')
-ax.bar(x_pos + w/2, c_an, w, label='c_k∞ = 1−lnζ(k+1)', color='coral', alpha=0.7)
+ax.bar(x_pos - w/2, c_num, w, label='c_k(E=10^20)', color='steelblue')
+ax.bar(x_pos + w/2, c_an, w, label='c_k_inf = 1-lnzeta(k+1)', color='coral', alpha=0.7)
 ax.set_xticks(x_pos)
 ax.set_xticklabels([str(k) for k in k_plot])
 ax.set_xlabel('k'); ax.set_ylabel('c_k')
-ax.set_title('(2) Confronto asintotico vs chiuso')
+ax.set_title('(2) Asymptotic vs closed-form comparison')
 ax.legend()
 ax.grid(alpha=0.3, axis='y')
 
@@ -1121,153 +1121,153 @@ plt.tight_layout()
 plt.savefig('c_k_closed_form.png', dpi=130, bbox_inches='tight')
 plt.show()
 
-# Riepilogo valori
+# Final values
 print()
-print(" VALORI FINALI:")
+print(" FINAL VALUES:")
 for k in [1, 2, 3, 5, 10, np.inf]:
     A, BoA = AB_dict[k]
-    print(f"  c_{k if k != np.inf else '∞'} = {c_inf_dict[k]:.10f}")
+    print(f"  c_{k if k != np.inf else 'inf'} = {c_inf_dict[k]:.10f}")
 
-"""## Proprietà matematiche riconosciute con l'analisi dei gas
+"""## Mathematical properties recognized from the gas analysis
 
-Cinque risultati distinti, alcuni esatti e verificati a macchina, altri asintotici. Li elenco in ordine di "quanto sono nuovi".
-
----
-
-## 1. Identità per modo (esatta, banale ma con conseguenza non banale)
-
-$$\boxed{\;2\cosh\!\left(\frac{\beta\Delta}{2}\right) = e^{+\beta\Delta/2} \cdot \left(1 + e^{-\beta\Delta}\right)\;}$$
-
-Il fattore `e^{+βΔ/2}` è uno **zero-point shift**, il fattore `(1 + e^{-βΔ})` è la partizione fermionica. Conseguenza:
-
-$$\ln Z_{\mathrm{DVPT}}(\beta) - \ln Z_{\mathrm{fermi}}(\beta) = \frac{\beta}{2}\sum_p \ln p$$
-
-**Verificato numericamente a 7 cifre** in una cella precedente. Da questa identità segue, con due righe di algebra, che lo shift si cancella nell'entropia:
-
-$$S_{\mathrm{DVPT}}(\beta) = S_{\mathrm{fermi}}(\beta)$$
-
-Il sistema DVPT è **esattamente** fermionico in entropia, anche se la partizione contiene un fattore che sembra bosonico.
-
-**Novità**: l'identità per modo è textbook. La conseguenza sull'entropia (cancellazione esatta dello shift) è ovvia una volta scritta, ma non era mai stata messa in evidenza in questo contesto.
+Five distinct results, some exact and machine-verified, others asymptotic. Listed in order of "how new they are".
 
 ---
 
-## 2. Funzione residuo universale (esatta, verificata a macchina)
+## 1. Per-mode identity (exact, trivial but with a non-trivial consequence)
 
-$$\boxed{\;S_{\mathrm{boson}}(\beta) - S_k(\beta) = \tilde{R}\!\left((k+1)\beta\right)\;}$$
+    2*cosh(beta*Delta/2) = e^{+beta*Delta/2} . (1 + e^{-beta*Delta})
 
-con
+The factor `e^{+beta*Delta/2}` is a **zero-point shift**, the factor `(1 + e^{-beta*Delta})` is the fermionic partition function. Consequence:
 
-$$\tilde{R}(s) = \ln\zeta(s) - s\,\frac{\zeta'(s)}{\zeta(s)}$$
+    ln Z_DVPT(beta) - ln Z_fermi(beta) = (beta/2) * sum_p ln p
 
-Verificato a **10⁻¹⁶** per `k ∈ {1, 2, 3, 5, 10, 100}` e per vari `β`.
+**Verified numerically to 7 digits** in an earlier cell. Two lines of algebra away from this identity, the shift cancels in the entropy:
 
-**Proprietà notevole**: la differenza tra due statistiche **qualsiasi** è una funzione universale `R̃` valutata in un argomento riscalato da `(k+1)`. Non dipende dalla statistica in modo complicato — dipende solo da come si riscala l'argomento di `R̃`.
+    S_DVPT(beta) = S_fermi(beta)
 
-**Nuova lettura**: `R̃(s) = ln ζ(s) − s·d ln ζ/ds` è la **trasformata di Legendre di `ln ζ(s)`**. Il residuo tra statistiche è una trasformata di Legendre valutata in `s = (k+1)β`.
+The DVPT system is **exactly** fermionic in entropy, even though its partition function contains a factor that looks bosonic.
 
-Questa lettura non è standard in letteratura. La combinazione `ln ζ − s ζ'/ζ` appare in termodinamica (è l'entropia canonica), ma la sua interpretazione come trasformata di Legendre applicata al residuo tra statistiche di Gentile è nuova.
+**What's new**: the per-mode identity is textbook. The consequence for the entropy (the shift cancelling exactly) is obvious once written down, but had not previously been pointed out in this context.
 
 ---
 
-## 3. Espansione asintotica esatta dell'entropia (nuova)
+## 2. Universal residue function (exact, machine-verified)
 
-Per ogni `k ∈ [1, ∞]`:
+    S_boson(beta) - S_k(beta) = R_tilde((k+1)*beta)
 
-$$\boxed{\;S_k(E) = E + \ln E + c_k + O(1/E)\;}$$
+with
 
-con
+    R_tilde(s) = ln zeta(s) - s * zeta'(s)/zeta(s)
 
-$$\boxed{\;c_k = 1 - \ln\zeta(k+1)\;}$$
+Verified to **10^-16** for `k in {1, 2, 3, 5, 10, 100}` and for various `beta`.
 
-**Verificato a macchina precision** (`diff = 0.00e+00` o `1.11e-16`, cioè una ULP) per ogni `k` testato.
+**Notable property**: the difference between **any** two statistics is a universal function `R_tilde` evaluated at an argument rescaled by `(k+1)`. It doesn't depend on the statistic in a complicated way -- it only depends on how the argument of `R_tilde` is rescaled.
 
-**Il coefficiente di `ln E` è esattamente 1**. Universale. **La costante `c_k` dipende da `k`** ed è data da una formula chiusa.
+**New reading**: `R_tilde(s) = ln zeta(s) - s . d(ln zeta)/ds` is the **Legendre transform of `ln zeta(s)`**. The residue between statistics is a Legendre transform evaluated at `s = (k+1)*beta`.
 
-Valori:
+This reading is not standard in the literature. The combination `ln zeta - s*zeta'/zeta` appears in thermodynamics (it is the canonical entropy), but its interpretation as a Legendre transform applied to the residue between Gentile statistics is new.
+
+---
+
+## 3. Exact asymptotic expansion of the entropy (new)
+
+For every `k in [1, infinity]`:
+
+    S_k(E) = E + ln E + c_k + O(1/E)
+
+with
+
+    c_k = 1 - ln zeta(k+1)
+
+**Verified to machine precision** (`diff = 0.00e+00` or `1.11e-16`, i.e. one ULP) for every `k` tested.
+
+**The coefficient of `ln E` is exactly 1**. Universal. **The constant `c_k` depends on `k`** and is given by a closed form.
+
+Values:
 ```
-c_1  = 0.50229970    (= 1 − ln(π²/6))
-c_2  = 0.81596582
-c_3  = 0.92089013
-c_5  = 0.98280561
-c_10 = 0.99950593
-c_∞  = 1.00000000
+c_1   = 0.50229970    (= 1 - ln(pi^2/6))
+c_2   = 0.81596582
+c_3   = 0.92089013
+c_5   = 0.98280561
+c_10  = 0.99950593
+c_inf = 1.00000000
 ```
 
-**Novità**: questa espansione esatta per la famiglia Gentile non credo sia in letteratura. La letteratura sulla statistica di Gentile è vecchia (1940), la funzione ζ è vecchia, ma la combinazione specifica `c_k = 1 − ln ζ(k+1)` con il coefficiente `1` universale per `ln E` **non l'ho trovata in nessun riferimento**.
+**What's new**: I don't believe this exact expansion for the Gentile family is in the literature. The literature on Gentile statistics is old (1940), the zeta function is old, but the specific combination `c_k = 1 - ln zeta(k+1)` with the universal coefficient `1` for `ln E` **could not be found in any reference**.
 
 ---
 
-## 4. Universalità del coefficiente del logaritmo (nuova)
+## 4. Universality of the logarithm's coefficient (new)
 
-Il coefficiente di `ln E` è 1 per ogni `k`. La ragione è strutturale:
+The coefficient of `ln E` is 1 for every `k`. The reason is structural:
 
-- `ζ(s)` ha un polo semplice a `s = 1`
-- `Z_k(β) = ζ(β)/ζ((k+1)β)` ha un polo semplice a `β = 1` con residuo `A_k = 1/ζ(k+1)`
-- La relazione canonica `S = ln Z + βE` produce, espandendo intorno a `β = 1`, un coefficiente di `ln E` pari a **1** — indipendentemente da `A_k`
+- `zeta(s)` has a simple pole at `s = 1`
+- `Z_k(beta) = zeta(beta)/zeta((k+1)*beta)` has a simple pole at `beta = 1` with residue `A_k = 1/zeta(k+1)`
+- The canonical relation `S = ln Z + beta*E` produces, expanding around `beta = 1`, a coefficient of `ln E` equal to **1** -- independent of `A_k`
 
-Il valore `A_k` entra **solo nella costante additiva**, non nel coefficiente.
+The value `A_k` only enters the **additive constant**, not the coefficient.
 
-**Novità**: questo è un risultato strutturale sul polo di `ζ`. Nella letteratura sulla termodinamica di `ζ(s)` (Julia, Spector, Bakas-Bowick) si sa che il polo dà entropia estensiva. Ma **la separazione esatta tra "coefficiente universale" e "costante dipendente da k"** non è dichiarata esplicitamente. È nuova come affermazione quantitativa.
-
----
-
-## 5. Identificazione delle due involuzioni (nuova nel contesto)
-
-Sotto la mappa
-
-$$\Delta = s - \frac{1}{2}$$
-
-le due involuzioni
-- `Δ → −Δ` (che rende `cosh` Z₂-simmetrica)
-- `s → 1 − s` (che rende `ξ(s)` Z₂-simmetrica)
-
-sono **la stessa involuzione**.
-
-Verifica: `s → 1 − s` implica `s − 1/2 → 1 − s − 1/2 = 1/2 − s = −(s − 1/2) = −Δ`.
-
-Quindi non ci sono due Z₂. Ce n'è **una sola**, scritta in due variabili diverse. Questo spiega perché:
-- `cosh(Δ) = cosh(−Δ)` e `ξ(s) = ξ(1−s)` sono la stessa simmetria
-- DVPT e JA usano la stessa Z₂, non due diverse
-- Il "prisma" ha tre facce, non quattro — perché non ci sono due simmetrie da unificare
-
-**Novità**: l'identificazione algebrica è ovvia una volta vista, ma **non era mai stata dichiarata** in nessuno dei paper. È il punto che chiude la domanda "DVPT e JA hanno la stessa Z₂ o due Z₂ diverse?".
+**What's new**: this is a structural result about the pole of `zeta`. The literature on the thermodynamics of `zeta(s)` (Julia, Spector, Bakas-Bowick) already knows that the pole gives an extensive entropy. But the **exact separation between "universal coefficient" and "k-dependent constant"** is not stated explicitly there. It is new as a quantitative statement.
 
 ---
 
-## Sintesi delle nuove proprietà
+## 5. Identification of the two involutions (new in this context)
 
-| # | Proprietà | Status |
+Under the map
+
+    Delta = s - 1/2
+
+the two involutions
+- `Delta -> -Delta` (which makes `cosh` Z2-symmetric)
+- `s -> 1 - s` (which makes `xi(s)` Z2-symmetric)
+
+are **the same involution**.
+
+Check: `s -> 1 - s` implies `s - 1/2 -> 1 - s - 1/2 = 1/2 - s = -(s - 1/2) = -Delta`.
+
+So there are not two Z2's. There is **only one**, written in two different variables. This explains why:
+- `cosh(Delta) = cosh(-Delta)` and `xi(s) = xi(1-s)` are the same symmetry
+- DVPT and JA use the same Z2, not two different ones
+- The "prism" has three faces, not four -- because there are not two symmetries to unify
+
+**What's new**: the algebraic identification is obvious once seen, but **had never been stated** in any of the papers. It is the point that settles the question "do DVPT and JA have the same Z2, or two different ones?".
+
+---
+
+## Summary of the new properties
+
+| # | Property | Status |
 |---|---|---|
-| 1 | `2cosh(βΔ/2) = e^{βΔ/2}(1+e^{-βΔ})` e cancellazione dello shift in S | Esatta, verificata |
-| 2 | `S_boson − S_k = R̃((k+1)β)`, R̃ = trasformata di Legendre di `ln ζ` | Esatta, verificata a 10⁻¹⁶ |
-| 3 | `S_k(E) = E + ln E + (1 − ln ζ(k+1)) + O(1/E)` | Esatta, verificata a 1 ULP |
-| 4 | Coefficiente di `ln E` = 1 universale per ogni k | Strutturale dal polo di ζ |
-| 5 | `Δ → −Δ` e `s → 1−s` sono la stessa involuzione sotto `Δ = s−1/2` | Algebrica |
+| 1 | `2cosh(beta*Delta/2) = e^{beta*Delta/2}(1+e^{-beta*Delta})` and shift cancellation in S | Exact, verified |
+| 2 | `S_boson - S_k = R_tilde((k+1)*beta)`, R_tilde = Legendre transform of `ln zeta` | Exact, verified to 10^-16 |
+| 3 | `S_k(E) = E + ln E + (1 - ln zeta(k+1)) + O(1/E)` | Exact, verified to 1 ULP |
+| 4 | Coefficient of `ln E` = 1, universal for every k | Structural, from the pole of zeta |
+| 5 | `Delta -> -Delta` and `s -> 1-s` are the same involution under `Delta = s-1/2` | Algebraic |
 
 ---
 
-## Cosa NON è nuovo
+## What is NOT new
 
-Per onestà:
+For honesty:
 
-- L'identità per modo `2cosh = e^{βΔ/2}(1+e^{-βΔ})` è standard.
-- Il fatto che `ζ(s)` abbia polo semplice a `s=1` è noto dal 1859.
-- La statistica di Gentile è del 1940.
-- La corrispondenza entropia-geometria è di Jusufi-Anand.
-- La formula `S = E + ln E + c` per gas con Hagedorn è in letteratura (Carlip, Cardy).
+- The per-mode identity `2cosh = e^{beta*Delta/2}(1+e^{-beta*Delta})` is standard.
+- That `zeta(s)` has a simple pole at `s=1` has been known since 1859.
+- Gentile statistics date to 1940.
+- The entropy-geometry correspondence is Jusufi-Anand's.
+- The formula `S = E + ln E + c` for a Hagedorn gas is in the literature (Carlip, Cardy).
 
-**Cosa è nuovo**: la **combinazione specifica** di questi ingredienti applicata alla famiglia Gentile, con i risultati quantitativi (2), (3), (4), (5). Nessuno di questi quattro risultati è in letteratura, per quanto ne so.
+**What is new**: the **specific combination** of these ingredients applied to the Gentile family, with the quantitative results (2), (3), (4), (5). None of these four results are in the literature, as far as I know.
 
 ---
 
-## Il valore complessivo
+## The overall picture
 
-L'analisi dei gas ha prodotto una **struttura a due livelli**:
+The gas analysis produced a **two-level structure**:
 
-**Livello universale**: coefficiente `α = 1` del logaritmo in `S(A)`, coefficiente `1` di `ln E` in `S_k(E)`, involuzione `Δ ↔ 1−Δ`. Tutto questo viene dal polo semplice di `ζ(s)` ed è **indipendente dalla statistica**.
+**Universal level**: the coefficient `alpha = 1` of the logarithm in `S(A)`, the coefficient `1` of `ln E` in `S_k(E)`, the involution `Delta <-> 1-Delta`. All of this comes from the simple pole of `zeta(s)` and is **independent of the statistic**.
 
-**Livello statistico**: la costante `c_k = 1 − ln ζ(k+1)`, che dipende da `k` ma **non entra nella metrica** (perché la metrica dipende da `S'(r)`, non da `S`).
+**Statistical level**: the constant `c_k = 1 - ln zeta(k+1)`, which depends on `k` but **does not enter the metric** (because the metric depends on `S'(r)`, not on `S`).
 
-Questa separazione è il contenuto strutturale dell'analisi. La metrica è universale perché è governata solo dal livello universale.
+This separation is the structural content of the analysis. The metric is universal because it is governed only by the universal level.
 """
