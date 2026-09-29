@@ -453,7 +453,8 @@ The ground state retains a substantial `sech`-like component throughout, but the
 
 **The two limits are connected by a continuous path in the family.**
 
-![Period divergence at μ=1, log-periodic lattice scan λ∈[1.5,1.8] showing λ_opt≈1.70 not Φ, and the ODE family u''=μu−2u³ for various μ](assets/dynamic_vacuum_pressure_theory/period_mu_lambda_scan_ode_family.png)
+<!-- TODO: restore once the PNG is committed to docs/assets/dynamic_vacuum_pressure_theory/
+![Period divergence at μ=1, log-periodic lattice scan λ∈[1.5,1.8] showing λ_opt≈1.70 not Φ, and the ODE family u''=μu−2u³ for various μ](assets/dynamic_vacuum_pressure_theory/period_mu_lambda_scan_ode_family.png) -->
 
 **Figure 5.** *(Left)* Period `T(μ)` of the associated nonlinear ODE, diverging as `μ → 1⁻` (red dashed line). The critical value `μ = 1` is the DVPT limit of the operator family and separates the `sech` regime from the Aubry–André regime. *(Centre)* Scan of the log-periodic lattice ratio `λ ∈ [1.5, 1.8]`: correlation with `sech` (blue, left axis) and IPR (red, right axis). The maximum mixedness (`IPR ≈ 0.5`) is at `λ_opt = 1.700`, **not** at `Φ = 1.618` (green dotted line, 5.0% difference). Φ is not the unique invariant of the family. *(Right)* Solutions of the ODE family `u'' = μu − 2u³` for `μ ∈ {0.50, 0.90, 1.00, 1.10, 1.50}`. At `μ = 1.00` the solution is exactly `sech(r)` (green); for `μ < 1` it oscillates about `u = 0`; for `μ > 1` it oscillates about `u = ±√μ`.
 
@@ -575,7 +576,8 @@ We solve the eigenvalue problem for the ground state of `H` on a 400-site lattic
 
 The transition is sharp and monotonic, as expected. The `r²` weighting shifts the numerical values slightly relative to the pure one-dimensional case but preserves the qualitative behaviour.
 
-![Montgomery-Odlyzko KS p=0.618; Riemann zero counting function; Aubry-André radial profiles showing extended, critical, localized regimes](assets/dynamic_vacuum_pressure_theory/montgomery_odlyzko_aubry_andre.png)
+<!-- TODO: restore once the PNG is committed to docs/assets/dynamic_vacuum_pressure_theory/
+![Montgomery-Odlyzko KS p=0.618; Riemann zero counting function; Aubry-André radial profiles showing extended, critical, localized regimes](assets/dynamic_vacuum_pressure_theory/montgomery_odlyzko_aubry_andre.png) -->
 
 **Figure 6.** *(Left)* Histogram of unfolded spacings between consecutive non-trivial zeros of the Riemann zeta function (blue, `N = 100`), compared to a GUE random-matrix ensemble (red) and the Wigner surmise (black dashed). KS p-value ≈ 0.618 — consistent with the correspondence at `N = 100`, not a discovery. *(Centre)* Counting function `N(t)` for the first 100 non-trivial zeros, computed via `mpmath.zetazero(n)`, reproducing the Riemann–von Mangoldt density. *(Right)* Ground-state radial density `|ψ₀(r)|² · r²` for the Aubry–André Hamiltonian on a 400-site radial lattice at three potential strengths: extended (`V₀ = 0.5 J`, IPR = 0.005), critical (`V₀ = 2.0 J`, IPR = 0.204), localized (`V₀ = 4.5 J`, IPR = 0.933). Note the log scale: the extended and critical profiles are nearly uniform; the localized profile is exponentially concentrated.
 
@@ -614,7 +616,8 @@ Two regimes:
 - **Recovery limit** (`Δ ≫ 1`, ordinary macroscopic horizons): `tanh(Δ) → 1`, so `Ḣ → −4πG(ρ + P)`, the standard Friedmann acceleration equation recovered exactly.
 - **Enhancement regime** (`Δ ≈ 0.97`, where `tanh(Δ) = 3/4`): the modification factor becomes exactly `1/tanh(Δ) = 4/3`. **The 4/3 factor appears at `Δ = arctanh(3/4) = ln(7)/2 ≈ 0.973`, not in the `Δ ≪ 1` limit.** In the strict limit `Δ → 0`, the factor diverges; the equation has no well-behaved `Δ → 0` limit in the classical form derived here.
 
-![sech attractor, 1/tanh(Δ) enhancement with 4/3 at Δ=0.973, and numerical collapse of H² under modified Friedmann dynamics](assets/dynamic_vacuum_pressure_theory/sech_attractor_enhancement_collapse.png)
+<!-- TODO: restore once the PNG is committed to docs/assets/dynamic_vacuum_pressure_theory/
+![sech attractor, 1/tanh(Δ) enhancement with 4/3 at Δ=0.973, and numerical collapse of H² under modified Friedmann dynamics](assets/dynamic_vacuum_pressure_theory/sech_attractor_enhancement_collapse.png) -->
 
 **Figure 7.** *(Left)* Attractor solution `u(r)` recovered from the relaxation dynamics of §5.2, with correlation 0.995 against the reference `sech(r)`. The residual deviation is real and does not vanish at the finest grid tested. *(Centre)* Enhancement factor `1/tanh(Δ)` in the modified Friedmann equation of §9.2. The exact `4/3` value is reached at `Δ = arctanh(3/4) ≈ 0.973`, not at `Δ ≪ 1` — contrary to an earlier version of this work. *(Right)* Numerical integration of the modified Friedmann equation with `ρ = ρ₀/a³`: the modified `H²` (blue) drops to zero at `a ≈ 1.4–1.5`, while standard dust (grey) and radiation (red) do not. There is no asymptotic `a⁻⁴` regime in the classical solution (§9.3).
 
