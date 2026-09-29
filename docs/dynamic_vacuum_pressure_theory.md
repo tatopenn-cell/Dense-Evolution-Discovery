@@ -239,6 +239,8 @@ From §2: `Δ(r) = α_G + (r/ℓ₀)²`, with `α_G > 0`. The imperfect-differen
 
 
 
+![The gap and sech(r) are both Z2-even; sech solves u'' = u - 2u^3; xi(s) = xi(1-s) is an exact Z2 involution on zeta; the regularized metric for alpha in {0, 0.5, 1, 1.5, 2}, with alpha=1 giving the Jusufi-Anand case](assets/dynamic_vacuum_pressure_theory/z2_topos_figure2.png)
+
 **Figure 2.** *(Top left)* The gap `Δ(r)` (quadratic, Z₂-even) and `sech(r)` (Z₂-even fixed point of the relaxation dynamics of §5). *(Top right)* `sech(r)` and its second derivative `sech'' = sech − 2sech³`, confirming symbolically that `sech` solves `d²u/dr² = u − 2u³` — the exact fixed-point verification of §5.2. *(Bottom left)* The Riemann functional equation `ξ(s) = ξ(1 − s)`, another exact Z₂ involution on a completely different mathematical object (see §8). *(Bottom right)* The regularized metric `f(r) = 1 − 2GMr/(r² + ℓ_ζ²)` for `α ∈ {0, 0.5, 1, 1.5, 2}`. The case `α = 1` (green) is the Jusufi–Anand arithmetic metric of §2.4 and §6.6.
 
 ---
