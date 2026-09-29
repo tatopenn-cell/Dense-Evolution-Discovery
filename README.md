@@ -13,7 +13,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/commits/main)
 [![Issues](https://img.shields.io/github/issues/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues)
 [![Stars](https://img.shields.io/github/stars/tatopenn-cell/Dense-Evolution-Discovery?style=flat-square&color=yellow)](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/stargazers)
-[![DOI](https://zenodo.org/badge/1258407155.svg)](https://doi.org/10.5281/zenodo.21855619)
+[![DOI](https://zenodo.org/badge/1258407155.svg)](https://doi.org/10.5281/zenodo.21855620)
 
 This is the research lab for [Dense Evolution](https://pypi.org/project/dense-evolution/) — every claim below is a real script, run and checked before it was written up, with negative results kept in alongside the positive ones.
 
