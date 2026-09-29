@@ -116,6 +116,7 @@ nav:
       - Dynamic Vacuum Pressure Theory: dynamic_vacuum_pressure_theory.md
       - "DVPT Companion: Z₂ Operator Family (Prisma)": prisma_operator_family.md
       - "DVPT Supplement: Gentile Statistics": gentile_supplement.md
+      - "DVPT: Ghost-Free Horndeski Embedding": ja_horndeski_embedding.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
       - "Chunk: GPU Dynamic-Cap Finding": chunk_gpu_cap_finding.md
