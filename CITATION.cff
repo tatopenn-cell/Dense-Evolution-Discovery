@@ -22,5 +22,5 @@ identifiers:
     value: "10.5281/zenodo.21855620"
     description: "The concept DOI for all versions of this repository."
   - type: doi
-    value: "10.5281/zenodo.21855619"
-    description: "The version-specific DOI for v2.20.0."
+    value: "10.5281/zenodo.23032939"
+    description: "The version-specific DOI for v2.32.0."
