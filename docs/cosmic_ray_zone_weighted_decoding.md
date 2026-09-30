@@ -54,14 +54,34 @@ Tracking the zone helps between 10 and 300 us (up to 77% at R=100) and gives 0% 
 
 Averaged over the first 100 ms: tracking gain +0.3% at both R values; static -11.6% (R=30) and -3.6% (R=100); wrong zone 1.01x and 1.00x the blind rate. The larger code does not lengthen the useful window: the paper's chip also has 26 qubits and saturates in about 1.5 ms.
 
+## Step 5: The syndromes as the detector
+
+Steps 1-4 give the decoder the zone. Here it has to find the zone itself, from the syndrome stream of the code it is decoding, with no extra hardware. `scripts/cosmic_ray_syndrome_detector_kaggle.py` (Kaggle, same 5x5 surface code): for each shot, the last W error-correction cycles (W = 10, 30, 100, one cycle = 1 us) give how often each check was active. For independent errors, the probability that a check fires is (1 - prod(1 - 2 p_q)) / 2 over its qubits, so -ln(1 - 2 f) is linear in a_q = -ln(1 - 2 p_q). A regularized non-negative least-squares fit (weight 0.1 toward the baseline, not tuned) recovers a per-qubit error probability, and MWPM uses it as its weights. The oracle is the decoder that knows the true zone. 12,000 shots per point, same shots for every decoder, impact qubit drawn uniformly. Raw results: `assets/cosmic_ray_zone_weighted_decoding/syndrome_detector_results.json`.
+
+| R | t (us) | blind | W=10 | W=30 | W=100 | oracle | best-W gain | oracle gain |
+|---|---|---|---|---|---|---|---|---|
+| 100 | 10 | 0.0056 | 0.0057 | 0.0055 | 0.0054 | 0.0007 | 3% | 88% |
+| 100 | 30 | 0.0245 | 0.0189 | 0.0131 | 0.0143 | 0.0037 | 47% | 85% |
+| 100 | 100 | 0.1620 | 0.1257 | 0.0970 | 0.0805 | 0.0473 | 50% | 71% |
+| 100 | 300 | 0.5992 | 0.5771 | 0.5423 | 0.5061 | 0.4334 | 16% | 28% |
+| 100 | 1000 | 0.7480 | 0.7466 | 0.7478 | 0.7439 | 0.7458 | 0.5% | 0.3% |
+| 30 | 10 | 0.0008 | 0.0014 | 0.0009 | 0.0008 | 0.0006 | -11% | 22% |
+| 30 | 30 | 0.0024 | 0.0035 | 0.0021 | 0.0022 | 0.0013 | 14% | 48% |
+| 30 | 100 | 0.0139 | 0.0217 | 0.0138 | 0.0117 | 0.0062 | 16% | 56% |
+| 30 | 300 | 0.1051 | 0.1847 | 0.1379 | 0.1000 | 0.0765 | 5% | 27% |
+| 30 | 1000 | 0.2711 | 0.4495 | 0.3910 | 0.3103 | 0.2711 | -14% | 0% |
+
+For a strong burst (R=100) the syndrome detector halves the failures between 30 and 100 us, about half of what the oracle achieves, and longer windows keep helping up to 300 us. It needs tens of cycles to gather evidence, so it gives nothing at 10 us. For a moderate burst (R=30) the gain is 14-16% at 30-100 us, within about two standard deviations at these failure counts. Short windows (W=10) are noisy enough to be worse than the blind decoder, and once the whole chip is uniformly hot (1 ms) the estimate invents structure and is up to 14% worse.
+
 ## What this means
 
-A zone-aware decoder is useful only if the burst is detected and localized within roughly 300 us of the impact, and the zone map is kept current. A stale or wrong map is worse than no map. At saturation the failure probability is 27-75% for every decoder, consistent with the paper's conclusion that mitigation on the chip itself is needed.
+A zone-aware decoder is useful only if the burst is detected and localized within roughly 300 us of the impact, and the zone map is kept current. Estimating the zone from the syndromes alone recovers about half of the ideal gain for strong bursts, between ~30 and ~300 us. A stale or wrong map is worse than no map. At saturation the failure probability is 27-75% for every decoder, consistent with the paper's conclusion that mitigation on the chip itself is needed.
 
 ## Details
 
 - **Assumptions chosen here, not measured:** baseline decay probability 0.01; initial patch of 2 qubits; spread time 300 us (the paper estimates ~180 us for the initial spread and saturation near 1-1.5 ms); Pauli-twirled amplitude damping; one snapshot in time (code capacity), X and Z decoded independently in the surface-code study.
 - **The 3.75x ratio** in `cosmic_ray_burst_profile` is 15/4, the chip-wide count of simultaneous errors at ~1 ms over a baseline of ~4. Applying it per qubit understates a localized hot spot, hence the stronger R=30 and R=100 cases.
+- **Step 5 assumptions:** each cycle corrects the previous ones, so a cycle's syndromes depend only on its new errors; the regularization weight 0.1 was not tuned; at 10-30 us with R=30 the failure counts are a few dozen.
 - **Not searched:** whether zone-aware decoding of cosmic-ray bursts has been studied before; the literature check covered the indexed papers only (McEwen et al. 2104.05219, Gu et al. 2408.00829 on erasure qubits, Grassl-Beth-Pellizzari 1997 on the erasure channel).
 - **Step 1 history:** an earlier wording of `cosmic_ray_erasure_decoding.py` credited the paper with real-time identification of the hit qubits and cited a "Fig. 3c" hot-spot size of exactly 2 qubits; the docstring now states what the paper supports.
 
@@ -73,4 +93,4 @@ python scripts/cosmic_ray_zone_weighted_decoding.py
 python scripts/cosmic_ray_spreading_zone_decoding.py
 ```
 
-The 5x5 surface-code study is a Kaggle notebook (`scripts/cosmic_ray_surface_zone_kaggle.py`, internet on, CPU).
+The 5x5 surface-code studies are Kaggle notebooks (`scripts/cosmic_ray_surface_zone_kaggle.py` and `scripts/cosmic_ray_syndrome_detector_kaggle.py`, internet on, CPU).
