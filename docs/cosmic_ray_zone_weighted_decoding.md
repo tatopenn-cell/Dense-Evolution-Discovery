@@ -38,7 +38,7 @@ Tracking the zone helps between 10 and 300 us (up to 77% at R=100) and gives 0% 
 
 ## Step 4: A 5x5 surface code (Kaggle)
 
-`scripts/cosmic_ray_surface_zone_kaggle.py` runs on Kaggle: rotated surface code, distance 5, 25 qubits, MWPM decoding (`pymatching`) with per-qubit weights from each prior, on a true 5x5 geometry with the zone spreading by distance from the impact qubit, averaged over all 25 impact positions, 50,000 shots per point. It first checks that every single and double X, Z, Y error is corrected. Raw results: `data/cosmic_ray_surface_zone_results.json`.
+`scripts/cosmic_ray_surface_zone_kaggle.py` runs on Kaggle: rotated surface code, distance 5, 25 qubits, MWPM decoding (`pymatching`) with per-qubit weights from each prior, on a true 5x5 geometry with the zone spreading by distance from the impact qubit, averaged over all 25 impact positions, 50,000 shots per point. It first checks that every single and double X, Z, Y error is corrected. Raw results: `docs/assets/cosmic_ray_zone_weighted_decoding/surface_code_results.json`.
 
 ![Zone-weighted decoding on a 5x5 surface code](assets/cosmic_ray_zone_weighted_decoding/surface_code_zone_decoding.png)
 
