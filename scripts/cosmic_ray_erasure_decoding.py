@@ -64,10 +64,10 @@ def sample_shot(rng):
     # strikes it this time -- NOT unconditionally on every trial. An
     # earlier version of this script heralded (0, 1) on every single shot
     # regardless of whether they were actually disturbed, which forced
-    # erasure_aware_decode to restrict its search there even when the real
+    # erasure_aware_decode to restrict its search there even when the
     # error was elsewhere (a baseline qubit) or nonexistent -- an
     # unrealistic erasure model that made the informed decoder WORSE than
-    # blind. Real erasure heralding is a per-trial event, exactly like
+    # blind. Erasure heralding is a per-trial event, exactly like
     # steane_code_block6_erasure_conversion.py's own `heralded = [q for q
     # in range(N_DATA) if rng.random() < p]`.
     true_error = ['I'] * N_QUBITS
@@ -87,7 +87,7 @@ def sample_shot(rng):
 def residual_is_logical_failure(true_error, correction):
     # Steane, logical X_L=XXXXXXX / logical Z_L=ZZZZZZZ convention: a
     # residual (true_error XOR correction) with odd total X-parity
-    # anticommutes with logical Z_L -- a real logical bit-flip survived.
+    # anticommutes with logical Z_L -- a logical bit-flip survived.
     # Even parity means a harmless stabilizer element (or identity). Same
     # check as steane_code_block6_erasure_conversion.py's
     # apply_correction_and_check.
@@ -252,11 +252,11 @@ if __name__ == "__main__":
     print(f"Baseline per-qubit X-error rate: {BASELINE_P}")
     print(f"Hot-spot X-error rate at burst peak (t=1ms): {P_HOTSPOT_PEAK:.4f} "
           f"({P_HOTSPOT_PEAK / BASELINE_P:.2f}x baseline)")
-    print(f"Shots with a real hot-spot herald: {RESULTS['n_heralded_shots']}/{N_TRIALS}")
+    print(f"Shots with a hot-spot herald: {RESULTS['n_heralded_shots']}/{N_TRIALS}")
     print(f"Logical error rate over all {N_TRIALS} trials:")
     print(f"  blind decoder (no herald info):         {RESULTS['rate_blind']:.4f}")
     print(f"  erasure-aware strategy (uses heralds):  {RESULTS['rate_erasure']:.4f}")
-    print(f"Logical error rate, conditioned on shots with a real herald "
+    print(f"Logical error rate, conditioned on shots with a herald "
           f"({RESULTS['n_heralded_shots']} shots) -- where the effect actually lives:")
     print(f"  blind decoder:          {RESULTS['heralded_rate_blind']:.4f}")
     print(f"  erasure-aware strategy: {RESULTS['heralded_rate_erasure']:.4f}")
