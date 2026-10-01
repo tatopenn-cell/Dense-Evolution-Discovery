@@ -19,7 +19,6 @@ Run with:
     pip install streamlit
     streamlit run app.py
 """
-
 import matplotlib
 matplotlib.use('Agg')
 
@@ -1037,8 +1036,7 @@ if section == "Tutte le funzioni":
     else:
         names = [f for f in ex.functions() if ex.connectable(f)]
         fname = st.selectbox("Funzione", names, key="ex_fn")
-        st.caption((ex.inspect.getdoc(getattr(ex.de, fname)) or "").split("
-")[0])
+        st.caption((ex.inspect.getdoc(getattr(ex.de, fname)) or "").split("\n")[0])
         texts = {p: st.text_input(p, ex.example(fname, p), key=f"ex_{fname}_{p}")
                  for p, k, _ in ex.plan2(fname) if k == "literal"}
         if st.button("Esegui funzione", key="ex_run"):
