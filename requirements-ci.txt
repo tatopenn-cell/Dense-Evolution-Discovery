@@ -13,3 +13,4 @@ osqp
 xacro
 rdkit
 basis_set_exchange
+basis-set-exchange
