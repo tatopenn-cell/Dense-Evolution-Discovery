@@ -108,6 +108,7 @@ nav:
       - JSD-ZNE Noise Generalization: jsd_zne_noise_generalization.md
       - Pink-Noise ZNE Windowed Coherence: pink_noise_zne_windowed_coherence.md
       - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
+      - "Cosmic-Ray Bursts: Zone-Weighted Decoding": cosmic_ray_zone_weighted_decoding.md
       - "VQE + ZNE + Autodiff (No Dense Hamiltonian)": vqe_pauli_sum_zne_autodiff.md
     - "Exotic Physics":
       - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md

@@ -68,6 +68,10 @@ graph TD
     subgraph COSMIC["6. Cosmic-Ray Noise &amp; Erasure QEC"]
         CRBURST["cosmic_ray_burst_validation.py"]
         CRERASE["cosmic_ray_erasure_decoding.py"]
+        CRZONE["cosmic_ray_zone_weighted_decoding.py"]
+        CRSPREAD["cosmic_ray_spreading_zone_decoding.py"]
+        CRSURF["cosmic_ray_surface_zone_kaggle.py"]
+        CRSYND["cosmic_ray_syndrome_detector_kaggle.py"]
         AUDITGHZ["audit_all_noise_channels_ghz.py"]
     end
 
