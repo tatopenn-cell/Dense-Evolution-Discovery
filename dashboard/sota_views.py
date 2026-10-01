@@ -102,7 +102,8 @@ def step_states(ops, n):
         sim = de.DenseSVSimulator(n)
         if k:
             sim.run_circuit_jit(list(ops[:k]))
-        states.append(np.asarray(sim.get_statevector()))
+        s = np.asarray(sim.get_statevector()).reshape([2] * n)
+        states.append(np.transpose(s, list(range(n))[::-1]).reshape(-1))
     return states
 
 
