@@ -32,7 +32,7 @@ def test_app_starts_without_exceptions():
     assert not _app().exception
 
 
-@pytest.mark.parametrize("section", ["Costruisci", "Risultati", "Chimica", "Rumore", "Sistema"])
+@pytest.mark.parametrize("section", ["Build", "Results", "Chemistry", "Noise", "System"])
 def test_every_section_opens_and_every_button_runs(section):
     at = _open(section)
     assert not at.exception, [str(e.value) for e in at.exception]
@@ -48,4 +48,4 @@ def test_every_section_opens_and_every_button_runs(section):
 
 
 def test_sections_list_is_the_expected_one():
-    assert _sections() == ["Costruisci", "Risultati", "Chimica", "Rumore", "Sistema"]
+    assert _sections() == ["Build", "Results", "Chemistry", "Noise", "System"]
