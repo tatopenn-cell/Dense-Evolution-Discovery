@@ -1,4 +1,4 @@
-dense-evolution[dashboard,qmmm,pennylane]
+dense-evolution
 dense-armor
 pennylane
 plotly

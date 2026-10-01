@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "dashboard/**"
+      - "tests/test_dashboard_*.py"
       - ".github/workflows/installers.yml"
   workflow_dispatch:
 
@@ -93,6 +94,11 @@ jobs:
         run: |
           cd ~/.dense-evolution-dashboard
           python3 -c "import sys; from streamlit.testing.v1 import AppTest; at = AppTest.from_file('app.py', default_timeout=300).run(); print('exceptions:', len(at.exception)); sys.exit(1 if at.exception else 0)"
+      - name: Dashboard tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest tests/test_dashboard_views.py tests/test_dashboard_app.py -q -rs
       - name: Uninstall and check
         run: |
           printf 'n\n' | bash dashboard/uninstall-dashboard.sh

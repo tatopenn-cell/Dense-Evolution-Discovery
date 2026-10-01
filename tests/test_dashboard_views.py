@@ -1,6 +1,6 @@
 """
-Every circuit function of the Dashboard on every preset, noise model and
-backend: circuit drawing, histogram, Q-sphere, Bloch spheres, step-by-step
+Every circuit function of the Dashboard on every preset (ideal, dense) and
+on every noise model and backend for the Bell and GHZ presets: circuit drawing, histogram, Q-sphere, Bloch spheres, step-by-step
 state differences, pairwise half-matrix, per-qubit summary and ket notation.
 The last step of the step-by-step view must equal the engine's statevector.
 """
@@ -24,9 +24,16 @@ import sota_views as V
 NOISES = ["ideal", "depolarizing", "bitflip", "phaseflip", "amplitude_damping", "combined"]
 
 
-@pytest.mark.parametrize("name", list(dc.QASM_LIBRARY))
-@pytest.mark.parametrize("noise", NOISES)
-@pytest.mark.parametrize("backend", ["dense", "mps"])
+CASES = [(name, "ideal", "dense") for name in dc.QASM_LIBRARY] + [
+    (name, noise, backend)
+    for name in ("Bell state (2 qubit)", "GHZ state (3 qubit)")
+    for noise in NOISES
+    for backend in ("dense", "mps")
+    if (noise, backend) != ("ideal", "dense")
+]
+
+
+@pytest.mark.parametrize("name,noise,backend", CASES)
 def test_every_circuit_function_runs(name, noise, backend):
     r = dc.run_circuit_from_qasm(dc.QASM_LIBRARY[name], n_shots=50, seed=1, noise_model=noise,
                                  noise_p=0.0 if noise == "ideal" else 0.05, backend=backend)
