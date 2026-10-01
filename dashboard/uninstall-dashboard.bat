@@ -20,9 +20,31 @@ for %%L in (
     )
 )
 
+rem Termina eventuali processi che potrebbero bloccare i file nella cartella
+echo Terminazione eventuali processi collegati...
+powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*DenseEvolutionDashboard*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+rem Rimuovi la cartella con tentativi multipli
+set "MAX_RETRIES=5"
+set /a RETRY=0
+
+:REMOVE_DIR
 if exist "%INSTALL_DIR%" (
-    rmdir /s /q "%INSTALL_DIR%"
-    echo Cartella "%INSTALL_DIR%" rimossa.
+    rmdir /s /q "%INSTALL_DIR%" 2>nul
+    if exist "%INSTALL_DIR%" (
+        set /a RETRY+=1
+        if !RETRY! LSS %MAX_RETRIES% (
+            echo Tentativo !RETRY!/%MAX_RETRIES%: cartella ancora presente, attendo...
+            timeout /t 2 /nobreak >nul
+            goto REMOVE_DIR
+        ) else (
+            echo Errore: impossibile rimuovere "%INSTALL_DIR%" dopo %MAX_RETRIES% tentativi.
+            exit /b 1
+        )
+    ) else (
+        echo Cartella "%INSTALL_DIR%" rimossa.
+    )
 ) else (
     echo Nessuna cartella trovata.
 )
