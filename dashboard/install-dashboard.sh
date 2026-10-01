@@ -46,8 +46,10 @@ mkdir -p "$INSTALL_DIR"
 echo "Scarico l'app Dashboard..."
 if command -v curl >/dev/null 2>&1; then
     curl -fsSL "$APP_URL" -o "$INSTALL_DIR/app.py"
+    curl -fsSL "${APP_URL%app.py}sota_views.py" -o "$INSTALL_DIR/sota_views.py"
 else
     "$PYTHON_BIN" -c "import urllib.request,sys; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])" "$APP_URL" "$INSTALL_DIR/app.py"
+    "$PYTHON_BIN" -c "import urllib.request,sys; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])" "${APP_URL%app.py}sota_views.py" "$INSTALL_DIR/sota_views.py"
 fi
 
 cat > "$LAUNCHER" <<EOF
