@@ -28,6 +28,7 @@ import dense_evolution
 import streamlit as st
 
 import dashboard_core as dc
+import sota_views as sv
 dc.enable_dashboard_precision()
 
 from dense_evolution.mitigation.magic_entropy import magic_entropy
@@ -258,9 +259,26 @@ elif section == "Risultati":
                 cols[i + 2].metric("Memoria MPS (MB)", f"{result.mps_memory_mb:.2f}")
             if result.fidelity_vs_ideal is not None:
                 st.caption("Fedeltà = quanto il run rumoroso si discosta dal circuito ideale (1.0 = identico).")
-        tab_sv, tab_prob, tab_qsphere, tab_bloch, tab_entropy = st.tabs(
-            ["Statevector", "Probabilità", "Q-sphere", "Bloch per qubit", "Entropia & informazione mutua"]
+        tab_sv, tab_prob, tab_qsphere, tab_bloch, tab_entropy, tab_steps, tab_pairs, tab_qubits = st.tabs(
+            ["Statevector", "Probabilità", "Q-sphere", "Bloch per qubit", "Entropia & informazione mutua",
+             "Passo per passo", "Coppie di qubit", "Riepilogo qubit"]
         )
+        with tab_steps:
+            if result.n_qubits > 10 or not result.ops:
+                st.info("Disponibile per circuiti fino a 10 qubit con almeno un gate.")
+            else:
+                states = sv.step_states(result.ops, result.n_qubits)
+                k = st.slider("Gate", 1, len(result.ops), 1, key="sota_step")
+                st.caption(f"Gate {k}: {result.ops[k - 1]} — come cambia ogni ampiezza rispetto al gate precedente.")
+                st.dataframe(sv.difference_rows(states[k - 1], states[k], result.n_qubits), width="stretch")
+        with tab_pairs:
+            if result.n_qubits < 2 or result.n_qubits > 10:
+                st.info("Disponibile da 2 a 10 qubit.")
+            else:
+                st.pyplot(sv.half_matrix_figure(result.statevector, result.n_qubits))
+        with tab_qubits:
+            st.dataframe(sv.qubit_table(result.statevector, result.n_qubits), width="stretch")
+            st.code(sv.ket_string(result.statevector, result.n_qubits), language=None)
         with tab_sv:
             st.caption(f"{result.n_qubits} qubit — {len(result.statevector)} ampiezze (convenzione Qiskit)")
             rows = [
