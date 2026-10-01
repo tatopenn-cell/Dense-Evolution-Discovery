@@ -23,7 +23,10 @@ for %%L in (
 rem Termina eventuali processi che potrebbero bloccare i file nella cartella
 echo Terminazione eventuali processi collegati...
 powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*DenseEvolutionDashboard*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
-timeout /t 2 /nobreak >nul
+taskkill /F /IM streamlit.exe /T >nul 2>&1
+
+rem Attesa senza usare timeout (non supportato in CI senza stdin)
+ping -n 3 127.0.0.1 >nul
 
 rem Rimuovi la cartella con tentativi multipli
 set "MAX_RETRIES=5"
@@ -31,12 +34,12 @@ set /a RETRY=0
 
 :REMOVE_DIR
 if exist "%INSTALL_DIR%" (
-    rmdir /s /q "%INSTALL_DIR%" 2>nul
+    rmdir /s /q "%INSTALL_DIR%"
     if exist "%INSTALL_DIR%" (
         set /a RETRY+=1
         if !RETRY! LSS %MAX_RETRIES% (
             echo Tentativo !RETRY!/%MAX_RETRIES%: cartella ancora presente, attendo...
-            timeout /t 2 /nobreak >nul
+            ping -n 3 127.0.0.1 >nul
             goto REMOVE_DIR
         ) else (
             echo Errore: impossibile rimuovere "%INSTALL_DIR%" dopo %MAX_RETRIES% tentativi.
