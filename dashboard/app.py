@@ -29,6 +29,7 @@ import streamlit as st
 
 import dashboard_core as dc
 import sota_views as sv
+import engine_explorer as ex
 dc.enable_dashboard_precision()
 
 from dense_evolution.mitigation.magic_entropy import magic_entropy
@@ -127,7 +128,7 @@ if "result" not in st.session_state:
 _BASE_SECTIONS = ["Costruisci", "Risultati", "Chimica", "Rumore", "Sistema"]
 _ADVANCED_SECTIONS = [
     "Dinamica", "Wormhole", "QEC", "Magia & Divergenze", "Materia Condensata",
-    "Grandi Sistemi", "Importa Circuito",
+    "Grandi Sistemi", "Importa Circuito", "Tutte le funzioni",
 ]
 
 # ── Barra di salute, sempre visibile in cima alla sidebar ───────────────
@@ -1026,3 +1027,27 @@ elif section == "Sistema":
         "richiesta dopo ogni allocazione -- calcolata dal vero stato di questa macchina, "
         "non un numero fisso."
     )
+
+
+# ── TUTTE LE FUNZIONI DEL MOTORE ─────────────────────────────────────────
+if section == "Tutte le funzioni":
+    st.header("Tutte le funzioni del motore")
+    if result is None:
+        st.info("Esegui prima un circuito in Costruisci.")
+    else:
+        names = [f for f in ex.functions() if ex.connectable(f)]
+        fname = st.selectbox("Funzione", names, key="ex_fn")
+        st.caption((ex.inspect.getdoc(getattr(ex.de, fname)) or "").split("
+")[0])
+        texts = {p: st.text_input(p, ex.example(fname, p), key=f"ex_{fname}_{p}")
+                 for p, k, _ in ex.plan2(fname) if k == "literal"}
+        if st.button("Esegui funzione", key="ex_run"):
+            try:
+                qasm = dc.gate_tuples_to_qasm(result.ops, result.n_qubits)
+                out = getattr(ex.de, fname)(**ex.build_args2(fname, result, qasm, texts=texts))
+                if hasattr(out, "savefig"):
+                    st.pyplot(out)
+                else:
+                    st.write(ex.to_display(out))
+            except Exception as exc:
+                st.error(f"Errore: {exc}")
