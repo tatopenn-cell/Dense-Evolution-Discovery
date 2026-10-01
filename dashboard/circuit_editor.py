@@ -1,23 +1,14 @@
 """
-Drag-and-drop circuit editor for the Dashboard, with the circuit kept in
-the page URL, undo/redo and the gate matrix on hover.
-
-The grid is stored in Quirk's circuit format (Gidney, github.com/Strilanc/
-Quirk, Apache-2.0, src/circuit/Serializer.js): {"cols": [[...], ...]},
-one list per column, one entry per qubit, 1 for an empty cell. The same
-JSON is written to the `circuit` query parameter, opens in Quirk through
-QUIRK_URL, and Quirk links paste back into the editor for the gates the
-palette covers. Undo/redo follows Quirk's src/base/Revision.js: a list of
-states and an index.
+Drag-and-drop circuit editor for the Dashboard: the circuit is kept in the
+page URL (`circuit` query parameter, a JSON list of [row, column, gate]
+cells), with undo/redo (a history list and an index) and the gate matrix
+shown on hover.
 """
 import json
-import urllib.parse
 
 import streamlit as st
 
 from dashboard_core.graphical_builder import GATE_PALETTE
-
-QUIRK_URL = "https://algassert.com/quirk#circuit="
 
 MATRICES = {
     "h": "H = 1/√2 · [[1, 1], [1, −1]]",
@@ -37,16 +28,6 @@ MATRICES = {
     "tgt_y": "Target of CY: Y = [[0, −i], [i, 0]] when the control is |1⟩",
     "tgt_z": "Target of CZ: Z = [[1, 0], [0, −1]] when the control is |1⟩",
     "swap": "SWAP = [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]] (two × in one column)",
-}
-
-_TO_QUIRK = {
-    "h": "H", "x": "X", "y": "Y", "z": "Z", "s": "Z^½", "sdg": "Z^-½", "t": "Z^¼", "tdg": "Z^-¼",
-    "sx": "X^½", "rx": {"id": "Rxft", "arg": "pi/2"}, "ry": {"id": "Ryft", "arg": "pi/2"},
-    "rz": {"id": "Rzft", "arg": "pi/2"}, "ctrl": "•", "tgt_x": "X", "tgt_y": "Y", "tgt_z": "Z", "swap": "Swap",
-}
-_FROM_QUIRK = {
-    "H": "h", "X": "x", "Y": "y", "Z": "z", "Z^½": "s", "Z^-½": "sdg", "Z^¼": "t", "Z^-¼": "tdg",
-    "X^½": "sx", "Rxft": "rx", "Ryft": "ry", "Rzft": "rz", "•": "ctrl", "Swap": "swap",
 }
 
 _CSS = """
@@ -162,42 +143,19 @@ export default function(component) {
 """
 
 
-def grid_to_quirk(grid):
-    cols = []
-    for c in range(len(grid[0]) if grid else 0):
-        col = [_TO_QUIRK.get(grid[r][c], 1) if grid[r][c] else 1 for r in range(len(grid))]
-        while col and col[-1] == 1:
-            col.pop()
-        cols.append(col)
-    while cols and not cols[-1]:
-        cols.pop()
-    return {"cols": cols}
+def encode_grid(grid):
+    cells = [[r, c, g] for r, row in enumerate(grid) for c, g in enumerate(row) if g]
+    return json.dumps({"n": len(grid), "cells": cells}, separators=(",", ":"))
 
 
-def quirk_to_grid(circuit, n_qubits=None, n_columns=12):
-    cols = circuit.get("cols", [])
-    n = n_qubits or max([len(col) for col in cols] + [1])
-    grid = [[None] * max(n_columns, len(cols)) for _ in range(n)]
-    for c, col in enumerate(cols):
-        controlled = "•" in col
-        for r, cell in enumerate(col[:n]):
-            key = cell.get("id") if isinstance(cell, dict) else cell
-            if key == 1:
-                continue
-            if key not in _FROM_QUIRK:
-                raise ValueError(f"Quirk gate {key!r} is outside the editor's palette")
-            gid = _FROM_QUIRK[key]
-            if controlled and gid in ("x", "y", "z"):
-                gid = "tgt_" + gid
-            grid[r][c] = gid
+def decode_grid(text, n_qubits, n_columns=12):
+    grid = [[None] * n_columns for _ in range(n_qubits)]
+    for r, c, g in json.loads(text).get("cells", []):
+        if g not in MATRICES:
+            raise ValueError(f"unknown gate {g!r}")
+        if r < n_qubits and c < n_columns:
+            grid[r][c] = g
     return grid
-
-
-def parse_quirk_link(text):
-    text = text.strip()
-    if "#circuit=" in text:
-        text = text.split("#circuit=", 1)[1]
-    return json.loads(urllib.parse.unquote(text))
 
 
 def grid_to_ops(grid):
@@ -237,13 +195,13 @@ def _move(step):
 
 
 def circuit_editor(n_qubits, n_columns=12):
-    """Mount the editor; returns (ops, quirk_json) for the current grid."""
+    """Mount the editor; returns the op list of the current grid."""
     if st.session_state.get("ce_n") != n_qubits:
         start = [[None] * n_columns for _ in range(n_qubits)]
         link = st.query_params.get("circuit")
         if link and "ce_hist" not in st.session_state:
             try:
-                start = quirk_to_grid(json.loads(link), n_qubits, n_columns)
+                start = decode_grid(link, n_qubits, n_columns)
             except (ValueError, KeyError, TypeError):
                 pass
         st.session_state.update(ce_n=n_qubits, ce_hist=[start], ce_idx=0, ce_version=0, ce_start_version=None)
@@ -275,7 +233,5 @@ def circuit_editor(n_qubits, n_columns=12):
         st.rerun()
 
     grid = st.session_state["ce_hist"][st.session_state["ce_idx"]]
-    quirk = grid_to_quirk(grid)
-    text = json.dumps(quirk, ensure_ascii=False, separators=(",", ":"))
-    st.query_params["circuit"] = text
-    return grid_to_ops(grid), text
+    st.query_params["circuit"] = encode_grid(grid)
+    return grid_to_ops(grid)
