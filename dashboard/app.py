@@ -21,6 +21,9 @@ Run with:
 import matplotlib
 matplotlib.use('Agg')
 
+import json
+import urllib.parse
+
 import numpy as np
 import dense_evolution
 import streamlit as st
@@ -28,6 +31,7 @@ import streamlit as st
 import dashboard_core as dc
 import sota_views as sv
 import engine_explorer as ex
+import circuit_editor as ce
 dc.enable_dashboard_precision()
 
 from dense_evolution.mitigation.magic_entropy import magic_entropy
@@ -128,6 +132,13 @@ _ADVANCED_SECTIONS = [
     "Large Systems", "Import Circuit", "All functions",
 ]
 
+def _load_qasm(qasm, go_to_build=False):
+    st.session_state["preset_select"] = "Custom"
+    st.session_state["qasm_text__Custom"] = qasm
+    if go_to_build:
+        st.session_state["nav_section"] = "Build"
+
+
 # ── Health bar, always visible at the top of the sidebar ────────────────
 with st.sidebar:
     limits = dc.max_safe_dense_qubits()
@@ -205,20 +216,38 @@ if section == "Build":
             "target in the same column form a 2-qubit gate, two × in the same column "
             "form a SWAP."
         )
+        if "n_qubits_builder" not in st.session_state:
+            try:
+                link_cols = json.loads(st.query_params.get("circuit", "")).get("cols", [])
+                st.session_state["n_qubits_builder"] = min(8, max([len(c) for c in link_cols] + [3]))
+            except (ValueError, AttributeError):
+                st.session_state["n_qubits_builder"] = 3
         n_qubits_builder = st.number_input(
-            "Qubits", min_value=1, max_value=8, value=3, step=1, key="n_qubits_builder",
+            "Qubits", min_value=1, max_value=8, step=1, key="n_qubits_builder",
         )
-        builder_ops = dc.mount_circuit_builder(
-            int(n_qubits_builder), n_columns=12, key=f"circuit_builder_{int(n_qubits_builder)}",
-        )
-        if st.button("→ Load into the Circuit Editor"):
-            if not builder_ops:
-                st.warning("No gates placed on the grid.")
-            else:
-                native_ops = dc.ops_to_native_tuples(int(n_qubits_builder), builder_ops)
-                st.session_state["preset_select"] = "Custom"
-                st.session_state["qasm_text__Custom"] = dc.gate_tuples_to_qasm(native_ops, int(n_qubits_builder))
-                st.rerun()
+        builder_ops, quirk_json = ce.circuit_editor(int(n_qubits_builder))
+
+        def _open_quirk_link():
+            try:
+                circuit = ce.parse_quirk_link(st.session_state["quirk_link"])
+                n = min(8, max([len(c) for c in circuit.get("cols", [])] + [1]))
+                grid = ce.quirk_to_grid(circuit, n)
+                st.session_state.update(n_qubits_builder=n, ce_n=n, ce_hist=[grid], ce_idx=0,
+                                        ce_version=st.session_state.get("ce_version", 0) + 1,
+                                        ce_start_version=None, quirk_link_error=None)
+            except (ValueError, KeyError, TypeError) as exc:
+                st.session_state["quirk_link_error"] = str(exc)
+
+        col_link, col_open, col_quirk = st.columns([4, 1, 1])
+        col_link.text_input("Open a Quirk link (or its circuit JSON)", key="quirk_link")
+        col_open.button("Open", on_click=_open_quirk_link, key="quirk_open")
+        col_quirk.link_button("Open in Quirk", ce.QUIRK_URL + urllib.parse.quote(quirk_json))
+        if st.session_state.get("quirk_link_error"):
+            st.error(f"Could not open the link: {st.session_state['quirk_link_error']}")
+        st.button("→ Load into the Circuit Editor", on_click=_load_qasm,
+                  args=(dc.gate_tuples_to_qasm(dc.ops_to_native_tuples(int(n_qubits_builder), builder_ops),
+                                               int(n_qubits_builder)) if builder_ops else None,),
+                  disabled=not builder_ops, help="Place at least one gate on the grid first." if not builder_ops else None)
 
     with tab_circuit:
         if result is None:
@@ -432,11 +461,8 @@ elif section == "Chemistry":
                     "possible plateau or local minimum, not necessarily the global minimum. "
                     "Try fewer n_layers or the UCCSD ansatz."
                 )
-        if st.button("→ Load the VQE circuit into the QASM Editor"):
-            st.session_state["preset_select"] = "Custom"
-            st.session_state["qasm_text__Custom"] = vqe_result["qasm"]
-            st.session_state["nav_section"] = "Build"
-            st.rerun()
+        st.button("→ Load the VQE circuit into the QASM Editor", on_click=_load_qasm,
+                  args=(vqe_result["qasm"], True))
 
         with st.expander("2D energy landscape"):
             if vqe_result["ansatz_type"] != "hardware_efficient" or vqe_result["n_params"] < 2:
