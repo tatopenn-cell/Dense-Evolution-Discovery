@@ -1,4 +1,4 @@
-dense-evolution[dashboard]
+dense-evolution[dashboard,qmmm,pennylane]
 dense-armor
 pennylane
 plotly
@@ -13,4 +13,3 @@ osqp
 xacro
 rdkit
 basis_set_exchange
-basis-set-exchange

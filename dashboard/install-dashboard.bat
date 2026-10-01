@@ -53,7 +53,7 @@ echo Trovato Python %PYVER%.
 echo.
 
 echo Installo/aggiorno dense-evolution[dashboard]...
-python -m pip install --upgrade "dense-evolution[dashboard]" basis-set-exchange
+python -m pip install --upgrade "dense-evolution[dashboard,qmmm,pennylane]"
 if errorlevel 1 (
     echo.
     echo Installazione fallita -- controlla i messaggi sopra.
