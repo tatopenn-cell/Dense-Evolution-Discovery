@@ -20,8 +20,18 @@ Also tested: a curvature test in the spirit of Majumdar et al.'s advice to
 check whether the data vary enough before choosing an extrapolator. If the
 second difference y1 - 2 y2 + y3 is within 2 shot-noise standard deviations of
 zero, use the linear fit, otherwise Richardson.
+
+Also tested: the library's bounded exponential extrapolation (Miranskyy,
+Sorrenti, Thind, Gravel, arXiv:2604.24475), zero-noise value constrained to
+[-1, 1], against the unconstrained exponential fit; and the variant with the
+asymptote fixed to 0 (their Table I, "asymptote a in {estimated, 0}"), which
+leaves 2 free parameters instead of 3.
 """
 import numpy as np
+from scipy.optimize import minimize
+
+from dense_evolution.config import ensure_x64
+from dense_evolution.mitigation import bounded_exponential_extrapolate
 
 N_QUBITS = 4
 FACTORS = np.array([1.0, 2.0, 3.0])
@@ -110,6 +120,18 @@ def curvature_select(y, z=2.0):
     return y @ coeffs(0.0) if abs(curvature) > z * noise else linear(y)
 
 
+def bounded_exponential_a0(y, bound=1.0):
+    def loss(theta):
+        zeta, c = theta
+        return np.sum((y - zeta * np.exp(-c * FACTORS)) ** 2)
+    best = None
+    for x0 in ([float(y[0]), 0.1], [float(np.clip(2 * y[0] - y[1], -bound, bound)), 0.5], [0.0, 1.0]):
+        r = minimize(loss, x0=x0, method="L-BFGS-B", bounds=[(-bound, bound), (0.0, None)])
+        if r.success and (best is None or r.fun < best.fun):
+            best = r
+    return float(best.x[0])
+
+
 def run_cell(channel, depth, p, n_circuits, rng):
     exact, ys = [], []
     for _ in range(n_circuits):
@@ -129,14 +151,17 @@ def run_cell(channel, depth, p, n_circuits, rng):
         "shuffled": np.array([y @ coeffs(r) for y, r in zip(ys, shuffled)]),
         "constant": ys @ coeffs(constant),
         "curv_select": np.array([curvature_select(y) for y in ys]),
+        "bounded_exp": np.array([float(bounded_exponential_extrapolate(y, FACTORS, 1.0)) for y in ys]),
+        "bounded_exp_a0": np.array([bounded_exponential_a0(y) for y in ys]),
     }
     return {k: float(np.sqrt(np.mean((v - exact) ** 2))) for k, v in est.items()}, float((rects > 0).mean())
 
 
 def main(n_circuits=100, cells=None):
+    ensure_x64()
     rng = np.random.default_rng(2307)
     cells = cells or [(c, d, p) for c in ("depolarizing", "amplitude_damping") for d in (4, 12) for p in (0.005, 0.02)]
-    names = ["richardson", "linear", "exponential", "nudge", "shuffled", "constant", "curv_select"]
+    names = ["richardson", "linear", "exponential", "nudge", "shuffled", "constant", "curv_select", "bounded_exp", "bounded_exp_a0"]
     print(f"{'channel':<18}{'depth':>6}{'p':>7}{'active':>8}" + "".join(f"{n:>13}" for n in names))
     for channel, depth, p in cells:
         rmse, active = run_cell(channel, depth, p, n_circuits, rng)
