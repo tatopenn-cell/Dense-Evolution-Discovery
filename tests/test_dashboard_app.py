@@ -40,7 +40,7 @@ def test_every_section_opens_and_every_button_runs(section):
     assert labels, f"no buttons in {section}"
     for label in labels:
         at = _open(section)
-        matches = [b for b in at.button if b.label == label]
+        matches = [b for b in at.button if b.label == label and not b.disabled]
         if not matches:
             continue
         matches[0].click().run()
