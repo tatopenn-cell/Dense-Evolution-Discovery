@@ -1,4 +1,4 @@
-# Single-Qubit Coherence Nudge for ZNE: the Gain Is Not the Signal
+# Single-Qubit Coherence Nudge for ZNE: the Gain Is Not the Signal (the Multi-Qubit One Holds)
 
 Variant 2 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/single_qubit_coherence_zne.py`. Negative result.
 
@@ -41,7 +41,19 @@ Haar-random pure states, 200 seeds, `base_p = 0.05`, factors 1, 2, 3. Baseline: 
 - Shuffled nudges keep most of the gain, and a constant nudge on every seed does better than the signal. The improvement comes from extrapolating less aggressively, which amplifies shot noise less, not from the coherence signal choosing when to act.
 - The signal adds only a little over random placement (0.0005 to 0.003).
 - A constant nudge trades variance for bias: it moves the estimate toward the noisy data, so at higher noise or with many more shots it can lose. It is not a free improvement and is not promoted.
-- The multi-qubit validation (#208) compared against the same `nudge_scale = 0` baseline without a shuffled or constant control. Whether its gain on GHZ(4) has the same cause is not tested here.
+- The multi-qubit version passes the same controls (next section): there the signal does carry the gain.
+
+## Re-check of the multi-qubit validation with the same controls
+
+Script: `scripts/coherence_zne_shuffled_control.py`. Exactly the setup of #208 (GHZ(4), phase flip, `base_p = 0.05`, 150 trajectories per scale, seeds 900000 + i, Uhlmann fidelity); it reproduces the original 63/200 active, 63/63 positive, p = 1.07e-8.
+
+| Nudge | Mean gain | Better / worse | t-test p |
+|---|---|---|---|
+| coherence signal (library) | 0.00469 | 63 / 0 | 1.1e-08 |
+| same nudges shuffled across seeds | 0.00072 | 17 / 14 | 0.16 |
+| constant nudge on every seed | 0.00243 | 65 / 43 | 4.5e-06 |
+
+The signal beats shuffled placement by 0.0040 (paired p = 5.3e-06) and the constant nudge by 0.0023 (p = 3.9e-06). On the full GHZ(4) state, where the coherence sits in the `|0000><1111|` element, the l1 signal really chooses when to act; on a single qubit, with one off-diagonal element, it does not.
 
 ## Details
 
