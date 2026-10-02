@@ -81,7 +81,7 @@ jobs:
         run: printf 's\nS\nn\n' | bash dashboard/install-dashboard.sh
       - name: Files and shortcut exist
         run: |
-          test -f ~/.dense-evolution-dashboard/app.py && test -f ~/.dense-evolution-dashboard/sota_views.py
+          test -f ~/.dense-evolution-dashboard/app.py && test -f ~/.dense-evolution-dashboard/sota_views.py && test -f ~/.dense-evolution-dashboard/circuit_editor.py
           test -x ~/.dense-evolution-dashboard/launch-dashboard.sh
           ls ~/Desktop | grep -q "Dense-Evolution Dashboard (Streamlit)"
       - name: Launcher starts the app
