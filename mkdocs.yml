@@ -109,6 +109,7 @@ nav:
       - Pink-Noise ZNE Windowed Coherence: pink_noise_zne_windowed_coherence.md
       - Single-Qubit ZNE with Bloch-Ball Projection: single_qubit_bloch_ball_zne.md
       - Single-Qubit Coherence Nudge for ZNE: single_qubit_coherence_zne.md
+      - Single-Qubit Population (JSD) Nudge for ZNE: single_qubit_jsd_zne.md
       - Cosmic-Ray Burst Validation: cosmic_ray_burst_validation.md
       - "Cosmic-Ray Bursts: Zone-Weighted Decoding": cosmic_ray_zone_weighted_decoding.md
       - "Finding the Noisy Qubits from the Check Alarms": syndrome_rate_estimator.md
