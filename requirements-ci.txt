@@ -13,3 +13,4 @@ osqp
 xacro
 rdkit
 basis_set_exchange
+river>=0.26
