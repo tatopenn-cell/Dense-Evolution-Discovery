@@ -1,6 +1,6 @@
 # Density-Matrix ZNE Validation
 
-Run: `python scripts/sophia_reflection.py`, seed=0, 2-qubit Bell state,
+Run: `python scripts/noise_mitigation_validation/sophia_reflection.py`, seed=0, 2-qubit Bell state,
 16-point depolarizing-noise sweep (base_p 0.02 → 0.5), K=200 trajectories
 per noise scale, 3-point Richardson ZNE + Smolin-Gambetta-Smith projection
 (`dense_evolution.mitigation.zne_density_matrix`). Raw data:
@@ -49,7 +49,7 @@ Part 1 shows the density-matrix ZNE extension improves fidelity, but that
 alone doesn't say why the density-matrix approach matters over plain
 scalar ZNE (Richardson-extrapolating a raw fidelity number directly,
 already used elsewhere in this project). A direct, real comparison
-answers that: `scripts/sophia_reflection.py`'s
+answers that: `scripts/noise_mitigation_validation/sophia_reflection.py`'s
 `run_scalar_vs_density_matrix_comparison`, same Bell state, same 3 noise
 scales, same K=200 trajectories, but on amplitude damping (a genuinely
 non-Pauli channel, `NoiseModel`'s `amplitude_damping`) instead of

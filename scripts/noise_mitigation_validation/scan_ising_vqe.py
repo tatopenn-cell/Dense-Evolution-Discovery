@@ -297,7 +297,7 @@ def _run_full_sweep():
     import sys
 
     def _import_script(name):
-        path = _REPO_ROOT / "scripts" / f"{name}.py"
+        path = next((_REPO_ROOT / "scripts").rglob(f"{name}.py"))
         spec = importlib.util.spec_from_file_location(name, path)
         module = importlib.util.module_from_spec(spec)
         sys.modules[name] = module
