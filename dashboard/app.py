@@ -17,7 +17,6 @@ Run with:
     pip install streamlit
     streamlit run app.py
 """
-
 import matplotlib
 matplotlib.use('Agg')
 
@@ -1036,8 +1035,7 @@ if section == "All functions":
         st.info("Run a circuit in Build first.")
     else:
         names = [f for f in ex.functions() if ex.connectable(f)]
-        fname = st.selectbox("Function", names, key="ex_fn")
-        st.caption((ex.inspect.getdoc(getattr(ex.de, fname)) or "").splitlines()[0] if ex.inspect.getdoc(getattr(ex.de, fname)) else "")
+
         texts = {p: st.text_input(p, ex.example(fname, p), key=f"ex_{fname}_{p}")
                  for p, k, _ in ex.plan2(fname) if k == "literal"}
         if st.button("Run function", key="ex_run"):
