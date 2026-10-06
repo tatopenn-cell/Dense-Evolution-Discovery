@@ -109,8 +109,8 @@ dataset's rate, not a universal claim.
 **Reproducing this**: `python scripts/dense_armor_streaming/realtime_lerobot_streaming.py`
 regenerates `realtime_lerobot_streaming_frozen.json` (reuses the already-cached real LeRobot
 parquet, no new download; requires `pip install --upgrade dense-armor` first if a stale
-local version is installed, as it was here). `pytest tests/test_realtime_lerobot_streaming.py`
+local version is installed, as it was here). `pytest tests/dense_armor/test_realtime_lerobot_streaming.py`
 reads the already-frozen file -- no network access needed in CI, matching this repo's own
-convention (see e.g. `tests/test_imu_sensor_validation.py`). Real wall-clock numbers vary
+convention (see e.g. `tests/dense_armor/test_imu_sensor_validation.py`). Real wall-clock numbers vary
 slightly run to run (system jitter, already documented project-wide) -- the frozen file
 reflects one real, committed run, not a guaranteed-reproducible exact value.

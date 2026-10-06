@@ -3,7 +3,7 @@
 ## Contents
 
 - the complete equation — below on this page
-- `scripts/dvpt_unified_formula_test.py` — numerical verification
+- `scripts/dvpt/dvpt_unified_formula_test.py` — numerical verification
 
 ## The formula in three lines
 
@@ -18,7 +18,7 @@ where:
 
 ## How to test it
 
-Run `python scripts/dvpt_unified_formula_test.py` (or paste it into Colab). Each test asserts its tolerance, so the final
+Run `python scripts/dvpt/dvpt_unified_formula_test.py` (or paste it into Colab). Each test asserts its tolerance, so the final
 "ALL TESTS PASSED" line is printed only if every check holds.
 
 Expected output:

@@ -177,7 +177,7 @@ engineering is applied on top.
 
 Reproducing this: `python scripts/robot_sensor_validation/analyze_lidar_persistent_gap.py`
 (reuses `run_lidar_validation.py`'s dataset loading, no separate download);
-`pytest tests/test_lidar_persistent_gap_analysis.py` reads the frozen result.
+`pytest tests/dense_armor/test_lidar_persistent_gap_analysis.py` reads the frozen result.
 
 ---
 
@@ -200,5 +200,5 @@ were declared before this was run and never adjusted afterward.
 
 **Reproducing this**: `python scripts/robot_sensor_validation/run_lidar_validation.py`
 re-downloads the dataset (79.5MB) into a gitignored `lidar_data/` folder and regenerates
-`lidar_validation_frozen.json`; `pytest tests/test_lidar_sensor_validation.py` reads the
+`lidar_validation_frozen.json`; `pytest tests/dense_armor/test_lidar_sensor_validation.py` reads the
 already-frozen file, no download needed.

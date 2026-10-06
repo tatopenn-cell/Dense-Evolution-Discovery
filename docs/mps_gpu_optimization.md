@@ -104,15 +104,15 @@ Not promoted. Scripts and the full derivation live in Dense-Evolution-Discovery 
 ## Reproduce
 
 ```bash
-python scripts/mps_bucketed_svd_correctness.py
-python scripts/mps_bucketed_svd_circuit_integration.py
-python scripts/mps_bucketed_svd_timing_cpu.py
-python scripts/mps_gate_blocking_experiment.py
-python scripts/mps_gate_blocking_redesign_v2.py
-python scripts/mps_gate_blocking_full_promotion_ready.py
-python scripts/mps_gate_blocking_jit_matrix_cache_fix.py
-python scripts/mps_padding_batch_jit_fix.py
-python scripts/mps_gpu_optimization_final_summary.py
+python scripts/mps_gpu_optimization/mps_bucketed_svd_correctness.py
+python scripts/mps_gpu_optimization/mps_bucketed_svd_circuit_integration.py
+python scripts/mps_gpu_optimization/mps_bucketed_svd_timing_cpu.py
+python scripts/mps_gpu_optimization/mps_gate_blocking_experiment.py
+python scripts/mps_gpu_optimization/mps_gate_blocking_redesign_v2.py
+python scripts/mps_gpu_optimization/mps_gate_blocking_full_promotion_ready.py
+python scripts/mps_gpu_optimization/mps_gate_blocking_jit_matrix_cache_fix.py
+python scripts/mps_gpu_optimization/mps_padding_batch_jit_fix.py
+python scripts/mps_gpu_optimization/mps_gpu_optimization_final_summary.py
 ```
 
 GPU checks were run on Google Colab (T4) for the earlier investigation and Kaggle (T4) for the final real-API re-verification, not from this repo directly — every GPU number above links back to the script that produced it: `colab_bucketed_svd_gpu_benchmark.py`, `colab_bucketed_svd_hlo_check.py`, `colab_gpu_mps_benchmark_v2/v3/v4.py`, `colab_gpu_mps_fair_comparison_old_vs_new.py`, `colab_full_chain_apples_to_apples.py`, `colab_gate_blocking_gpu_benchmark.py`, `colab_gate_blocking_redesign_v2_gpu.py`, `colab_cuquantum_mps_benchmark_v2.py`.

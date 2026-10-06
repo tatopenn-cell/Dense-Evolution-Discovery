@@ -200,10 +200,10 @@ reaction-energy advantage over BFS yet -- would need thresholds chosen to
 actually diverge from BFS's selection, not just a differently-computed
 region that happens to match it.
 
-**Scripts**: `scripts/qmmm_electrostatic_embedding_charge_shifting.py`,
-`scripts/qmmm_rc_midpoint_scheme.py` (sixth attempt, real RC scheme),
-`scripts/qmmm_bond_order_partition_vs_radius.py` (first, negative test),
-`scripts/qmmm_bond_order_aromatic_vs_alkyl_branch.py` (second, positive
+**Scripts**: `scripts/casmi26_chemistry_qmmm/qmmm_electrostatic_embedding_charge_shifting.py`,
+`scripts/casmi26_chemistry_qmmm/qmmm_rc_midpoint_scheme.py` (sixth attempt, real RC scheme),
+`scripts/casmi26_chemistry_qmmm/qmmm_bond_order_partition_vs_radius.py` (first, negative test),
+`scripts/casmi26_chemistry_qmmm/qmmm_bond_order_aromatic_vs_alkyl_branch.py` (second, positive
 signal), `scripts/qmmm/` (the reusable partitioning/capping/propagation
 utility that came out of all of this and WAS promoted -- ring-safe BFS
 and Diffuse2Seg propagation only, no electrostatic embedding, no MMFF94

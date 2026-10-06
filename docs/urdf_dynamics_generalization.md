@@ -95,6 +95,6 @@ published figures; the inertia tensors are a common simplification, disclosed ra
 presented as precise.
 
 **Reproducing this**: `python scripts/rigid_body_dynamics/urdf_generality_check.py` runs the
-SPD and energy-conservation checks on both new robots; `pytest tests/test_urdf_dynamics.py`
+SPD and energy-conservation checks on both new robots; `pytest tests/dense_armor/test_urdf_dynamics.py`
 runs the full regression suite (DOF count, SPD, energy conservation, and the Experiment 61
 cross-check) across all three.

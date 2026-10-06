@@ -38,7 +38,7 @@ The shipped production Phi-Trigger fires on 85-90% of *every* trajectory tested 
 ## Reproduce
 
 ```bash
-python scripts/stratonovich_vector_healing.py
+python scripts/diagnostics_healing/stratonovich_vector_healing.py
 ```
 
 Produces `data/stratonovich_vector_healing.csv`, `data/stratonovich_vector_healing_summary.csv`.

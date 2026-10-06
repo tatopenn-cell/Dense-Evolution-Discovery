@@ -40,12 +40,12 @@ None of these three curves is a simple rescaling of another -- they capture genu
 
 ## Status
 
-`magic_entropy` is implemented and validated in `scripts/quantum_ruzsa_magic_entropy.py`, not yet promoted to `dense_evolution`. Two things worth resolving before promotion: (a) whether the non-monotonic amplitude-damping shape is a generally useful early-warning signal (e.g. distinguishing "still recoverable" from "past the point of no return") or just a curiosity of this one channel, and (b) the connection to Classical Shadows raised separately (shadow-based magic estimation) is still open.
+`magic_entropy` is implemented and validated in `scripts/diagnostics_healing/quantum_ruzsa_magic_entropy.py`, not yet promoted to `dense_evolution`. Two things worth resolving before promotion: (a) whether the non-monotonic amplitude-damping shape is a generally useful early-warning signal (e.g. distinguishing "still recoverable" from "past the point of no return") or just a curiosity of this one channel, and (b) the connection to Classical Shadows raised separately (shadow-based magic estimation) is still open.
 
 ## Reproduce
 
 ```bash
-python scripts/quantum_ruzsa_magic_entropy.py
+python scripts/diagnostics_healing/quantum_ruzsa_magic_entropy.py
 ```
 
 Produces `data/quantum_ruzsa_magic_entropy_states.csv`, `data/quantum_ruzsa_magic_entropy_noise_sweep.csv`.

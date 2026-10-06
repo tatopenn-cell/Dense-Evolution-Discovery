@@ -98,7 +98,7 @@ where a learned metric has the most room.
 ```bash
 pip install scikit-learn
 python scripts/river_metric_learning/benchmark.py
-pytest tests/test_river_metric_learning.py
+pytest tests/dense_armor/test_river_metric_learning.py
 ```
 
 `benchmark.py` prints both tables and writes `data/river_metric_learning.csv` (about 11

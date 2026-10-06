@@ -283,12 +283,12 @@ This result has been used as an **ingredient** in the construction of a map betw
 
 ## 7. Verification
 
-The verification code is `scripts/dvpt_poschl_teller_width.py`: section 1 (setup), section 2a (numerical–analytical verification), section 2b (gas matching), section 3 (convergence to \(3/2\)).
+The verification code is `scripts/dvpt/dvpt_poschl_teller_width.py`: section 1 (setup), section 2a (numerical–analytical verification), section 2b (gas matching), section 3 (convergence to \(3/2\)).
 
 All computations are reproducible with:
 
 ```
-python scripts/dvpt_poschl_teller_width.py
+python scripts/dvpt/dvpt_poschl_teller_width.py
 ```
 
 Requirements: `numpy`, `scipy`, `mpmath`. Default precision: mpmath at 40 decimal digits.

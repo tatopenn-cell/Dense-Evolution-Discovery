@@ -112,7 +112,7 @@ research lead for fast-drifting streams, not yet a general improvement.
 ```bash
 pip install river
 python scripts/river_platt_scaling/benchmark.py
-pytest tests/test_river_platt_scaling.py
+pytest tests/dense_armor/test_river_platt_scaling.py
 ```
 
 `benchmark.py` prints both tables and writes `data/river_platt_scaling.csv`.

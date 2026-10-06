@@ -34,12 +34,12 @@ On a Bell state degraded by amplitude damping, the fixed divergence tracks `uhlm
 
 ## Status
 
-The clamp bug and the infinity-handling bug are both fixed and validated in `scripts/sandwiched_renyi_density_matrix.py`. Not yet promoted to `dense_evolution` -- pending a decision on the right integration point (likely alongside `zne_density_matrix`/`uhlmann_fidelity` in `dense_evolution.mitigation` as an additional, α-tunable distance metric for density-matrix ZNE diagnostics).
+The clamp bug and the infinity-handling bug are both fixed and validated in `scripts/diagnostics_healing/sandwiched_renyi_density_matrix.py`. Not yet promoted to `dense_evolution` -- pending a decision on the right integration point (likely alongside `zne_density_matrix`/`uhlmann_fidelity` in `dense_evolution.mitigation` as an additional, α-tunable distance metric for density-matrix ZNE diagnostics).
 
 ## Reproduce
 
 ```bash
-python scripts/sandwiched_renyi_density_matrix.py
+python scripts/diagnostics_healing/sandwiched_renyi_density_matrix.py
 ```
 
 Produces `data/sandwiched_renyi_bugfix_confirmation.csv`, `data/sandwiched_renyi_noise_scaling.csv`, `data/sandwiched_renyi_vs_uhlmann_fidelity.csv`.

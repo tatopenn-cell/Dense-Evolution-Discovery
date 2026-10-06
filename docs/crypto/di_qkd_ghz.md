@@ -38,4 +38,4 @@ Key-generation rounds (all parties measure Z, `Y=(0,2,0)` per Protocol 2 step (c
 python scripts/crypto/di_qkd_ghz.py
 ```
 
-`tests/test_di_qkd_ghz.py` covers the same scenarios at a smaller `N` with fixed seeds, checking the win rate clears the classical bound and stays close to the closed form, without pinning exact numbers.
+`tests/dense_armor/test_di_qkd_ghz.py` covers the same scenarios at a smaller `N` with fixed seeds, checking the win rate clears the classical bound and stays close to the closed form, without pinning exact numbers.
