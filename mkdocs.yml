@@ -127,6 +127,7 @@ nav:
       - "DVPT: Unified Formula (Lambert W map)": dvpt_unified_formula.md
       - "DVPT: Asymptotic Width of the Pöschl-Teller Ground State": dvpt_poschl_teller_width.md
       - "DVPT: Closing the Inverse Temperature β": dvpt_beta_closure.md
+      - "DVPT: Deriving the Operator Parameter μ": dvpt_mu_derivation.md
       - "DVPT: Ghost-Free Horndeski Embedding": ja_horndeski_embedding.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
