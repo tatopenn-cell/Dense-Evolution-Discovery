@@ -58,4 +58,4 @@ redundancy-resolution scenario here -- a legitimate, if incidental, finding, not
 bug in the limit-enforcement code itself (confirmed separately with a direct, single-QP-call
 check of the box math above, independent of any closed-loop dynamics).
 
-**Reproducing this**: `pytest tests/test_general_pbc_cbf_controller.py`.
+**Reproducing this**: `pytest tests/dense_armor/test_general_pbc_cbf_controller.py`.

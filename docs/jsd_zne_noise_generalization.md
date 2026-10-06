@@ -63,7 +63,7 @@ The shipped classical-JSD signal is genuinely blind to phase-type noise, for a s
 ## Reproducing this
 
 ```bash
-python scripts/jsd_zne_noise_generalization.py
+python scripts/noise_mitigation_validation/jsd_zne_noise_generalization.py
 ```
 
 Real data: [`data/jsd_zne_noise_generalization.csv`](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/blob/main/data/jsd_zne_noise_generalization.csv)-equivalent (generated locally, `/data/` is gitignored -- re-run the script above to reproduce).

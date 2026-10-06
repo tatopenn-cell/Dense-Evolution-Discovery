@@ -32,7 +32,7 @@ Shipped as an opt-in `trigger_mode='adaptive'` parameter on `enhanced_dense_heal
 ## Reproduce
 
 ```bash
-python scripts/healing_trigger_false_positive_audit.py
+python scripts/diagnostics_healing/healing_trigger_false_positive_audit.py
 ```
 
 Produces `data/healing_trigger_false_positive_audit.csv`, `data/healing_trigger_false_positive_audit_summary.csv`.

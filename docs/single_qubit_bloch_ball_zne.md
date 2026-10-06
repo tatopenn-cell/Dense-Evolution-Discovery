@@ -1,6 +1,6 @@
 # Single-Qubit ZNE with Bloch-Ball Projection
 
-Variant 1 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/single_qubit_bloch_ball_zne.py`.
+Variant 1 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/noise_mitigation_validation/single_qubit_bloch_ball_zne.py`.
 
 A single-qubit state is fixed by its Bloch vector `r = (<X>, <Y>, <Z>)`, which needs only three measurement settings. Zero-noise extrapolation of each component can return `|r| > 1`, a state that does not exist. For one qubit the eigenvalues of the density matrix are `(1 ± |r|)/2`, so the eigenvalue projection onto the simplex of Smolin, Gambetta and Smith (arXiv:1106.5458) is exactly "shrink `r` to length 1". The script checks this against the library's `project_to_physical`: maximum difference `7.8e-16` over 200 random matrices.
 

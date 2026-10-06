@@ -264,8 +264,8 @@ regenerates `arl_theory_validation_frozen.json` (no download needed, pure simula
 `real_lidar_arl_validation_frozen.json` (reuses Experiment 42's own committed data, no
 download needed either); `python scripts/cusum_detectability_theory/validate_against_real_imu.py`
 regenerates `real_imu_arl_validation_frozen.json` (reuses the IMU validation experiment's
-own committed data, no download needed); `pytest tests/test_cusum_arl_theory.py
-tests/test_cusum_arl_real_lidar_validation.py tests/test_cusum_arl_real_imu_validation.py`
+own committed data, no download needed); `pytest tests/dense_armor/test_cusum_arl_theory.py
+tests/dense_armor/test_cusum_arl_real_lidar_validation.py tests/dense_armor/test_cusum_arl_real_imu_validation.py`
 reads the already-frozen files.
 
 **Paper indexed**: Reynolds (1975) is now in quantumrag's `statistica_controllo_processo`

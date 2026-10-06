@@ -36,4 +36,4 @@ The abort at `p_dep=0.05` lands right where it should: `expected_win_rate(0.05) 
 python scripts/crypto/dicka_protocol2.py
 ```
 
-`tests/test_dicka_protocol2.py` covers the same scenarios (proceed on an ideal channel, abort under enough noise, QBER rising with noise) at smaller `N` with fixed seeds.
+`tests/dense_armor/test_dicka_protocol2.py` covers the same scenarios (proceed on an ideal channel, abort under enough noise, QBER rising with noise) at smaller `N` with fixed seeds.

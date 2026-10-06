@@ -90,4 +90,4 @@ harder safety constraint (prevents an actual kinematic singularity), so it's kep
 
 ## Details
 
-**Reproducing this**: `pytest tests/test_six_dof_pbc_cbf_controller.py`.
+**Reproducing this**: `pytest tests/dense_armor/test_six_dof_pbc_cbf_controller.py`.

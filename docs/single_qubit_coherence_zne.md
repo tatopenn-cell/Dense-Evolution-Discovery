@@ -1,6 +1,6 @@
 # Single-Qubit Coherence Nudge for ZNE: the Gain Is Not the Signal (the Multi-Qubit One Holds)
 
-Variant 2 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/single_qubit_coherence_zne.py`. Negative result.
+Variant 2 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/noise_mitigation_validation/single_qubit_coherence_zne.py`. Negative result.
 
 The library's `coherence_predictive_zne_density_matrix` lowers the weight of the 3-point Richardson extrapolation when the l1 coherence (Baumgratz, Cramer, Plenio, PRL 113, 140401 (2014)) changes non-linearly across the noise scales, then projects onto a physical state. Here the same core runs on one qubit, on the 2×2 matrix rebuilt from single-qubit tomography (X, Y, Z, `K` shots each), so the signal is `2|ρ₀₁|`.
 
@@ -45,7 +45,7 @@ Haar-random pure states, 200 seeds, `base_p = 0.05`, factors 1, 2, 3. Baseline: 
 
 ## Re-check of the multi-qubit validation with the same controls
 
-Script: `scripts/coherence_zne_shuffled_control.py`. Exactly the setup of #208 (GHZ(4), phase flip, `base_p = 0.05`, 150 trajectories per scale, seeds 900000 + i, Uhlmann fidelity); it reproduces the original 63/200 active, 63/63 positive, p = 1.07e-8.
+Script: `scripts/noise_mitigation_validation/coherence_zne_shuffled_control.py`. Exactly the setup of #208 (GHZ(4), phase flip, `base_p = 0.05`, 150 trajectories per scale, seeds 900000 + i, Uhlmann fidelity); it reproduces the original 63/200 active, 63/63 positive, p = 1.07e-8.
 
 | Nudge | Mean gain | Better / worse | t-test p |
 |---|---|---|---|

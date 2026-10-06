@@ -110,8 +110,8 @@ without wasting an unacceptable amount of measurement budget.
 ## Reproducing this
 
 ```bash
-python scripts/photonic_predictive_zne.py
-python scripts/photonic_zne_multi_circuit_postselection.py
+python scripts/noise_mitigation_validation/photonic_predictive_zne.py
+python scripts/noise_mitigation_validation/photonic_zne_multi_circuit_postselection.py
 ```
 
 Real data: [`data/photonic_predictive_zne.csv`](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/blob/main/data/photonic_predictive_zne.csv)-equivalent (generated locally, `/data/` is gitignored -- re-run the scripts above to reproduce). Literature grounding this page cites is verified and indexed locally in `quantumrag`'s `fotonica_quantistica` collection (Mills & Mezher arXiv:2405.02278; Borzenkova et al. arXiv:2311.13985; Somhorst et al. arXiv:2601.05947; a broader photonic-QML noise survey, arXiv:2603.09645).

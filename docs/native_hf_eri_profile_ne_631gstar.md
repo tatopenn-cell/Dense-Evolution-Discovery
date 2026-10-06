@@ -1,6 +1,6 @@
 # ERI cost profile: Ne/6-31G* (P10)
 
-Measurement only, per prog.txt's Prompt 12 -- no optimization code written or proposed as a change in this pass. Script: `scripts/native_hf_eri_profile_ne_631gstar.py`, run against `dense_evolution.native_hf.assembly.build_repulsion_tensor`'s real code path (same functions, same loop structure, instrumented from the outside).
+Measurement only, per prog.txt's Prompt 12 -- no optimization code written or proposed as a change in this pass. Script: `scripts/casmi26_chemistry_qmmm/native_hf_eri_profile_ne_631gstar.py`, run against `dense_evolution.native_hf.assembly.build_repulsion_tensor`'s real code path (same functions, same loop structure, instrumented from the outside).
 
 Machine/run note: this run measured **172.1s** total (54.4s Schwarz bounds + 117.7s main quartet loop), not the 623s figure from an earlier session -- different machine, same qualitative structure, which is what this profile is actually answering.
 

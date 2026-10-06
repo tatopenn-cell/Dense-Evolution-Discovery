@@ -96,6 +96,6 @@ different molecules -- promotion to Dense-Evolution not yet proposed
 dependency), but this is the validated building block for any future
 QM/MM experiment in this repo.
 
-**Scripts**: `scripts/qmmm_region_partitioning_mmff_correction.py`
+**Scripts**: `scripts/casmi26_chemistry_qmmm/qmmm_region_partitioning_mmff_correction.py`
 (original, retracted correction), `scripts/qmmm/` (the reusable
 utility that replaces it).

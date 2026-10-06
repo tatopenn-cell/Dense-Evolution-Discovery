@@ -220,7 +220,7 @@ step (not yet done) is the same library scale-up applied to
 `rerank_train`/`query_holdout` themselves, which needs more of the full
 2.5M-row dataset than explored so far.
 
-**Script**: `scripts/spectral_retrieval_jax_two_stage_reranker.py`.
+**Script**: `scripts/casmi26_chemistry_qmmm/spectral_retrieval_jax_two_stage_reranker.py`.
 
 **Not yet done**: real epochs over a much larger training pool (not
 fresh-random-forever over just 4,800), a candidate library large enough
@@ -251,7 +251,7 @@ names (`ms2_mzs`, `ms2_normalized_intensities`, `collision_energy_ev`)
 entirely -- `pq.ParquetFile(path).schema_arrow.names` or plain
 `pd.read_parquet(...).columns` give the real top-level names.
 
-**Scripts**: `scripts/spectral_retrieval_jax.py` (toy/synthetic
-verification), `scripts/spectral_retrieval_jax_real_data.py` (Step 3, the
-fixed-batch memorization check), `scripts/spectral_retrieval_jax_padded_batch.py`
+**Scripts**: `scripts/casmi26_chemistry_qmmm/spectral_retrieval_jax.py` (toy/synthetic
+verification), `scripts/casmi26_chemistry_qmmm/spectral_retrieval_jax_real_data.py` (Step 3, the
+fixed-batch memorization check), `scripts/casmi26_chemistry_qmmm/spectral_retrieval_jax_padded_batch.py`
 (Step 4, padding/masking + real multi-batch training and held-out eval).

@@ -44,4 +44,4 @@ are simply two independent parameter sets for the same physical robot, not a bug
 expansion. The regression guard here instead checks that expanding the same xacro source twice
 gives identical results (`xacro.process_file()` has no hidden global state across calls).
 
-**Reproducing this**: `pytest tests/test_xacro_support.py`.
+**Reproducing this**: `pytest tests/dense_armor/test_xacro_support.py`.

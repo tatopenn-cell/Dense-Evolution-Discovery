@@ -1,6 +1,6 @@
 # Expectation-Value Nudge for ZNE: No Signal
 
-Script: `scripts/expectation_nudge_zne.py`. Negative result.
+Script: `scripts/noise_mitigation_validation/expectation_nudge_zne.py`. Negative result.
 
 Question: can the Richardson nudge of the library's predictive ZNE be driven by the three measured expectation values alone (no tomography, any number of qubits)? Signal: `(|y2 - y3| - |y1 - y2|) / (|y2 - y3| + |y1 - y2|)`, rectified.
 

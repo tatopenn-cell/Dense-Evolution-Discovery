@@ -33,11 +33,11 @@ At `t=20us`, survival with the event is **5.1x lower** than the undisturbed base
 
 ## Status
 
-Validated in `scripts/cosmic_ray_burst_validation.py` and `tests/test_cosmic_ray_burst_validation.py` (7/7 passing). Uses `continuous_dissipative_evolve`/`amplitude_damping_channel`, both released in Dense-Evolution v8.1.67.
+Validated in `scripts/noise_mitigation_validation/cosmic_ray_burst_validation.py` and `tests/noise_mitigation_validation/test_cosmic_ray_burst_validation.py` (7/7 passing). Uses `continuous_dissipative_evolve`/`amplitude_damping_channel`, both released in Dense-Evolution v8.1.67.
 
 ## Reproduce
 
 ```bash
-python scripts/cosmic_ray_burst_validation.py
-pytest tests/test_cosmic_ray_burst_validation.py -v
+python scripts/noise_mitigation_validation/cosmic_ray_burst_validation.py
+pytest tests/noise_mitigation_validation/test_cosmic_ray_burst_validation.py -v
 ```

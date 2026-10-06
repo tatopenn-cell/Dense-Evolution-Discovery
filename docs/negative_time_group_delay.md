@@ -45,5 +45,5 @@ Theory reproduced and cross-checked at three independent levels, including one r
 ## Reproduce
 
 ```bash
-python scripts/negative_time_group_delay.py
+python scripts/exotic_physics/negative_time_group_delay.py
 ```

@@ -45,4 +45,4 @@ central finite difference (1e-6): matches to < 1e-5
 name an independent (non-mimic) joint; mimicking another mimic joint is not supported -- not
 something real published URDFs do.
 
-**Reproducing this**: `pytest tests/test_mimic_joints.py`.
+**Reproducing this**: `pytest tests/dense_armor/test_mimic_joints.py`.
