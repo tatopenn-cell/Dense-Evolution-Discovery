@@ -125,6 +125,7 @@ nav:
       - "DVPT Companion: Z₂ Operator Family (Prisma)": prisma_operator_family.md
       - "DVPT Supplement: Gentile Statistics": gentile_supplement.md
       - "DVPT: Unified Formula (Lambert W map)": dvpt_unified_formula.md
+      - "DVPT: Asymptotic Width of the Pöschl-Teller Ground State": dvpt_poschl_teller_width.md
       - "DVPT: Ghost-Free Horndeski Embedding": ja_horndeski_embedding.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
