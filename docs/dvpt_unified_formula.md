@@ -105,7 +105,7 @@ Expected output:
 Note on α: here α(k,β) is the energy→area map, A/(4G) = α·E. It is not the α of
 Jusufi & Anand (arXiv:2608.23528), which is the coefficient of ln(A/4G) in the entropy
 (fixed to 1 by the pole of ζ at β = 1) and enters their metric as ℓ² = α·G/π. With their map
-E = A/(4G) the metric is the same for every k (DVPT Gentile supplement); the k-dependence
+E = A/(4G) the metric is the same for every k ([DVPT Gentile supplement](gentile_supplement.md)); the k-dependence
 below comes from choosing the map S_J(αE) = S_k(E), which absorbs c_k.
 
 ## VERIFICATION
