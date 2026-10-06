@@ -81,6 +81,7 @@ nav:
       - "Predicting CUSUM Detectability From Theory": cusum_detectability_theory.md
       - "Contributing Drift Detectors to river": river_drift_detector_contribution.md
       - "Online Platt Scaling for river": river_platt_scaling.md
+      - "Online Metric Learning: OASIS, LEGO, POLA": river_metric_learning.md
       - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
       - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
       - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
