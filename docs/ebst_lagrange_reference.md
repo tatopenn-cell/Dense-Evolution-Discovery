@@ -1,19 +1,24 @@
-# An order-free reference for the E-BST split of FIMT-DD: Lagrange interpolation against Ikonomovska 2012
+# Making the offline split of a regression tree online without changing its result
 
 Salvatore Pennacchio, Dense-Armor `v1.1.31`, October 2026.
 
 ## Problem
 
-FIMT-DD (Ikonomovska 2012, PhD thesis, chapter 6) chooses the split of a numerical attribute from an
-extended binary search tree (E-BST). Each node keeps the count, the sum and the sum of squares of the
-target for the samples that reached it with a value at most equal to its key (page 74, "the counts in all
-the nodes on the way are additionally updated"). The statistics of a node therefore depend on the order in
-which the samples arrived. The thesis gives the pseudocode (Algorithm 3, page 75) and one example (figure
-7), and no value computed by an independent method. A test written from the same scheme as the code checks
-the code against itself, so for an order-dependent tree there was no external reference to decide whether
-an implementation computes the split statistic correctly.
+The textbook way to choose the split of a numerical attribute in a regression tree is offline: keep all
+the samples, sort them by the attribute, and compute the left and right sums of the target for every
+threshold. It needs the whole stream in memory. Dense-Armor works online: one sample at a time, bounded
+memory, and the same answer as the offline procedure.
 
-## Idea
+Ikonomovska (2012, PhD thesis, chapter 6) gives the online structure for it, the extended binary search
+tree (E-BST). Each node keeps the count, the sum and the sum of squares of the target for the samples that
+reached it with a value at most equal to its key (page 74, "the counts in all the nodes on the way are
+additionally updated"). The statistics of a node depend on the order in which the samples arrived, while
+the offline answer does not. The thesis gives the pseudocode (Algorithm 3, page 75) and one example
+(figure 7), and no value computed by the offline procedure. A test written from the same scheme as the
+code checks the code against itself. The open question was therefore: does the online split statistic
+equal the offline one, and how can it be checked when the order changes the nodes?
+
+## Reference for the check
 
 The Lagrange interpolating polynomial through the observed points, `p_n(f;x) = sum_k f(x_k) l_k(x)` with
 `l_k(x) = prod_{j != k} (x - x_j)/(x_k - x_j)` (Gautschi 2012, eq. (6)-(7), page 351; remainder eq. (11),
