@@ -131,6 +131,7 @@ EXAMPLES = {
     "bond_length_angstrom": "2.35", "kxyz": "(0.0, 0.0, 0.0)", "lx": "2", "ly": "2",
     "mode_indices": "[1, 2]", "n_steps": "2", "k": "(0.0, 0.0, 0.0)", "cation": "'Ga'", "anion": "'As'",
     "lattice_constant_angstrom": "5.65",
+    "pauli_expectation": "Z",
 }
 EXAMPLES_BY_FUNC = {
     ("double_excitation_ops", "p"): "0", ("single_excitation_ops", "p"): "0",
@@ -138,8 +139,8 @@ EXAMPLES_BY_FUNC = {
     ("trotter_evolve_ops", "terms"): "[(1.0, {0: 'Z', 1: 'Z'}), (0.5, {0: 'X'})]",
 }
 N_OVERRIDE = {"central_charge": 8}
-FIRST_ARG = {"from_qiskit": "qiskit", "run_qiskit_circuit": "qiskit", "from_pennylane": "pennylane",
-             "run_pennylane_circuit": "pennylane", "circuit_to_energy_fn": "parsed"}
+FIRST_ARG = {"from_qiskit": "qiskit","from_pennylane": "pennylane",
+             "run_pennylane_circuit": "pennylane"}
 
 
 def _first_arg(kind, qasm, n):
