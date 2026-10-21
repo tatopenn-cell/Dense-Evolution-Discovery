@@ -14,8 +14,8 @@ authors:
     email: "jtatopenn@libero.it"
 repository-code: "https://github.com/tatopenn-cell/Dense-Evolution-Discovery"
 url: "https://github.com/tatopenn-cell/Dense-Evolution-Discovery"
-license: "MIT"
-version: "2.38.0"
+license: "BUSL-1.1"
+version: "2.39.0"
 doi: "10.5281/zenodo.21855620"
 identifiers:
   - type: doi

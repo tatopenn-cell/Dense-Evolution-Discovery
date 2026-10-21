@@ -698,6 +698,6 @@ All produced under `data/` when you run the corresponding script (see [Repositor
 
 ## License
 
-MIT License — © 2026 Salvatore Pennacchio (tatopenn-cell)
+Business Source License 1.1 — © 2026 Salvatore Pennacchio (tatopenn-cell). The terms are in [LICENSE.md](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/blob/main/LICENSE.md); from 1 June 2029 the license becomes Apache 2.0.
 This repository depends on Dense Evolution, licensed under Business Source License 1.1. See https://github.com/tatopenn-cell/Dense-Evolution for license terms.
 
