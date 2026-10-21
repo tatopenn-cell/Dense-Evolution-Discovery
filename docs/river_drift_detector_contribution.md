@@ -237,6 +237,7 @@ implement the protocol, at the commit that adds this section:
 | `dummy_baselines.py` | `9445da89f8a0daec` |
 | `cusum_river.py` | `0678abfd2a5bd67f` |
 | `arl_check.py` | `a738080dcdf23680` |
+| `check_candidate_cusum.py` | `8dc86ae797d329b6` |
 
 ## Current status
 
@@ -262,5 +263,7 @@ All code lives in `scripts/river_cusum_contribution/`: `cusum_river.py`, `ewma_r
 with the false-alarm-counting fix), `dummy_baselines.py` (`AlwaysFire`/`NeverFire`),
 `compare_to_river_baselines.py` (the full comparison, writes
 `compare_to_river_baselines_frozen.json`), `arl_check.py` (the run length against the
-theory and the 1000-trial false-alarm sweep, 15 seconds). Requires `pip install river` (not a Dense-Armor
+theory and the 1000-trial false-alarm sweep, 15 seconds). `check_candidate_cusum.py` applies the
+verification (check 1 and the flag count) to any streaming CUSUM loaded from a file, for
+example a candidate pull request, without copying it into this repository. Requires `pip install river` (not a Dense-Armor
 or Dense-Evolution dependency, kept isolated to this experiment).
