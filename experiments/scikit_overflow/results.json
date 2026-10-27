@@ -1,14 +1,34 @@
 {
   "issue": "scikit-learn#5602",
   "issue_url": "https://github.com/scikit-learn/scikit-learn/issues/5602",
-  "old_formula": "inf on the reproducer",
-  "new_formula": "finite, matches batch within 1e-10",
-  "tests": {
-    "test_old_formula_overflows": "PASS",
-    "test_new_formula_no_overflow": "PASS",
-    "test_new_formula_matches_numpy_on_normal_data": "PASS",
-    "test_new_formula_constant_data": "PASS",
-    "test_new_formula_streaming_matches_batch": "PASS"
+  "environment": "scikit-learn from pip, fix applied to sklearn/utils/extmath.py",
+  "reproducer": {
+    "batch_mean": 1.7976931348623154e+301,
+    "partial_mean": 1.7976931348623154e+301,
+    "finite": true,
+    "difference": 0.0
   },
-  "pytest_summary": "============================== 5 passed in 1.98s ==============================="
+  "constant_data": {
+    "fit_mean": [
+      42.0,
+      42.0
+    ],
+    "partial_mean": [
+      42.0,
+      42.0
+    ],
+    "fit_var": [
+      0.0,
+      0.0
+    ],
+    "partial_var": [
+      0.0,
+      0.0
+    ]
+  },
+  "streaming": {
+    "mean_diff": 1.249000902703301e-16,
+    "var_diff": 4.973799150320701e-14
+  },
+  "pytest": "5 passed in 1.98s"
 }

@@ -65,12 +65,19 @@ test_incremental.py::test_new_formula_streaming_matches_batch PASSED
 
 ## Step 4. The numbers
 
-| Scenario | Old formula | New formula | Batch reference |
+| Scenario | Old formula | New formula (scikit-learn) | Batch reference |
 |---|---|---|---|
-| Mean on the reproducer | `inf` | finite, difference < 1e-10 | finite |
-| Mean on constant data | wrong | 42.0 | 42.0 |
-| Variance on constant data | wrong | 0.0 | 0.0 |
-| Streaming vs batch | wrong | difference < 1e-10 | - |
+| Mean on the reproducer | `inf` | `1.7976931348623154e+301` | `1.7976931348623154e+301` |
+| Difference on the reproducer | not measured | `0.0` | - |
+| Mean on constant data | not measured | `[42.0, 42.0]` | `[42.0, 42.0]` |
+| Variance on constant data | not measured | `[0.0, 0.0]` | `[0.0, 0.0]` |
+| Streaming vs batch, mean | not measured | difference `1.25e-16` | - |
+| Streaming vs batch, variance | not measured | difference `4.97e-14` | - |
+
+The "old formula" column for constant data and for streaming is not measured:
+the bug appears only on the reproducer, and the constant and streaming cases
+are regression checks to show that the fix does not change the behaviour on
+normal data.
 
 ![Error after 100 batches at 1.79e301, log scale: the old formula overflows, the new one stays flat.](assets/scikit_overflow/mean_overflow.png)
 
@@ -118,7 +125,10 @@ python -m pytest test_incremental.py -v
 - The fix uses the delta-based update of Chan, Golub and LeVeque (1979), not
   the Welford one-sample update. The two are algebraically equivalent, but CGL
   is the batch form and it is the one the docstring of
-  `_incremental_mean_and_var` cites.
+  `_incremental_mean_and_var` cites as "In Compstat". The exact equation,
+  Eq. (2.1b), page 4 of the paper (page 8 of the PDF), is taken from the
+  Stanford tech report STAN-CS-79-773 in `papers/`. This is my addition, not a
+  citation from the docstring.
 - The mean and the variance are both updated with the delta-based formula. The
   original code used the cumulative sum for the mean and a Youngs-Cramer
   correction for the variance.

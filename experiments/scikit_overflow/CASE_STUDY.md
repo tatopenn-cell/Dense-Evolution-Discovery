@@ -38,7 +38,7 @@ updated_m2 = last_m2 + new_m2 + delta**2 * last_count * new_count / total_count
 The formula is algebraically equivalent to the cumulative-sum formula, but it
 never reconstructs the sum, so it does not overflow. The file
 `chan_golub_leveque_1979_stanford.pdf` in `papers/` is the source (STAN-CS-79-773,
-equations 1.1 and 1.2).
+In Compstat.), as cited in the docstring of `moments.py` of Dense-Armor.
 
 ## The tests
 
@@ -57,12 +57,20 @@ equations 1.1 and 1.2).
 
 ## The numbers
 
-| Test | Old formula | New formula | Batch reference |
+| Scenario | Old formula | New formula (scikit-learn) | Batch reference |
 |---|---|---|---|
-| Mean on the reproducer | `inf` | finite, difference < 1e-10 | finite |
-| Mean on constant data | 0 (but only because `inf`-adjacent) | 42.0 | 42.0 |
-| Variance on constant data | wrong | 0.0 | 0.0 |
-| Streaming vs batch | wrong | difference < 1e-10 | - |
+| Mean on the reproducer | `inf` | `1.7976931348623154e+301` | `1.7976931348623154e+301` |
+| Difference on the reproducer | not measured | `0.0` | - |
+| Mean on constant data | not measured | `[42.0, 42.0]` | `[42.0, 42.0]` |
+| Variance on constant data | not measured | `[0.0, 0.0]` | `[0.0, 0.0]` |
+| Streaming vs batch, mean | not measured | difference `1.25e-16` | - |
+| Streaming vs batch, variance | not measured | difference `4.97e-14` | - |
+
+The "old formula" column for constant data and for streaming is not measured:
+the bug appears only on the reproducer, and the constant and streaming cases
+are regression checks to show that the fix does not change the behaviour on
+normal data. The numbers in the "new formula" column are measured in
+scikit-learn 1.x from pip, with the fix applied to `sklearn/utils/extmath.py`.
 
 ## Status
 
@@ -79,3 +87,15 @@ repository are green, with a link back to this folder in the PR description.
   squares and products*. Technometrics 4(3), 419-420. Bibliographic only
   (paywalled).
 - Issue #5602: https://github.com/scikit-learn/scikit-learn/issues/5602
+
+## Choices stated explicitly
+
+- The formula is the delta-based merge of Chan, Golub, LeVeque (1979). The
+  docstring of `dense_armor/utility/stats/moments.py` cites it as
+  "In Compstat", without equation or page. The exact equation, Eq. (2.1b),
+  page 4 of the paper (page 8 of the PDF), is taken from the Stanford tech
+  report STAN-CS-79-773, which is in `papers/`. This is my addition, not a
+  citation from the docstring.
+- The code computes with `float64`, which is the scikit-learn default. The
+  paper does not require `float128`.
+
