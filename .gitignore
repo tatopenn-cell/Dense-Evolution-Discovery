@@ -39,3 +39,5 @@ Desktop.ini
 
 # mkdocs build output
 /site/
+.coverage
+__pycache__/

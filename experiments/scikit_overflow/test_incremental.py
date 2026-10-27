@@ -96,4 +96,3 @@ def test_new_formula_with_std_false():
     assert var_new is None
     assert np.allclose(count_old, 1000)
     assert np.allclose(count_new, 1000)
-

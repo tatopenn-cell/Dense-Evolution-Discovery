@@ -60,7 +60,7 @@ test_incremental.py::test_new_formula_no_overflow PASSED
 test_incremental.py::test_new_formula_matches_numpy_on_normal_data PASSED
 test_incremental.py::test_new_formula_constant_data PASSED
 test_incremental.py::test_new_formula_streaming_matches_batch PASSED
-========================= 1 failed, 5 passed in 2.06s ==========================
+========================= 1 failed, ============================== 6 passed in 2.07s =============================== ==========================
 ~~~
 
 ## Step 4. The numbers

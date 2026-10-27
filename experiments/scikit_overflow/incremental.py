@@ -20,8 +20,9 @@ def incremental_mean_and_var_old(X, last_mean, last_variance, last_sample_count)
     """
     X = np.asarray(X, dtype=np.float64)
     last_mean = np.asarray(last_mean, dtype=np.float64)
-    last_variance = np.asarray(last_variance, dtype=np.float64)
     last_sample_count = np.asarray(last_sample_count, dtype=np.float64)
+    if last_variance is not None:
+        last_variance = np.asarray(last_variance, dtype=np.float64)
 
     last_sum = last_mean * last_sample_count
     X_nan_mask = np.isnan(X)
@@ -78,8 +79,9 @@ def incremental_mean_and_var_new(X, last_mean, last_variance, last_sample_count)
     """
     X = np.asarray(X, dtype=np.float64)
     last_mean = np.asarray(last_mean, dtype=np.float64)
-    last_variance = np.asarray(last_variance, dtype=np.float64)
     last_sample_count = np.asarray(last_sample_count, dtype=np.float64)
+    if last_variance is not None:
+        last_variance = np.asarray(last_variance, dtype=np.float64)
 
     X_nan_mask = np.isnan(X)
     new_sum = np.nansum(X, axis=0)

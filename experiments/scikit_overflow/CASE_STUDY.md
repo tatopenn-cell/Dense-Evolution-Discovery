@@ -72,7 +72,7 @@ are regression checks to show that the fix does not change the behaviour on
 normal data. The numbers in the "new formula" column are measured in
 scikit-learn 1.x from pip, with the fix applied to `sklearn/utils/extmath.py`.
 
-The pytest run is `========================= 1 failed, 5 passed in 2.06s ==========================`.
+The pytest run is `========================= 1 failed, ============================== 6 passed in 2.07s =============================== ==========================`.
 
 ## Status
 
