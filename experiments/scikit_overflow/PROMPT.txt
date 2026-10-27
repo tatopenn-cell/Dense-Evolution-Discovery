@@ -1,0 +1,18 @@
+Task T1 (fix the overflow in StandardScaler.partial_fit, scikit-learn issue #5602).
+
+In Colab there is the folder scikit_overflow_package with README.md,
+ISTRUZIONI.md, SKILL.md, REGOLE_DOC.md, 04_SELF_CHECK.md,
+05_DELIVERY_TEMPLATE.md and papers/ (74 PDFs).
+
+Read README.md, ISTRUZIONI.md and SKILL.md, then start from item A.
+Do only the items listed (A, B, C), nothing else: no public signature changed,
+no default changed, no new dependency. Do not touch the public API of
+StandardScaler or of _incremental_mean_and_var.
+If a detail is not in the files, stop on that item and say it: no formula from
+memory.
+
+Before delivering, run the checks of 04_SELF_CHECK.md and paste the output.
+At the end, push the branch fix/standard-scaler-overflow to your fork and open
+the PR on scikit-learn/scikit-learn. Do not merge. Do not push to main.
+
+Last line of the message: the branch name, the last commit, the PR link.
