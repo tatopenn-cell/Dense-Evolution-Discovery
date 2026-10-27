@@ -4,11 +4,20 @@ The old formula reconstructs the cumulative sum and overflows on long streams
 with large values. The fixed formula uses the delta-based update of Chan, Golub
 and LeVeque (1979), which never reconstructs the sum.
 """
+
 import numpy as np
 
 
 def incremental_mean_and_var_old(X, last_mean, last_variance, last_sample_count):
-    """The cumulative-sum formula (the one that overflows)."""
+    """The cumulative-sum formula (the one that overflows).
+
+    The mean is computed as ``(last_sum + new_sum) / updated_sample_count``
+    with ``last_sum = last_mean * last_sample_count``. The variance uses
+    the same Eq. (2.1b) of the paper, written with the cumulative sums.
+    On long streams with large values, ``last_sum`` overflows to ``inf``.
+    The PDF is in ``papers/chan_golub_leveque_1979_stanford.pdf``
+    (STAN-CS-79-773).
+    """
     X = np.asarray(X, dtype=np.float64)
     last_mean = np.asarray(last_mean, dtype=np.float64)
     last_variance = np.asarray(last_variance, dtype=np.float64)
@@ -31,7 +40,7 @@ def incremental_mean_and_var_old(X, last_mean, last_variance, last_sample_count)
     correction = np.nansum(temp, axis=0)
     temp **= 2
     new_unnormalized_variance = np.nansum(temp, axis=0)
-    new_unnormalized_variance -= correction ** 2 / new_sample_count
+    new_unnormalized_variance -= correction**2 / new_sample_count
 
     last_unnormalized_variance = last_variance * last_sample_count
 
@@ -52,7 +61,21 @@ def incremental_mean_and_var_old(X, last_mean, last_variance, last_sample_count)
 
 
 def incremental_mean_and_var_new(X, last_mean, last_variance, last_sample_count):
-    """The delta-based formula (Chan, Golub, LeVeque 1979)."""
+    """The delta-based formula (Chan, Golub, LeVeque 1979).
+
+    Mean update (Eq. 2.1a, page 4 of the paper, PDF page 8):
+        T_{1,m+n} = T_{1,m} + T_{m+1,m+n}
+
+    Variance merge (Eq. 2.1b, page 4 of the paper, PDF page 8):
+        S_{1,m+n} = S_{1,m} + S_{m+1,m+n}
+                    + (m*n)/(m+n) * (T_{1,m}/m - T_{m+1,m+n}/n)**2
+
+    Corrected two-pass term (Eq. 1.4, page 2 of the paper, PDF page 6):
+        S = sum((x_i - x_bar)**2) - (sum(x_i - x_bar))**2 / N
+
+    The PDF is in ``papers/chan_golub_leveque_1979_stanford.pdf``
+    (STAN-CS-79-773).
+    """
     X = np.asarray(X, dtype=np.float64)
     last_mean = np.asarray(last_mean, dtype=np.float64)
     last_variance = np.asarray(last_variance, dtype=np.float64)
@@ -77,14 +100,14 @@ def incremental_mean_and_var_new(X, last_mean, last_variance, last_sample_count)
     correction = np.nansum(temp, axis=0)
     temp **= 2
     new_unnormalized_variance = np.nansum(temp, axis=0)
-    new_unnormalized_variance -= correction ** 2 / new_sample_count
+    new_unnormalized_variance -= correction**2 / new_sample_count
 
     last_unnormalized_variance = last_variance * last_sample_count
 
     updated_unnormalized_variance = (
         last_unnormalized_variance
         + new_unnormalized_variance
-        + delta ** 2 * last_sample_count * new_sample_count / updated_sample_count
+        + delta**2 * last_sample_count * new_sample_count / updated_sample_count
     )
 
     zeros = last_sample_count == 0

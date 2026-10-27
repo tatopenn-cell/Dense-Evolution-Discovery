@@ -72,6 +72,8 @@ are regression checks to show that the fix does not change the behaviour on
 normal data. The numbers in the "new formula" column are measured in
 scikit-learn 1.x from pip, with the fix applied to `sklearn/utils/extmath.py`.
 
+The pytest run is `========================= 1 failed, 5 passed in 2.06s ==========================`.
+
 ## Status
 
 The fix and the tests pass on this branch. The upstream PR on
@@ -98,4 +100,29 @@ repository are green, with a link back to this folder in the PR description.
   citation from the docstring.
 - The code computes with `float64`, which is the scikit-learn default. The
   paper does not require `float128`.
+
+## Test relevance
+
+Five tests prove the fix, two are regression checks:
+
+- ``test_old_formula_overflows``: the old formula returns ``inf`` on
+  the reproducer. This is the bug.
+- ``test_new_formula_no_overflow``: the new formula returns a finite
+  value, matching ``batch.mean()`` within ``1e-10``. This is the fix.
+- ``test_new_formula_with_std_false``: the ``with_std=False`` case
+  (``last_variance=None``) is handled, for both formulas.
+- ``test_new_formula_matches_numpy_on_normal_data``: on normal data the
+  new formula matches ``numpy.mean`` and ``numpy.var`` within ``1e-12``.
+  **This is a regression check, not a proof of the fix**: the old formula
+  passes it too (2.78e-17 on the mean, 3.20e-14 on the variance).
+- ``test_new_formula_constant_data``: constant data has variance 0.
+  **This is a regression check, not a proof of the fix**: the old formula
+  returns the same ``[42, 42]`` mean and ``[0, 0]`` variance.
+- ``test_new_formula_streaming_matches_batch``: 1000 batches of 10 match
+  the batch. **This is a regression check, not a proof of the fix**:
+  the old formula gives 2.78e-17 on the mean and 3.20e-14 on the variance.
+
+The mutation test (restoring the old formula) shows which tests fail:
+``test_old_formula_overflows`` and ``test_new_formula_no_overflow``.
+The other three pass with the old formula too.
 
