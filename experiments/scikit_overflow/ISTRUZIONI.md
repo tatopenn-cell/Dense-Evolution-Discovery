@@ -70,3 +70,22 @@ The table of the items (A1, B1, C1, C2), done / not done / stopped with the
 reason. The files touched. The real output of pytest on the branch and the
 failure on main. The link to the PR. The holes, one per line. The last line:
 the name of the pushed branch and its last commit.
+
+## D. Publication on Dense-Evolution-Discovery
+
+Before the PR on scikit-learn, the full case study lives here, in
+`experiments/scikit_overflow/` of `Dense-Evolution-Discovery`, branch
+`case/scikit-overflow`. This folder contains the task, the rules of the code,
+the self-check, the delivery template, and the paper (CGL 1979). The tests
+(pytest, ruff, mypy, mkdocs strict) run on this branch.
+
+1. `experiments/scikit_overflow/` is the folder. The files are the ones of this
+   package.
+2. `pytest`, `ruff check`, `mypy`, `mkdocs build --strict` pass on this branch.
+3. Only after all the checks are green, the branch
+   `fix/standard-scaler-overflow` is pushed to the fork of scikit-learn and the
+   PR is opened on `scikit-learn/scikit-learn`.
+
+Criterion: the checks on `Dense-Evolution-Discovery` are green; the PR on
+scikit-learn is open, with the link to this folder in the description.
+
