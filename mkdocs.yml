@@ -83,6 +83,7 @@ nav:
       - "Online Platt Scaling for river": river_platt_scaling.md
       - "Neural Bricks for Online and Classic Learning": neural_bricks_plan.md
       - "Online Metric Learning: OASIS, LEGO, POLA": river_metric_learning.md
+      - "StandardScaler.partial_fit overflow for scikit-learn": scikit_learn_overflow.md
       - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
       - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
       - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
