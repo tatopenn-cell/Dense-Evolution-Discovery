@@ -89,7 +89,7 @@ nav:
       - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
       - "Native Multi-Channel Support": multichannel_wrapper.md
       - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
-      - "Variance in float32: Shift, Centring and Compensated Sum": dense_armor_float32_variance.md
+      - "Variance in float32: Shift, Centring and Compensated Tree Sum": dense_armor_float32_variance.md
     - "Safety & Control":
       - "A Causal Rate Limiter for Real Motor Commands": rate_limiter_real_joint_commands.md
       - "A Geometric CBF Filter for Real Robot Commands": geometric_cbf_filter_real_joint_commands.md
