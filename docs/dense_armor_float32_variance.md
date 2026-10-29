@@ -7,7 +7,7 @@ Every number of this note is produced by `scripts/dense_armor_float32_variance/r
 
 ## Abstract
 
-The variance of float32 data with a large offset and a small spread loses its digits in the subtraction `x - mean(x)`. This note describes a kernel in three steps, built on the shift by the first element, which was invented by the author: the shift, a local centring of the shifted values, and a sum of the squared residuals by a tree of error-free additions (TwoSum), which runs in `log2(n)` vectorised levels. On four synthetic datasets the kernel has a maximum relative error at most equal to the two-term formula of reference on 3 (eager) and 3 (jit) of the four on the CPU, and on 4 (eager) and 3 (jit) of the four on the GPU. Where it is worse is stated in Section 3. It returns exactly `0.0` on identical values up to `1e38` in eager and in jit, on both backends; at `1e38` the formula of reference returns `nan`. It costs time: the median ratio of its time to the time of the formula of reference on a `[4096, 4096]` array is 2.27 on the CPU (range 2.24 to 2.35) and 2.19 on the GPU (range 2.16 to 2.30).
+The variance of float32 data with a large offset and a small spread loses its digits in the subtraction `x - mean(x)`. This note describes a kernel in four steps, built on the shift by the first element, which was invented by the author: the shift, a local centring of the shifted values, a sum of the squared residuals by a tree of error-free additions (TwoSum), which runs in `log2(n)` vectorised levels, and the two-term correction. On four synthetic datasets the kernel has a maximum relative error at most equal to the two-term formula of reference on 3 (eager) and 3 (jit) of the four on the CPU, and on 4 (eager) and 3 (jit) of the four on the GPU. Where it is worse is stated in Section 3. It returns exactly `0.0` on identical values up to `1e38` in eager and in jit, on both backends; at `1e38` the formula of reference returns `nan`. It costs time: the median ratio of its time to the time of the formula of reference on a `[4096, 4096]` array is 2.27 on the CPU (range 2.24 to 2.35) and 2.19 on the GPU (range 2.16 to 2.30).
 
 ## 1. The problem
 
@@ -23,11 +23,12 @@ A copy of it is in the script; nothing is sent to TensorFlow. The naive formula 
 
 ## 2. The kernel
 
-Three steps, all in the input dtype (no float64).
+Four steps, all in the input dtype (no float64).
 
 1. **Shift (invented by the author, and the base of the kernel).** `y = x - x[0]` along the reduction axis. When the values are within a factor of two of the reference, the subtraction is exact (Sterbenz lemma; Shewchuk 1997, Lemma 5, PDF page 10). On D4 the script compares the float32 shift with the exact difference computed in float64: 100% of the 64000 entries are equal.
 2. **Local centring.** `m = sum(y) / n`, `d = y - m`.
-3. **Compensated tree sum.** The squares `d^2` are summed by a binary tree. At each level the pairs of partial sums are added with `TwoSum` (Ogita, Rump and Oishi 2005, Algorithm 3.1, PDF page 7; Shewchuk 1997, Theorem 7, PDF page 12), which returns the rounded sum and the exact rounding error; the errors are carried up the tree in a second array, and the result is the final sum plus the final carry. The tree has `log2(n)` levels of vectorised operations, so it runs on a GPU. The variance is `max(s2/n - (s1/n)^2, 0)` with `s1 = sum(d)`, rescaled by `n/(n - ddof)`. The mean is `x[0] + m`.
+3. **Compensated tree sum.** The squares `d^2` are summed by a binary tree. At each level the pairs of partial sums are added with `TwoSum` (Ogita, Rump and Oishi 2005, Algorithm 3.1, PDF page 7; Shewchuk 1997, Theorem 7, PDF page 12), which returns the rounded sum and the exact rounding error; the errors are carried up the tree in a second array, and the result is the final sum plus the final carry. The tree has `log2(n)` levels of vectorised operations, so it runs on a GPU.
+4. **Two-term correction and division.** The variance is `max(s2/n - (s1/n)^2, 0)` with `s1 = sum(d)`, rescaled by `n/(n - ddof)`. The mean is `x[0] + m`.
 
 The compensated tree was added to the author's solution. The papers give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
 
