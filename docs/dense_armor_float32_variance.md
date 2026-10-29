@@ -29,7 +29,7 @@ Three steps, all in the input dtype (no float64).
 2. **Local centring.** `m = sum(y) / n`, `d = y - m`.
 3. **Compensated tree sum.** The squares `d^2` are summed by a binary tree. At each level the pairs of partial sums are added with `TwoSum` (Ogita, Rump and Oishi 2005, Algorithm 3.1, PDF page 7; Shewchuk 1997, Theorem 7, PDF page 12), which returns the rounded sum and the exact rounding error; the errors are carried up the tree in a second array, and the result is the final sum plus the final carry. The tree has `log2(n)` levels of vectorised operations, so it runs on a GPU. The variance is `max(s2/n - (s1/n)^2, 0)` with `s1 = sum(d)`, rescaled by `n/(n - ddof)`. The mean is `x[0] + m`.
 
-The formula of reference of Section 1 is a different formula: it has no shift. The compensated tree was added afterwards to the author's solution. The structure of the tree is my choice: the papers give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
+The compensated tree was added to the author's solution. The structure of the tree is my choice: the papers give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
 
 The kernel in the repository and the version written again in the script are equal bit for bit on the datasets D1, D2, D3, D4 on both backends.
 
