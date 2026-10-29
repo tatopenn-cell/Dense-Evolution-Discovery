@@ -1,0 +1,16 @@
+{
+ "head": "1098759 docs: state in the module docstring that the speed is reported as median of three sessions with the range, and that claim 2 has two declared exceptions (D4 CPU, D3 jit GPU). No behaviour change; this commit runs the CI on the final state.",
+ "jax": "0.11.1 gpu [CudaDevice(id=0), CudaDevice(id=1)]",
+ "gpu": [
+  "written /kaggle/working/results_gpu.json",
+  "D4 shift exact fraction: 1.0",
+  "kernel == reimplementation: {'D1': True, 'D2': True, 'D3': True, 'D4': True}",
+  "ratio kernel/base per session: [2.19, 2.3, 2.2, 2.19, 2.16]"
+ ],
+ "kaggle_cpu": [
+  "written /kaggle/working/results_kaggle_cpu.json",
+  "D4 shift exact fraction: 1.0",
+  "kernel == reimplementation: {'D1': True, 'D2': True, 'D3': True, 'D4': True}",
+  "ratio kernel/base per session: [2.24, 2.32, 2.27, 2.26, 2.35]"
+ ]
+}

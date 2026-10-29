@@ -11,7 +11,7 @@ Contenders, all float32, eager and under jax.jit:
   tf.nn.moments in TensorFlow master, nn_impl.py lines 1480-1487, read on
   2026-10-29. A local copy: nothing is sent to TensorFlow.
 - kernel: dense_armor.utility.stats.stable.stable_var.
-- shift_kahan: the kernel written again here, to check that the paper
+- shift_comp: the kernel written again here, to check that the paper
   describes the code (the two must agree bit for bit).
 - shift_tree, base_kahan, shift_twoterm_tree: the variants of the ablation,
   with the same vmap-over-1D structure as the kernel.
@@ -40,6 +40,27 @@ def kahan_sum(x):
     z = jnp.zeros((), x.dtype)
     (s, c), _ = jax.lax.scan(step, (z, z), x)
     return s + c
+
+
+def two_sum(a, b):
+    s = a + b
+    bb = s - a
+    return s, (a - (s - bb)) + (b - bb)
+
+
+def comp_tree(v):
+    S = v
+    C = jnp.zeros_like(v)
+    while S.shape[0] > 1:
+        if S.shape[0] % 2 == 1:
+            S = jnp.concatenate([S, jnp.zeros((1,), S.dtype)])
+            C = jnp.concatenate([C, jnp.zeros((1,), C.dtype)])
+        s1, e1 = two_sum(S[0::2], S[1::2])
+        s2, e2 = two_sum(C[0::2], C[1::2])
+        s3, e3 = two_sum(s1, s2)
+        S = s3
+        C = e1 + e2 + e3
+    return S[0] + C[0]
 
 
 def over_axis(f1d):
@@ -99,14 +120,39 @@ def v_base_kahan(v):
     return jnp.maximum(s2 / n - (s1 / n) ** 2, jnp.zeros_like(s2))
 
 
+def v_shift_comp(v):
+    n = v.shape[0]
+    d = _shift_center(v)
+    s2 = comp_tree(d * d)
+    s1 = jnp.sum(d)
+    return jnp.maximum(s2 / n - (s1 / n) ** 2, jnp.zeros_like(s2))
+
+
+def v_shift_comp_no2t(v):
+    d = _shift_center(v)
+    s2 = comp_tree(d * d)
+    return jnp.maximum(s2 / v.shape[0], jnp.zeros_like(s2))
+
+
+def v_base_comp(v):
+    n = v.shape[0]
+    d = v - jnp.sum(v) / n
+    s2 = comp_tree(d * d)
+    s1 = jnp.sum(d)
+    return jnp.maximum(s2 / n - (s1 / n) ** 2, jnp.zeros_like(s2))
+
+
 CONTENDERS = {
     "naive": naive,
     "base": base,
     "kernel": lambda x, axis: stable_var(x, axis=axis),
-    "shift_kahan": over_axis(v_shift_kahan),
+    "shift_comp": over_axis(v_shift_comp),
     "shift_tree": over_axis(v_shift_tree),
-    "base_kahan": over_axis(v_base_kahan),
     "shift_twoterm_tree": over_axis(v_shift_twoterm_tree),
+    "base_comp": over_axis(v_base_comp),
+    "shift_comp_no2t": over_axis(v_shift_comp_no2t),
+    "shift_kahan_scan": over_axis(v_shift_kahan),
+    "base_kahan_scan": over_axis(v_base_kahan),
 }
 
 
@@ -203,7 +249,7 @@ def main():
         same[name] = bool(
             np.array_equal(
                 np.asarray(run(CONTENDERS["kernel"], xj, axis, False)),
-                np.asarray(run(CONTENDERS["shift_kahan"], xj, axis, False)),
+                np.asarray(run(CONTENDERS["shift_comp"], xj, axis, False)),
             )
         )
         if name == "D4":
