@@ -29,7 +29,7 @@ Three steps, all in the input dtype (no float64).
 2. **Local centring.** `m = sum(y) / n`, `d = y - m`.
 3. **Compensated tree sum.** The squares `d^2` are summed by a binary tree. At each level the pairs of partial sums are added with `TwoSum` (Ogita, Rump and Oishi 2005, Algorithm 3.1, PDF page 7; Shewchuk 1997, Theorem 7, PDF page 12), which returns the rounded sum and the exact rounding error; the errors are carried up the tree in a second array, and the result is the final sum plus the final carry. The tree has `log2(n)` levels of vectorised operations, so it runs on a GPU. The variance is `max(s2/n - (s1/n)^2, 0)` with `s1 = sum(d)`, rescaled by `n/(n - ddof)`. The mean is `x[0] + m`.
 
-The compensated tree was added to the author's solution. The structure of the tree is my choice: the papers give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
+The compensated tree was added to the author's solution. The papers give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
 
 The kernel in the repository and the version written again in the script are equal bit for bit on the datasets D1, D2, D3, D4 on both backends.
 
@@ -95,7 +95,7 @@ Same datasets and the same structure (a `vmap` over one-dimensional slices), one
 | shift + centring + two-term, compensated tree (the kernel) | 3/4 | 3/4 | 4/4 | 3/4 | 0 / 0 | 0 / 0 | 2.27 (2.24-2.35) | 2.19 (2.16-2.30) |
 | shift + centring, Kahan sequential scan (previous version) | 3/4 | 3/4 | 4/4 | 3/4 | 0 / 0 | 0 / 0 | 1.62 (1.55-1.64) | 42.96 (41.71-45.79) |
 
-Reading, from the table: The shift is the step that gives the exact zero on `[1e38]*3` under `jit`: the variant without it (compensated tree, no shift) returns nan there on the CPU, and the kernel returns 0. The two-term correction does not change the result: the kernel and the variant without it have the same errors on all sixteen cells (four datasets, eager and jit, CPU and GPU). It is kept because the formula of reference has it. The compensated tree is the step that keeps the error under jit at the level of the reference: the shifted variants without compensation are at most equal on 0/4 (CPU) and 2/4 (GPU) datasets in jit, the kernel on 3/4 and 3/4. The Kahan sequential scan of the previous version is in the last row for comparison.
+Reading, from the table: The shift is the step that gives the exact zero on `[1e38]*3` under `jit`: the variant without it (compensated tree, no shift) returns nan there on the CPU, and the kernel returns 0. The two-term correction does not change the result: the kernel and the variant without it have the same errors on all sixteen cells (four datasets, eager and jit, CPU and GPU). The compensated tree is the step that keeps the error under jit at the level of the reference: the shifted variants without compensation are at most equal on 0/4 (CPU) and 2/4 (GPU) datasets in jit, the kernel on 3/4 and 3/4. The Kahan sequential scan of the previous version is in the last row for comparison.
 
 ## 5. Limits
 
