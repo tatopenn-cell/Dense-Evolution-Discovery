@@ -7,7 +7,7 @@ Every number of this note is produced by `scripts/dense_armor_float32_variance/r
 
 ## Abstract
 
-The variance of float32 data with a large offset and a small spread loses its digits in the subtraction `x - mean(x)`. This note describes a kernel in four steps, built on the shift by the first element, the shifted-data formula of Chan, Golub and LeVeque (1983) with K = x[0]: the shift, a local centring of the shifted values, a sum of the squared residuals by a tree of error-free additions (TwoSum), which runs in `log2(n)` vectorised levels, and the two-term correction. On four synthetic datasets the kernel has a maximum relative error at most equal to the two-term formula of reference on 3 (eager) and 3 (jit) of the four on the CPU, and on 4 (eager) and 3 (jit) of the four on the GPU. Where it is worse is stated in Section 3. It returns exactly `0.0` on identical values up to `1e38` in eager and in jit, on both backends; at `1e38` the formula of reference returns `nan`. It costs time: the median ratio of its time to the time of the formula of reference on a `[4096, 4096]` array is 2.27 on the CPU (range 2.24 to 2.35) and 2.19 on the GPU (range 2.16 to 2.30).
+The variance of float32 data with a large offset and a small spread loses its digits in the subtraction `x - mean(x)`. This note describes a kernel in four steps, built on the shift by the first element, the shifted-data algorithm with K = x[0] (Healy 2022, Algorithm 2): the shift, a local centring of the shifted values, a sum of the squared residuals by a tree of error-free additions (TwoSum), which runs in `log2(n)` vectorised levels, and the two-term correction. On four synthetic datasets the kernel has a maximum relative error at most equal to the two-term formula of reference on 3 (eager) and 3 (jit) of the four on the CPU, and on 4 (eager) and 3 (jit) of the four on the GPU. Where it is worse is stated in Section 3. It returns exactly `0.0` on identical values up to `1e38` in eager and in jit, on both backends; at `1e38` the formula of reference returns `nan`. It costs time: the median ratio of its time to the time of the formula of reference on a `[4096, 4096]` array is 2.27 on the CPU (range 2.24 to 2.35) and 2.19 on the GPU (range 2.16 to 2.30).
 
 ## 1. The problem
 
@@ -25,12 +25,12 @@ A copy of it is in the script; nothing is sent to TensorFlow. The naive formula 
 
 Four steps, all in the input dtype (no float64).
 
-1. **Shift (the shifted-data formula of Chan, Golub and LeVeque 1983, with K = x[0]; the base of the kernel).** `y = x - x[0]` along the reduction axis. When the values are within a factor of two of the reference, the subtraction is exact (Sterbenz lemma; Shewchuk 1997, Lemma 5, PDF page 10). On D4 the script compares the float32 shift with the exact difference computed in float64: 100% of the 64000 entries are equal.
+1. **Shift (the shifted-data algorithm with K = x[0], Healy 2022, Algorithm 2; the base of the kernel).** `y = x - x[0]` along the reduction axis. When the values are within a factor of two of the reference, the subtraction is exact (Sterbenz lemma; Shewchuk 1997, Lemma 5, PDF page 10). On D4 the script compares the float32 shift with the exact difference computed in float64: 100% of the 64000 entries are equal.
 2. **Local centring.** `m = sum(y) / n`, `d = y - m`.
 3. **Compensated tree sum.** The squares `d^2` are summed by a binary tree. At each level the pairs of partial sums are added with `TwoSum` (Ogita, Rump and Oishi 2005, Algorithm 3.1, PDF page 7; Shewchuk 1997, Theorem 7, PDF page 12), which returns the rounded sum and the exact rounding error; the errors are carried up the tree in a second array, and the result is the final sum plus the final carry. The tree has `log2(n)` levels of vectorised operations, so it runs on a GPU.
 4. **Two-term correction and division.** The variance is `max(s2/n - (s1/n)^2, 0)` with `s1 = sum(d)`, rescaled by `n/(n - ddof)`. The mean is `x[0] + m`.
 
-The combination of the four steps is by the author. The shift is the formula of Chan, Golub and LeVeque (1983), cited from Wikipedia, "Algorithms for calculating variance"; the paper of 1983 was not read. The papers on `TwoSum` give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
+Healy (2022), Introduction and Algorithm 2, takes the first observation as K, sums with Kahan's compensation and applies the two-term formula `T/n - (M - K)^2`, and cites Chan, Golub and LeVeque (1983) for the choice of K; the paper of 1983 was not read. This kernel adds to that algorithm the local centring of step 2, the compensated tree of step 3 in place of the sequential Kahan sum, and the evaluation in float32 one slice at a time with `vmap`. These additions are by the author. The papers on `TwoSum` give `TwoSum`, not this tree. A complex input is split into real and imaginary part and the two variances are added, which is `E|z - mean(z)|^2`.
 
 The kernel in the repository and the version written again in the script are equal bit for bit on the datasets D1, D2, D3, D4 on both backends.
 
@@ -114,6 +114,7 @@ On a GPU machine run the same command with `--out results_gpu.json`. Environment
 
 ## 7. References
 
+- Healy, J. (2022). Accurate and consistent calculation of the mean and variance in Monte-Carlo simulations. arXiv:2206.10662v7. Introduction and Algorithm 2: the shifted naive algorithm with K = x[0] and Kahan summation.
 - Ogita, T., Rump, S. M., Oishi, S. (2005). Accurate Sum and Dot Product. SIAM Journal on Scientific Computing 26(6), 1955-1988. Algorithm 3.1 (`TwoSum`), PDF page 7 of the file read.
 - Shewchuk, J. R. (1997). Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates. Discrete and Computational Geometry 18(3), 305-363. Theorem 7 (`Two-Sum`), PDF page 12; Lemma 5 (Sterbenz), PDF page 10 of the file read.
 - TensorFlow, `tensorflow/python/ops/nn_impl.py`, function `moments`, lines 1480-1487 (master, read on 2026-10-29): the formula of reference.
