@@ -51,16 +51,17 @@ never reconstructs the sum, so it does not overflow.
 
 ## Step 3. The tests
 
-`test_incremental.py` has five tests. All pass:
+`test_incremental.py` has six tests. All pass:
 
 ~~~text
 $ python -m pytest test_incremental.py -v
 test_incremental.py::test_old_formula_overflows PASSED
 test_incremental.py::test_new_formula_no_overflow PASSED
+test_incremental.py::test_new_formula_with_std_false PASSED
 test_incremental.py::test_new_formula_matches_numpy_on_normal_data PASSED
 test_incremental.py::test_new_formula_constant_data PASSED
 test_incremental.py::test_new_formula_streaming_matches_batch PASSED
-========================= 1 failed, ============================== 6 passed in 2.07s =============================== ==========================
+============================== 6 passed in 2.31s ==============================
 ~~~
 
 ## Step 4. The numbers
@@ -81,9 +82,10 @@ normal data.
 
 ![Error after 100 batches at 1.79e301, log scale: the old formula overflows, the new one stays flat.](assets/scikit_overflow/mean_overflow.png)
 
-The old cumulative-sum formula overflows to `inf` after a few batches. The
-delta-based formula stays flat at `1e-10` for all 100 batches, which is
-the float64 machine precision on this input.
+The old cumulative-sum formula overflows to `inf` from about the ninth batch
+(the red line is drawn at a fixed height, because `inf` cannot be plotted).
+The delta-based formula has a difference of `0.0` from the batch mean on this
+input, drawn at the bottom of the axis.
 
 ## What this shows
 
@@ -105,7 +107,7 @@ python -m pytest test_incremental.py -v
 ~~~
 
 `incremental.py` contains the old formula and the new formula.
-`test_incremental.py` contains the five tests.
+`test_incremental.py` contains the six tests.
 `results.json` contains the pytest summary.
 
 ## Details
@@ -137,9 +139,8 @@ python -m pytest test_incremental.py -v
 
 ### Measured cost
 
-The five tests run in 1.98 seconds on a shared Colab CPU. The test on the
-reproducer uses 100 batches of 500,000 samples at `1.79e301`, and it is the
-slowest of the five.
+The six tests run in 2.31 seconds on a Windows CPU. The test on the
+reproducer uses 100 batches of 500,000 samples at `1.79e301`.
 
 ### Development diary
 
