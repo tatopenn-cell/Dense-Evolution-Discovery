@@ -118,3 +118,4 @@ On a GPU machine run the same command with `--out results_gpu.json`. Environment
 - Ogita, T., Rump, S. M., Oishi, S. (2005). Accurate Sum and Dot Product. SIAM Journal on Scientific Computing 26(6), 1955-1988. Algorithm 3.1 (`TwoSum`), PDF page 7 of the file read.
 - Shewchuk, J. R. (1997). Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates. Discrete and Computational Geometry 18(3), 305-363. Theorem 7 (`Two-Sum`), PDF page 12; Lemma 5 (Sterbenz), PDF page 10 of the file read.
 - TensorFlow, `tensorflow/python/ops/nn_impl.py`, function `moments`, lines 1480-1487 (master, read on 2026-10-29): the formula of reference.
+This kernel was developed while attempting to solve the numerical instability reported in TensorFlow GitHub Issue #117286 (opened 2026-04-30), where XLA's reduction algorithm introduces destructive rounding errors on large-magnitude inputs.
