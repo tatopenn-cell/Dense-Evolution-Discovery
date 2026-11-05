@@ -16,7 +16,7 @@ The coefficient of `ln E` is **exactly 1 for every k**, verified numerically to 
 
 $$f(r) = 1 - \frac{2GMr}{r^2 + \ell_\zeta^2}, \qquad \ell_\zeta^2 = \alpha G/\pi, \quad \alpha = 1,$$
 
-is the **same for every value of `k`** in the Gentile family. DVPT (`k = 1`) and the bosonic Jusufi–Anand limit (`k = ∞`) share the same metric; they differ only in the additive constant `c_k` of the entropy. The Prisma of the three papers therefore remains a **three-face structure**; the statistics parameter `k` is an internal degree of freedom that changes the constant, not the geometry.
+is the **same for every value of `k`** in the Gentile family. DVPT (`k = 1`) and the bosonic Jusufi–Anand limit (`k = ∞`) share the same metric; they differ only in the additive constant `c_k` of the entropy. With this map the Gentile statistics sit on one face of the Prisma: `k` changes the constant, not the geometry. With the Lambert-W energy–area map of the [unified formula](dvpt_unified_formula.md), the metric depends on `k` and each statistics opens its own face. The number of faces is what the maps produce, not something fixed in advance.
 
 ---
 
@@ -148,7 +148,7 @@ The universal value `α = 1` is a direct consequence of the simple pole of `ζ(s
 
 **Does not:**
 
-- Create a "fourth face" of the Prisma. The Prisma [3] remains a three-face structure (DVPT, GDS, `H(μ, ε)`). The statistics parameter `k` is an internal degree of freedom of the arithmetic-gas description; it changes the constant `c_k`, not the geometry.
+- Create a "fourth face" of the Prisma *with the Jusufi–Anand map*: there the statistics parameter `k` is an internal degree of freedom of the arithmetic-gas description; it changes the constant `c_k`, not the geometry. With a different energy–area map (see the [unified formula](dvpt_unified_formula.md)) `k` does change the geometry, and new faces appear.
 - Derive the horizon operator whose arithmetic cutoff scales with the area. That open problem, stated at the end of Jusufi–Anand [4], remains open.
 - Connect `Φ` to the metric. The metric uses `π` (`ℓ_ζ² = G/π`), not `Φ`. The role of `Φ` in the framework is restricted to the discrete-scale-invariance context of GDS and Sornette's open question [2, 5], and is not touched by the results of this note.
 - Provide any new falsifiable prediction. The results here are structural and internal to the framework.
@@ -204,7 +204,7 @@ $$f(r) = 1 - \frac{2GMr}{r^2 + G/\pi}$$
 
 is the same across the whole family. The statistics changes only the additive constant of the entropy, which does not propagate into the metric because the metric is reconstructed from `S'(r)`.
 
-This is a structural result, following from the simple pole of `ζ(s)` at `s = 1`. It confirms that the metric of the framework is universal across statistics, and it clarifies that the DVPT/Prisma structure is a three-face structure whose internal statistics parameter does not create additional geometric faces. The result is offered as a supplementary note to the three companion papers [1, 2, 3], without modifying any of their retained claims.
+This is a structural result, following from the simple pole of `ζ(s)` at `s = 1`. It confirms that, with the Jusufi–Anand map E = A/4G, the metric of the framework is universal across statistics and the statistics parameter does not create additional geometric faces; other energy–area maps can, and the faces are counted as they are found. The result is offered as a supplementary note to the three companion papers [1, 2, 3], without modifying any of their retained claims.
 
 ---
 

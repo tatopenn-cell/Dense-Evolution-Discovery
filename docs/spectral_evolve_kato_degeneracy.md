@@ -115,5 +115,5 @@ call in the real Hamiltonian test above.
 **Status**: promoted to Dense-Evolution as `dense_evolution.physics.spectral`
 (`has_exact_degeneracy`, `matrix_function_eigh`, `spectral_evolve`).
 
-**Scripts**: `scripts/spectral_evolve_kato_degeneracy.py`,
-`scripts/kato_syk_wormhole_real_usecase.py`.
+**Scripts**: `scripts/simulator_infrastructure/spectral_evolve_kato_degeneracy.py`,
+`scripts/exotic_physics/kato_syk_wormhole_real_usecase.py`.

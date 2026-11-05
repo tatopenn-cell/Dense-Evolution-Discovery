@@ -1,6 +1,6 @@
 # Single-Qubit Population (JSD) Nudge for ZNE: No Better Than Random
 
-Variant 3 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/single_qubit_jsd_zne.py`. Negative result.
+Variant 3 of [issue #243](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/issues/243). Script: `scripts/noise_mitigation_validation/single_qubit_jsd_zne.py`. Negative result.
 
 The library's `jsd_predictive_zne_density_matrix` nudges the 3-point Richardson coefficients when the Jensen-Shannon divergence of the diagonal populations changes non-linearly across the noise scales. Here the same core runs on one qubit (the script checks that it matches the library to 1e-10), on the 2×2 matrix from single-qubit tomography: the signal uses only the Z populations. Controls as in [variant 2](single_qubit_coherence_zne.md): the same nudges shuffled across seeds, and one constant nudge on every seed.
 

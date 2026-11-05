@@ -125,7 +125,7 @@ finding specifically), but "a rate-limiting mechanism works for safety, not for 
 parquet, no new download); `python scripts/robot_sensor_validation/rate_limiter_second_domain_aloha.py`
 regenerates `rate_limiter_second_domain_aloha_frozen.json` (ALOHA, downloads
 `lerobot/aloha_static_coffee` once if not already cached); `pytest
-tests/test_rate_limiter_real_joint_commands.py tests/test_rate_limiter_second_domain_aloha.py`
+tests/dense_armor/test_rate_limiter_real_joint_commands.py tests/dense_armor/test_rate_limiter_second_domain_aloha.py`
 reads the already-frozen files, no network access needed in CI.
 
 **Paper indexed**: Berscheid & Kroger (2021) is now in quantumrag's new

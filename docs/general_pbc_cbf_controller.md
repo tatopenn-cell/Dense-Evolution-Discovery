@@ -52,6 +52,6 @@ as the constraint allows and stops there.
 Franka Panda -- a different manufacturer), matching `RigidBodyModel`'s own validation bar
 before its promotion.
 
-**Reproducing this**: `pytest tests/test_general_pbc_cbf_controller.py`;
+**Reproducing this**: `pytest tests/dense_armor/test_general_pbc_cbf_controller.py`;
 `python scripts/rigid_body_dynamics/general_controller_multirobot_validation.py` for the
 closed-loop numbers above.

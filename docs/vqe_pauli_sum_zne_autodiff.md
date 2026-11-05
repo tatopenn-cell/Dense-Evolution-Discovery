@@ -52,7 +52,7 @@ Working end-to-end: differentiable VQE via `PauliSumOperator` (promoted to `dens
 ## Reproduce
 
 ```bash
-python scripts/vqe_pauli_sum_zne_autodiff.py
+python scripts/noise_mitigation_validation/vqe_pauli_sum_zne_autodiff.py
 ```
 
 Or try it directly in Colab -- no local install needed: [vqe_pauli_sum_zne_autodiff.ipynb](https://colab.research.google.com/github/tatopenn-cell/Dense-Evolution-Discovery/blob/main/notebooks/vqe_pauli_sum_zne_autodiff.ipynb)

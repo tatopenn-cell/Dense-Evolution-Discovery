@@ -39,5 +39,5 @@ Confirmed, not a confound (unlike Experiment 35) -- the CFT prediction genuinely
 ## Reproduce
 
 ```bash
-python scripts/central_charge_calabrese_cardy.py
+python scripts/exotic_physics/central_charge_calabrese_cardy.py
 ```

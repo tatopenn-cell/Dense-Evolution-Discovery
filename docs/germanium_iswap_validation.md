@@ -116,11 +116,11 @@ Combining the paper's own real measurements -- `F_QPT = 60%` (full process tomog
 
 ## Status
 
-Validated in `scripts/germanium_iswap_validation.py` and `tests/test_germanium_iswap_validation.py` (8/8 passing). The box-diagram circuit-drawing utility (`draw_circuit`) and the global 2-qubit depolarizing channel (`depolarize_2q`) are candidates for promotion into Dense-Evolution proper if they prove broadly useful.
+Validated in `scripts/materials_tight_binding/germanium_iswap_validation.py` and `tests/materials_tight_binding/test_germanium_iswap_validation.py` (8/8 passing). The box-diagram circuit-drawing utility (`draw_circuit`) and the global 2-qubit depolarizing channel (`depolarize_2q`) are candidates for promotion into Dense-Evolution proper if they prove broadly useful.
 
 ## Reproduce
 
 ```bash
-python scripts/germanium_iswap_validation.py
-pytest tests/test_germanium_iswap_validation.py -v
+python scripts/materials_tight_binding/germanium_iswap_validation.py
+pytest tests/materials_tight_binding/test_germanium_iswap_validation.py -v
 ```

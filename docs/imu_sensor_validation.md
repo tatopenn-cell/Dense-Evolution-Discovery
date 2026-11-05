@@ -151,5 +151,5 @@ before this was run and never adjusted afterward.
 
 **Reproducing this**: `python scripts/robot_sensor_validation/run_imu_validation.py`
 re-downloads UCI HAR (61MB) into a gitignored `data/` folder and regenerates
-`imu_validation_frozen.json`; `pytest tests/test_imu_sensor_validation.py` reads the
+`imu_validation_frozen.json`; `pytest tests/dense_armor/test_imu_sensor_validation.py` reads the
 already-frozen file, no download needed.

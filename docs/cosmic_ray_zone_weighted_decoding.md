@@ -18,13 +18,13 @@ So a decoder can be given the zone as a *prior* (elevated per-qubit error probab
 
 ## Step 1: Perfect knowledge of the flipped qubits (erasure)
 
-`scripts/cosmic_ray_erasure_decoding.py` treats the hot-spot qubits that flipped as heralded erasures of a Steane [[7,1,3]] block. Extended with the hot-spot size (1-7 qubits), the time since impact, and imperfect detection (false negatives, false positives, latency), all computed exactly by enumerating the 2^7 X-error patterns.
+`scripts/noise_mitigation_validation/cosmic_ray_erasure_decoding.py` treats the hot-spot qubits that flipped as heralded erasures of a Steane [[7,1,3]] block. Extended with the hot-spot size (1-7 qubits), the time since impact, and imperfect detection (false negatives, false positives, latency), all computed exactly by enumerating the 2^7 X-error patterns.
 
 The gain over the blind decoder is ~22% at the peak for a 2-qubit zone, and for a 3-qubit zone it erodes roughly in proportion to the false-negative rate (about 50% left at 30% missed flags, 25% at 50%). False positives up to 5% change little. Flags that arrive after ~10 ms remove the gain exactly where it matters (the 1-1.5 ms peak). This step assumes the decoder knows the exact qubits that flipped, which the paper does not provide, so it is an upper bound.
 
 ## Step 2: The zone as a prior, with decay errors
 
-`scripts/cosmic_ray_zone_weighted_decoding.py`: decay errors (amplitude damping, Pauli-twirled to X, Y with gamma/4 and a small Z term), and maximum-likelihood decoding on stabilizer cosets. Three decoders that differ only in the prior they assume: blind (baseline everywhere), zone (knows hot qubits and strength), wrong zone. Exact, no sampling.
+`scripts/noise_mitigation_validation/cosmic_ray_zone_weighted_decoding.py`: decay errors (amplitude damping, Pauli-twirled to X, Y with gamma/4 and a small Z term), and maximum-likelihood decoding on stabilizer cosets. Three decoders that differ only in the prior they assume: blind (baseline everywhere), zone (knows hot qubits and strength), wrong zone. Exact, no sampling.
 
 - With the peak ratio R of 3.75 or 10 the zone prior changes nothing: one baseline error is always more likely than two hot-qubit errors.
 - With R=30 or 100 (hot-qubit decay probability 28% or 95%, closer to the paper's hot spot) and a small zone, failures drop by 49% (2 qubits, R=30) up to 95% (R=100).
@@ -32,13 +32,13 @@ The gain over the blind decoder is ~22% at the peak for a 2-qubit zone, and for 
 
 ## Step 3: A zone that spreads
 
-`scripts/cosmic_ray_spreading_zone_decoding.py`: the front starts at 2 qubits and covers k(t) = 2 + (N-2)(1 - exp(-t/300 us)) qubits; the burst strength follows `cosmic_ray_burst_profile`. A fourth decoder knows the initial patch only (static). Averaged over 120 random spreading orders on the 7-qubit block.
+`scripts/noise_mitigation_validation/cosmic_ray_spreading_zone_decoding.py`: the front starts at 2 qubits and covers k(t) = 2 + (N-2)(1 - exp(-t/300 us)) qubits; the burst strength follows `cosmic_ray_burst_profile`. A fourth decoder knows the initial patch only (static). Averaged over 120 random spreading orders on the 7-qubit block.
 
 Tracking the zone helps between 10 and 300 us (up to 77% at R=100) and gives 0% from 1 ms on. The average over the first 100 ms is +0.3%. The static decoder is 25% worse than blind at R=30.
 
 ## Step 4: A 5x5 surface code (Kaggle)
 
-`scripts/cosmic_ray_surface_zone_kaggle.py` runs on Kaggle: rotated surface code, distance 5, 25 qubits, MWPM decoding (`pymatching`) with per-qubit weights from each prior, on a true 5x5 geometry with the zone spreading by distance from the impact qubit, averaged over all 25 impact positions, 50,000 shots per point. It first checks that every single and double X, Z, Y error is corrected. Raw results: `docs/assets/cosmic_ray_zone_weighted_decoding/surface_code_results.json`.
+`scripts/noise_mitigation_validation/cosmic_ray_surface_zone_kaggle.py` runs on Kaggle: rotated surface code, distance 5, 25 qubits, MWPM decoding (`pymatching`) with per-qubit weights from each prior, on a true 5x5 geometry with the zone spreading by distance from the impact qubit, averaged over all 25 impact positions, 50,000 shots per point. It first checks that every single and double X, Z, Y error is corrected. Raw results: `docs/assets/cosmic_ray_zone_weighted_decoding/surface_code_results.json`.
 
 ![Zone-weighted decoding on a 5x5 surface code](assets/cosmic_ray_zone_weighted_decoding/surface_code_zone_decoding.png)
 
@@ -56,7 +56,7 @@ Averaged over the first 100 ms: tracking gain +0.3% at both R values; static -11
 
 ## Step 5: The syndromes as the detector
 
-Steps 1-4 give the decoder the zone. Here it has to find the zone itself, from the syndrome stream of the code it is decoding, with no extra hardware. `scripts/cosmic_ray_syndrome_detector_kaggle.py` (Kaggle, same 5x5 surface code): for each shot, the last W error-correction cycles (W = 10, 30, 100, one cycle = 1 us) give how often each check was active. For independent errors, the probability that a check fires is (1 - prod(1 - 2 p_q)) / 2 over its qubits, so -ln(1 - 2 f) is linear in a_q = -ln(1 - 2 p_q). A regularized non-negative least-squares fit (weight 0.1 toward the baseline, not tuned) recovers a per-qubit error probability, and MWPM uses it as its weights. The oracle is the decoder that knows the true zone. 12,000 shots per point, same shots for every decoder, impact qubit drawn uniformly. Raw results: `assets/cosmic_ray_zone_weighted_decoding/syndrome_detector_results.json`.
+Steps 1-4 give the decoder the zone. Here it has to find the zone itself, from the syndrome stream of the code it is decoding, with no extra hardware. `scripts/noise_mitigation_validation/cosmic_ray_syndrome_detector_kaggle.py` (Kaggle, same 5x5 surface code): for each shot, the last W error-correction cycles (W = 10, 30, 100, one cycle = 1 us) give how often each check was active. For independent errors, the probability that a check fires is (1 - prod(1 - 2 p_q)) / 2 over its qubits, so -ln(1 - 2 f) is linear in a_q = -ln(1 - 2 p_q). A regularized non-negative least-squares fit (weight 0.1 toward the baseline, not tuned) recovers a per-qubit error probability, and MWPM uses it as its weights. The oracle is the decoder that knows the true zone. 12,000 shots per point, same shots for every decoder, impact qubit drawn uniformly. Raw results: `assets/cosmic_ray_zone_weighted_decoding/syndrome_detector_results.json`.
 
 | R | t (us) | blind | W=10 | W=30 | W=100 | oracle | best-W gain | oracle gain |
 |---|---|---|---|---|---|---|---|---|
@@ -88,9 +88,9 @@ A zone-aware decoder is useful only if the burst is detected and localized withi
 ## Reproduce
 
 ```bash
-python scripts/cosmic_ray_erasure_decoding.py
-python scripts/cosmic_ray_zone_weighted_decoding.py
-python scripts/cosmic_ray_spreading_zone_decoding.py
+python scripts/noise_mitigation_validation/cosmic_ray_erasure_decoding.py
+python scripts/noise_mitigation_validation/cosmic_ray_zone_weighted_decoding.py
+python scripts/noise_mitigation_validation/cosmic_ray_spreading_zone_decoding.py
 ```
 
-The 5x5 surface-code studies are Kaggle notebooks (`scripts/cosmic_ray_surface_zone_kaggle.py` and `scripts/cosmic_ray_syndrome_detector_kaggle.py`, internet on, CPU).
+The 5x5 surface-code studies are Kaggle notebooks (`scripts/noise_mitigation_validation/cosmic_ray_surface_zone_kaggle.py` and `scripts/noise_mitigation_validation/cosmic_ray_syndrome_detector_kaggle.py`, internet on, CPU).

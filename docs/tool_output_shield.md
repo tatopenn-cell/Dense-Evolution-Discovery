@@ -104,7 +104,7 @@ answer (see [Indirect Prompt Injection vs. Dense-Armor](agent_indirect_prompt_in
 for that boundary) -- only whether numerically implausible values survive
 to reach the point where an agent would reason over them.
 
-**Reproducing this**: `python scripts/tool_output_shield.py` from this
+**Reproducing this**: `python scripts/dense_armor/tool_output_shield.py` from this
 repository's root (requires `dense-armor` importable and network access to
 fetch the OTRF dataset; downloads ~500 points' worth of a 33-minute real
 attack emulation, a few MB).

@@ -72,21 +72,40 @@ res.false_alarm_rate
 ```
 
 ```
-0.875
+0.88
 ```
 
-k=0.5/h=5.0 -- cited casually as "the" classical CUSUM tuning -- gives an **87.5%
-stream-level false-alarm rate** on a 1000-sample purely stable series. Its average run
-length under no-change is only ~19-38 samples, nowhere near a realistic monitoring
-horizon. Swept `h` empirically: `h=20.0` gives 3.0% false-alarm rate, 0% missed-detection,
-F1=0.975 for a 1-sigma shift.
+k=0.5/h=5.0 -- cited casually as "the" classical CUSUM tuning -- gives an **88%
+stream-level false-alarm rate** on a 1000-sample purely stable series (200 trials above;
+1000 trials: 0.880 and 0.862 for two seeds). The reason is the average run length (ARL)
+under no change: **about 469 samples** (closed-form theory, Reynolds 1975 with Siegmund's
+correction, `arl_theory.two_sided_arl`: 469.1; simulation with the true mean and sigma
+known: 466). That is shorter than the 1000-sample horizon, so the probability of at least
+one alarm is 1 - exp(-1000/469) = 0.88 (theory 0.881; simulated 0.888 with known
+parameters, 0.877 with the baseline estimated on 30 points). Swept `h` empirically (1000
+trials, two seeds): `h=10.0` gives a 27% false-alarm rate; `h=20.0` gives **5-6%**
+(0.057 and 0.051), 0.5-0.8% missed detections and F1=0.91 for a 1-sigma shift, every
+spurious flag counted. The theory gives practically no false alarm at `h=20.0` (ARL
+1.6e9): the 5% left is the effect of estimating the mean and the sigma on the first 30
+points, the same gap between theory and a detector with an estimated reference that
+Experiment 44 measured for Dense-Armor's own detector.
+
+*Correction, 21 October 2026.* The first version of this page said 3.0% false alarms and
+F1=0.975 at `h=20.0`, and an average run length of "~19-38 samples" at `h=5.0`. The 3.0%
+does not reproduce: the same call with 200 trials gives 0.095 today (Python 3.12.10, river
+0.26.1) and the frozen comparison file of the same day records 7.5%; with 1000 trials the
+rate is 5-6%. The F1 of 0.975 does not match the harness after the fix of Step 3 (0.91).
+The 19 and 38 are the ARL for a shift of 0.5 sigma (38.02 = (5 + 1.166)^2 for one branch,
+19.01 for two), not the ARL under no change. All three are replaced by the numbers above,
+produced by `arl_check.py`; the conclusion (`h=5.0` is a trap, `h=20.0` removes it)
+stands.
 
 **Generalized immediately, not left as a one-off**: `dense_armor.utility.cusum.
 cusum_detector` ships the exact same `h=5.0` default.
 
 ```python
 import numpy as np
-from dense_armor.utility.cusum import cusum_detector
+from dense_armor.utility.drift.cusum import cusum_detector
 
 rng = np.random.default_rng(42)
 n_with_flag = sum(1 for _ in range(200)
@@ -145,6 +164,9 @@ empirically-calibrated default (CUSUM, EWMA, Shewhart -- see Step 6):
 | 2.0σ | 0.842 | 0.815 | 0.661 | **1.000** | 0.802 | 0.539 |
 | 3.0σ | 0.842 | 0.815 | **0.871** | 1.000 | 0.802 | 0.539 |
 
+The table is the record `compare_to_river_baselines_frozen.json` of 3 September (200
+trials per cell); it was not run again on 21 October.
+
 **ADWIN wins on F1 everywhere.** No detector built here is proposed as a replacement for
 it. What each real, honest number says instead:
 
@@ -186,17 +208,53 @@ detector tested at every shift size (27-286 sample delay). Included in the compa
 table above for completeness; not currently proposed to river as its own contribution --
 no distinctive advantage was found to justify it.
 
+## The verification, in one place
+
+What validates the detector is not the detector: it is the order of the checks and what
+each one is allowed to conclude. The protocol, as it stands after the corrections of Steps
+2 and 3:
+
+| # | Check | What it decides | Where |
+|---|---|---|---|
+| 1 | False-alarm rate over the monitoring horizon, on a purely stable stream, swept over the threshold | A threshold is accepted only if the rate over the real horizon is low, not because the textbook says so | `benchmark_harness.evaluate`, `arl_check.py` |
+| 2 | Count every spurious flag, never the streams that have one | A detector that fires 1000 times must not score like one that fires once | `false_alarm_flags` in `benchmark_harness.py` |
+| 3 | Stress the harness with trivial detectors | A real detector must clear `AlwaysFire`, `NeverFire` and `DummyDriftDetector` at every shift size; `AlwaysFire` scores F1=0.0013 | `dummy_baselines.py` |
+| 4 | Run the same test on the defaults of the sister library | A calibration found once is checked against what is already shipped (100% at `h=5.0`, 3.5% at the default `h=20.0`) | Step 2 |
+| 5 | Compare the measured run length with the closed-form theory | Explains the result instead of only measuring it: 469.1 theory, 466 simulated, 0.877 and 0.05 with an estimated baseline | `arl_check.py` |
+| 6 | Compare at library defaults with the detectors that exist, and state where it loses | ADWIN wins everywhere; the 0.5-sigma weakness is disclosed | `compare_to_river_baselines.py` |
+| 7 | Run the project's own interface checks | 13 of 14 pass; the one failure is the same on the other detectors | Step 5 |
+
+Checks 1 to 4, 6 and 7 were published on 3 September 2026 (commit
+[3018908](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/commit/3018908810bbc9b527d6f7937b11c92fdb45f500),
+06:49 UTC); check 5 and the 1000-trial sweep of check 1 on 21 October 2026.
+
+Fingerprints (first 16 hexadecimal characters of the SHA-256) of the scripts that
+implement the protocol, at the commit that adds this section:
+
+| File | SHA-256 |
+|---|---|
+| `benchmark_harness.py` | `0ac494203ea00b91` |
+| `dummy_baselines.py` | `9445da89f8a0daec` |
+| `cusum_river.py` | `0678abfd2a5bd67f` |
+| `arl_check.py` | `a738080dcdf23680` |
+| `check_candidate_cusum.py` | `8dc86ae797d329b6` |
+
 ## Current status
 
-Posted [a comment on issue #1914](https://github.com/online-ml/river/issues/1914) proposing
-CUSUM specifically, with the h=5.0 finding, the harness stress-test finding, and the honest
-F1 comparison -- following the same collaborative pattern already established in that
-thread (propose scope, wait for maintainer confirmation before opening a PR). EWMA and
-Shewhart are built, calibrated, and interface-verified, held back from a second issue
-comment pending a first response -- posting a second large update before the first gets a
-reply risks looking like pushing rather than collaborating, on a project with real,
-observed community norms (another contributor there explicitly asked to be assigned before
-writing code).
+- **3 September 2026.** Posted [a comment on issue #1914](https://github.com/online-ml/river/issues/1914)
+  proposing CUSUM specifically, with the h=5.0 finding, the harness stress-test finding and
+  the honest F1 comparison. The prototype and the scripts were pushed to this repository
+  the same day (commit 3018908).
+- **21 September 2026.** The maintainer wrote to all the contributors of the thread that he
+  prefers to give the drift work to someone with a track record in drift learning. Between
+  21 and 26 September another contributor opened pull requests for EWMA (#2014), D3
+  (#2015), CUSUM (#2026), Shewhart (#2027) and RDDM (#2028). The CUSUM one keeps the
+  textbook threshold 5 as its default and reports 42 false alarms over 10 x 2000 stable
+  samples (ARL about 476), the trap measured in Step 2.
+- **5 October 2026.** The maintainer wrote that he does not ask anyone to stop
+  contributing, only to follow the contribution guidelines.
+- No pull request was opened from this work. The prototypes (CUSUM, EWMA, Shewhart), the
+  harness and the verification protocol above stay in this repository.
 
 ## Reproducing this
 
@@ -204,5 +262,8 @@ All code lives in `scripts/river_cusum_contribution/`: `cusum_river.py`, `ewma_r
 `shewhart_river.py` (the three detectors), `benchmark_harness.py` (the evaluation harness,
 with the false-alarm-counting fix), `dummy_baselines.py` (`AlwaysFire`/`NeverFire`),
 `compare_to_river_baselines.py` (the full comparison, writes
-`compare_to_river_baselines_frozen.json`). Requires `pip install river` (not a Dense-Armor
+`compare_to_river_baselines_frozen.json`), `arl_check.py` (the run length against the
+theory and the 1000-trial false-alarm sweep, 15 seconds). `check_candidate_cusum.py` applies the
+verification (check 1 and the flag count) to any streaming CUSUM loaded from a file, for
+example a candidate pull request, without copying it into this repository. Requires `pip install river` (not a Dense-Armor
 or Dense-Evolution dependency, kept isolated to this experiment).

@@ -79,12 +79,12 @@ Fitted: `std(n) ≈ 11.75 / n^0.546` — the exponent lands at `0.546`, close to
 
 ## Status
 
-`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. Two of the three original blockers are now closed (robustness, sample-complexity guidance). One remains open: the API shape needs its own design (measurement snapshots in, not a density matrix -- unlike every other function in `dense_evolution.mitigation`).
+`estimate_purity_fixed` and `estimate_magic_entropy_from_shadows` (both median-of-means-based, `n_groups=20` default, configurable) are implemented and validated in `scripts/diagnostics_healing/quantum_shadows_magic_entropy.py`, not yet promoted to `dense_evolution`. Two of the three original blockers are now closed (robustness, sample-complexity guidance). One remains open: the API shape needs its own design (measurement snapshots in, not a density matrix -- unlike every other function in `dense_evolution.mitigation`).
 
 ## Reproduce
 
 ```bash
-python scripts/quantum_shadows_magic_entropy.py
+python scripts/diagnostics_healing/quantum_shadows_magic_entropy.py
 ```
 
 Produces `data/quantum_shadows_purity_bugfix.csv`, `data/quantum_shadows_magic_entropy_convergence.csv`, `data/quantum_shadows_median_of_means_robustness.csv`, `data/quantum_shadows_sample_complexity.csv`.

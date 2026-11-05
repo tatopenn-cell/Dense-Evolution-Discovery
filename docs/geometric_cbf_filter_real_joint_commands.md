@@ -132,8 +132,8 @@ geometric obstacle instead of live visual reconstruction.
 regenerates `cbf_filter_full_evaluation_frozen.json` (SO-101, reuses the already-cached real
 LeRobot parquet, no new download); `python scripts/robot_sensor_validation/cbf_filter_second_domain_aloha.py`
 regenerates `cbf_filter_second_domain_aloha_frozen.json` (ALOHA, reuses the already-cached
-real ALOHA parquet); `pytest tests/test_geometric_cbf_filter.py
-tests/test_cbf_filter_real_joint_commands.py tests/test_cbf_filter_second_domain_aloha.py`
+real ALOHA parquet); `pytest tests/dense_armor/test_geometric_cbf_filter.py
+tests/dense_armor/test_cbf_filter_real_joint_commands.py tests/dense_armor/test_cbf_filter_second_domain_aloha.py`
 reads the already-frozen files / runs the direct unit tests, no network access needed in CI.
 
 **Paper indexed**: Ames et al. (2019) is now in quantumrag's

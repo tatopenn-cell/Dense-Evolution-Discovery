@@ -33,7 +33,7 @@ Local scaling shows a real-looking gain against zero -- but the shuffled control
 
 **Not promoted.** `pink_noise_p_eff` ships as a noise-generation primitive; no predictive ZNE variant for it is added to `dense_evolution.mitigation` on the strength of this result.
 
-Produced by `scripts/pink_noise_zne_windowed_coherence.py`.
+Produced by `scripts/noise_mitigation_validation/pink_noise_zne_windowed_coherence.py`.
 
 ## References
 

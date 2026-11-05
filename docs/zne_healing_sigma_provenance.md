@@ -39,5 +39,5 @@ Not promoted. `calculate_advanced_sigma` remains publicly exported (backward-com
 ## Reproduce
 
 ```bash
-python scripts/zne_healing_sigma_provenance.py
+python scripts/diagnostics_healing/zne_healing_sigma_provenance.py
 ```

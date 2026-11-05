@@ -26,11 +26,11 @@ Run side by side against `healing.py`'s existing `calculate_vettore_dinamico` on
 
 ## Status
 
-Validated in `scripts/kullback_leibler_divergence.py` and `tests/test_kullback_leibler_divergence.py` (7/7 passing). Promoted to `dense_evolution.mitigation.kl_divergence`/`kl_divergence_jit` as an additive diagnostic, alongside `sandwiched_renyi_divergence` -- not a replacement for `healing.py`'s existing (already-validated) scalar signal.
+Validated in `scripts/diagnostics_healing/kullback_leibler_divergence.py` and `tests/diagnostics_healing/test_kullback_leibler_divergence.py` (7/7 passing). Promoted to `dense_evolution.mitigation.kl_divergence`/`kl_divergence_jit` as an additive diagnostic, alongside `sandwiched_renyi_divergence` -- not a replacement for `healing.py`'s existing (already-validated) scalar signal.
 
 ## Reproduce
 
 ```bash
-python scripts/kullback_leibler_divergence.py
-pytest tests/test_kullback_leibler_divergence.py -v
+python scripts/diagnostics_healing/kullback_leibler_divergence.py
+pytest tests/diagnostics_healing/test_kullback_leibler_divergence.py -v
 ```

@@ -39,3 +39,9 @@ Desktop.ini
 
 # mkdocs build output
 /site/
+.coverage
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.pyc

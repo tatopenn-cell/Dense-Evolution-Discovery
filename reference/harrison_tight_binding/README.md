@@ -213,7 +213,7 @@ no longer "the same 4 numbers for everything."
 ## Silicon: indirect gap, same VHD fix (run 2026-08-05)
 
 Si ("silicio ibrido" in this repo's older band-comparison pipeline,
-`scripts/next_gen_silicon.py` / `data/bande_silicio_ibrido.csv`) is
+`scripts/materials_tight_binding/next_gen_silicon.py` / `data/bande_silicio_ibrido.csv`) is
 an **indirect**-gap material -- unlike GaAs, its conduction-band
 minimum is not at Gamma, it's off-axis along the Gamma->X (Delta)
 line. `direct_gap_at_gamma` alone would give the wrong (too-large)
@@ -273,7 +273,7 @@ within ~5-16% of experiment and correctly identifies *which* valley
 
 ## Comparison plot and reproducible script
 
-`scripts/harrison_vhd_validation.py` reruns all three materials'
+`scripts/materials_tight_binding/harrison_vhd_validation.py` reruns all three materials'
 Harrison-universal vs. VHD-material-specific gaps against experiment
 in one script (same numbers as the sections above), and writes:
 

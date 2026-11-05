@@ -1,0 +1,46 @@
+# Output di pytest su main (fix/standard-scaler-overflow branch non applicato)
+# I due test nuovi falliscono con 'inf' sul reproducer.
+
+[1m============================= test session starts ==============================[0m
+[1mcollecting ... [0mcollected 307 items / 305 deselected / 2 selected
+
+sklearn/utils/tests/test_extmath.py::test_incremental_mean_and_var_large_values_no_overflow [31mFAILED[0m[31m [ 50%][0m
+sklearn/utils/tests/test_extmath.py::test_incremental_mean_and_var_constant_values [32mPASSED[0m[31m [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m____________ test_incremental_mean_and_var_large_values_no_overflow ____________[0m
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_incremental_mean_and_var_large_values_no_overflow[39;49;00m():[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Non-regression test for issue #5602.[39;49;00m
+    [33m[39;49;00m
+    [33m    ``StandardScaler.partial_fit`` used to overflow to ``inf`` on long[39;49;00m
+    [33m    streams with large values, because the cumulative sum[39;49;00m
+    [33m    ``last_mean * last_sample_count`` was reconstructed. The delta-based[39;49;00m
+    [33m    update of Chan, Golub and LeVeque (1979) never reconstructs the sum.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        rng = np.random.RandomState([94m0[39;49;00m)[90m[39;49;00m
+        max_f = np.finfo(np.float64).max / [94m1e5[39;49;00m[90m[39;49;00m
+        min_f = max_f / [94m1e2[39;49;00m[90m[39;49;00m
+        batch = rng.uniform(min_f, min_f, size=([94m500000[39;49;00m, [94m1[39;49;00m))[90m[39;49;00m
+    [90m[39;49;00m
+        scaler = StandardScaler(with_std=[94mFalse[39;49;00m).fit(batch)[90m[39;49;00m
+        expected_mean = scaler.mean_[90m[39;49;00m
+    [90m[39;49;00m
+        iscaler = StandardScaler(with_std=[94mFalse[39;49;00m)[90m[39;49;00m
+        [94mfor[39;49;00m _ [95min[39;49;00m [96mrange[39;49;00m([94m100[39;49;00m):[90m[39;49;00m
+            iscaler = iscaler.partial_fit(batch)[90m[39;49;00m
+    [90m[39;49;00m
+>       [94massert[39;49;00m np.isfinite(iscaler.mean_).all()[90m[39;49;00m
+[1m[31mE       AssertionError: assert np.False_[0m
+[1m[31mE        +  where np.False_ = <built-in method all of numpy.ndarray object at 0x78ab9f110f30>()[0m
+[1m[31mE        +    where <built-in method all of numpy.ndarray object at 0x78ab9f110f30> = array([False]).all[0m
+[1m[31mE        +      where array([False]) = <ufunc 'isfinite'>(array([inf]))[0m
+[1m[31mE        +        where <ufunc 'isfinite'> = np.isfinite[0m
+[1m[31mE        +        and   array([inf]) = StandardScaler(with_std=False).mean_[0m
+
+[1m[31msklearn/utils/tests/test_extmath.py[0m:1191: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+I: Seeding RNGs with 249027858
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m sklearn/utils/tests/test_extmath.py::[1mtest_incremental_mean_and_var_large_values_no_overflow[0m - AssertionError: assert np.False_
+[31m=========== [31m[1m1 failed[0m, [32m1 passed[0m, [33m305 deselected[0m, [33m2 warnings[0m[31m in 0.57s[0m[31m ============[0m

@@ -45,5 +45,5 @@ Both real claims in Arovas et al.'s Table 2 for this exact model -- the perturba
 ## Reproduce
 
 ```bash
-python scripts/hubbard_square_arovas.py
+python scripts/materials_tight_binding/hubbard_square_arovas.py
 ```

@@ -80,11 +80,16 @@ nav:
     - "Detection & Drift Algorithms":
       - "Predicting CUSUM Detectability From Theory": cusum_detectability_theory.md
       - "Contributing Drift Detectors to river": river_drift_detector_contribution.md
+      - "Online Platt Scaling for river": river_platt_scaling.md
+      - "Neural Bricks for Online and Classic Learning": neural_bricks_plan.md
+      - "Online Metric Learning: OASIS, LEGO, POLA": river_metric_learning.md
+      - "StandardScaler.partial_fit overflow for scikit-learn": scikit_learn_overflow.md
       - "Cross-Channel Correlation for Robot Fault Detection": cross_channel_correlation_fault_detection.md
       - "Deadband/Backlash Gating for Spike/Regime": deadband_gate_spike_regime.md
       - "Streaming Causal Deviation Detector": streaming_deviation_detector.md
       - "Native Multi-Channel Support": multichannel_wrapper.md
       - "Cross-Channel Mahalanobis Fusion (Negative Result)": cross_channel_mahalanobis_imu.md
+      - "Variance in float32: Shift, Centring and Compensated Tree Sum": dense_armor_float32_variance.md
     - "Safety & Control":
       - "A Causal Rate Limiter for Real Motor Commands": rate_limiter_real_joint_commands.md
       - "A Geometric CBF Filter for Real Robot Commands": geometric_cbf_filter_real_joint_commands.md
@@ -119,10 +124,15 @@ nav:
       - Traversable-Wormhole Teleportation: wormhole_syk_teleportation.md
       - Negative Time (Weak-Value Group Delay): negative_time_group_delay.md
       - Quantum Many-Body Scar Investigation: quantum_scar_investigation.md
-      - Dynamic Vacuum Pressure Theory: dynamic_vacuum_pressure_theory.md
-      - "DVPT Companion: Z₂ Operator Family (Prisma)": prisma_operator_family.md
-      - "DVPT Supplement: Gentile Statistics": gentile_supplement.md
-      - "DVPT: Ghost-Free Horndeski Embedding": ja_horndeski_embedding.md
+      - "Dynamic Vacuum Pressure Theory":
+        - Dynamic Vacuum Pressure Theory: dynamic_vacuum_pressure_theory.md
+        - "Companion: Z₂ Operator Family (Prisma)": prisma_operator_family.md
+        - "Supplement: Gentile Statistics": gentile_supplement.md
+        - "Unified Formula (Lambert W map)": dvpt_unified_formula.md
+        - "Asymptotic Width of the Pöschl-Teller Ground State": dvpt_poschl_teller_width.md
+        - "Closing the Inverse Temperature β": dvpt_beta_closure.md
+        - "Deriving the Operator Parameter μ": dvpt_mu_derivation.md
+        - "Ghost-Free Horndeski Embedding": ja_horndeski_embedding.md
     - "Simulator Infrastructure":
       - "Chunk: Distributed & Disk-Backed Simulation": chunk_distributed_disk_experiment.md
       - "Chunk: GPU Dynamic-Cap Finding": chunk_gpu_cap_finding.md

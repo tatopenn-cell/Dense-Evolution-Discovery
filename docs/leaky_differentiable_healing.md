@@ -33,7 +33,7 @@ Sound differentiability engineering, not promoted to `dense-evolution`. Healing 
 ## Reproduce
 
 ```bash
-python scripts/leaky_differentiable_healing.py
+python scripts/diagnostics_healing/leaky_differentiable_healing.py
 ```
 
 Produces `data/leaky_differentiable_healing.csv`.

@@ -14,13 +14,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect code changes
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && ! git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qvE '^(docs/|mkdocs\.yml$|.*\.md$|scripts/.*\.json$)'; then
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python 3.12
+        if: steps.scope.outputs.code == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Cache pip
+        if: steps.scope.outputs.code == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -29,9 +42,11 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
+        if: steps.scope.outputs.code == 'true'
         run: pip install -r requirements-ci.txt
 
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
+        if: steps.scope.outputs.code == 'true'
         run: pytest tests/ -v --tb=short
 
       - name: Upload Simulation Artifacts

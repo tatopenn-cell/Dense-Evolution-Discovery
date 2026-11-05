@@ -52,7 +52,7 @@ Both numbers for the arithmetic metric, and both for Hayward, were independently
 
 ## 4. What this does and does not establish
 
-**Does**: shows the arithmetic metric is the more physically viable of the two candidate regular black holes on every classical-consistency axis checked (ghost-free, energy-condition-respecting), where the standard alternative (Hayward) fails badly on both. Independently reproduces exactly the numbers reported in the analysis (see `scripts/ja_scalar_tensor_horndeski.py`).
+**Does**: shows the arithmetic metric is the more physically viable of the two candidate regular black holes on every classical-consistency axis checked (ghost-free, energy-condition-respecting), where the standard alternative (Hayward) fails badly on both. Independently reproduces exactly the numbers reported in the analysis (see `scripts/dvpt/ja_scalar_tensor_horndeski.py`).
 
 **Does not**:
 - Derive a value for the coupling `γ` from a deeper principle — it is a free parameter, chosen to work.

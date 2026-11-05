@@ -68,4 +68,4 @@ standard CPU kernel. This scaling wall motivated the QM/MM
 region-partitioning experiments (see
 [QM/MM region partitioning](qmmm_region_partitioning_mmff_correction.md)).
 
-**Script**: `scripts/native_hf_isodesmic_scission_energy.py`.
+**Script**: `scripts/casmi26_chemistry_qmmm/native_hf_isodesmic_scission_energy.py`.

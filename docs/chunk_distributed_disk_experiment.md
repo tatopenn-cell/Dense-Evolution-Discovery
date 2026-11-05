@@ -201,19 +201,19 @@ file in one shared pytest process. If an earlier-collected test file
 imports `dense_evolution`/`jax` first, JAX has already locked in 1 real
 device by the time this script's own `XLA_FLAGS` line runs, and Step 4
 falls back silently to reporting it as unavailable instead of running.
-Running `python scripts/chunk_distributed_disk_experiment.py` on its own
+Running `python scripts/simulator_infrastructure/chunk_distributed_disk_experiment.py` on its own
 (as this page's own numbers were produced) always hits the real
-8-device path — `tests/test_chunk_distributed_disk_experiment.py` skips
+8-device path — `tests/simulator_infrastructure/test_chunk_distributed_disk_experiment.py` skips
 that one check, with the reason above, when it detects this.
 
 ### Reproducing this page
 
-`scripts/chunk_distributed_disk_experiment.py` runs everything on this
+`scripts/simulator_infrastructure/chunk_distributed_disk_experiment.py` runs everything on this
 page top to bottom, including generating the three images above via
 `dense_evolution.circuits.diagram.plot_circuit` (Step 1) and this
 script's own small matplotlib helper for the piece-pairing diagrams
 (Steps 4-5) built from the run's own real `num_chunks`/stride values, not
-drawn by hand. `tests/test_chunk_distributed_disk_experiment.py` checks
+drawn by hand. `tests/simulator_infrastructure/test_chunk_distributed_disk_experiment.py` checks
 its results on every CI run.
 
 ## See Also

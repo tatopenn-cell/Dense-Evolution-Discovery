@@ -1,0 +1,34 @@
+{
+  "issue": "scikit-learn#5602",
+  "issue_url": "https://github.com/scikit-learn/scikit-learn/issues/5602",
+  "environment": "scikit-learn from pip, fix applied to sklearn/utils/extmath.py",
+  "reproducer": {
+    "batch_mean": 1.7976931348623154e+301,
+    "partial_mean": 1.7976931348623154e+301,
+    "finite": true,
+    "difference": 0.0
+  },
+  "constant_data": {
+    "fit_mean": [
+      42.0,
+      42.0
+    ],
+    "partial_mean": [
+      42.0,
+      42.0
+    ],
+    "fit_var": [
+      0.0,
+      0.0
+    ],
+    "partial_var": [
+      0.0,
+      0.0
+    ]
+  },
+  "streaming": {
+    "mean_diff": 1.249000902703301e-16,
+    "var_diff": 4.973799150320701e-14
+  },
+  "pytest": "============================== 6 passed in 2.07s ==============================="
+}

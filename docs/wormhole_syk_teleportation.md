@@ -214,7 +214,7 @@ measured directly at 4.3-6.4s, versus 0.022s/call for the actual
 and their eigendecompositions once, then reusing them for all 870 grid
 points, cut this experiment from an estimated ~2 hours down to **47.6
 seconds** (~165x) -- confirmed by timing both approaches directly, not
-assumed. No multiprocessing needed. See `scripts/wormhole_syk_teleportation.py`'s
+assumed. No multiprocessing needed. See `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_2d_grid_search` for the implementation.
 
 ![2D grid search](assets/wormhole_syk_teleportation/wormhole_2d_grid.png)
@@ -262,8 +262,8 @@ does exactly that.
 ![t1 re-scan at the 2D optimum](assets/wormhole_syk_teleportation/wormhole_t1_rescan_optimum.png)
 
 Uses Experiment 5's precompute-once helpers (same measured ~165x speedup
-rationale), now folded into `scripts/wormhole_syk_teleportation.py`'s
-`run_t1_rescan` -- reproduced by `python scripts/wormhole_syk_teleportation.py`
+rationale), now folded into `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
+`run_t1_rescan` -- reproduced by `python scripts/exotic_physics/wormhole_syk_teleportation.py`
 like every other experiment on this page. Full data:
 `data/wormhole_t1_rescan_optimum.csv`.
 
@@ -306,7 +306,7 @@ reproducible script) suggested the true continuum optimum sits close to
 not contradicting, the converged answer; a real continuous optimizer
 would be needed to settle global optimality rather than a fixed-point
 on this specific grid. Produced by
-`scripts/wormhole_syk_teleportation.py`'s `run_coordinate_ascent_3d`.
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s `run_coordinate_ascent_3d`.
 Full data: `data/wormhole_coordinate_ascent_3d.csv`.
 
 ## Experiment 8: does the converged point generalize across SYK instances? (run 2026-08-07)
@@ -358,7 +358,7 @@ seeds tried: `61, 448, 1944, 2166, 2835, 2907`.
 **Conclusion**: `t0=0.70, mu=17.0, t1=0.36` is a property of seed=61's
 specific random Hamiltonian, not a general finding about the
 traversable-wormhole-inspired teleportation protocol. Produced by
-`scripts/wormhole_syk_teleportation.py`'s `run_generality_check`. Full
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s `run_generality_check`. Full
 data: `data/wormhole_generality_check.csv`.
 
 ## Experiment 9: does the signal survive realistic hardware noise? (run 2026-08-07)
@@ -400,7 +400,7 @@ noise.** It decays monotonically and crosses zero between `p=0.01` and
 of current real superconducting-qubit hardware -- the mean signal
 (`+0.00051`) is smaller than its own trial-to-trial standard deviation
 (`0.01203`): statistically indistinguishable from zero, not a small but
-real effect. Produced by `scripts/wormhole_syk_teleportation.py`'s
+real effect. Produced by `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_trotter_noise_scan`. Full data:
 `data/wormhole_trotter_noise_scan.csv`.
 
@@ -411,7 +411,7 @@ The scan above ran 2026-08-07, four days before `dense-evolution` v8.1.57
 channel: it used to draw `2^(n-1)` independent fire/no-fire decisions per
 qubit per shot instead of one, over-decohering entangled states by up to
 ~2.5x the nominal `p`. Re-run against v8.1.60
-(`scripts/wormhole_noise_scan_reverified.py`, a JAX-`vmap`-batched
+(`scripts/exotic_physics/wormhole_noise_scan_reverified.py`, a JAX-`vmap`-batched
 rewrite using the public `NoiseSpec` wrapper for `n=500` trials/point
 instead of the original `n=6` -- verified first against this page's own
 eager noiseless result bit-for-bit before trusting any noisy number):
@@ -428,7 +428,7 @@ any error at all (a real ~16% chance at `p=0.01`, not a bug).
 
 Experiments 17 and 18's noise-level scan below (the term-order x noise
 interaction check) predated the same fix and are re-verified in their
-own sections. Produced by `scripts/wormhole_noise_scan_reverified.py` ->
+own sections. Produced by `scripts/exotic_physics/wormhole_noise_scan_reverified.py` ->
 `data/wormhole_trotter_noise_scan_reverified_v8160.csv`.
 
 ## Experiment 10: cross-check against the paper's own "Ensemble robustness" claim (run 2026-08-07)
@@ -474,7 +474,7 @@ at *both* evaluation points tested across this whole write-up -- not an
 artifact of any one specific parameter choice. For this specific
 34/11-selection-matched subset, the "generic feature of the ensemble"
 claim does not hold up. Produced by
-`scripts/wormhole_syk_teleportation.py`'s
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_paper_defaults_comparison`. Full data:
 `data/wormhole_paper_defaults_comparison.csv`.
 
@@ -520,7 +520,7 @@ an ad hoc `n=6` look at mode-usage imbalance (using only Experiment
 p=0.022`) -- that does not replicate at `n=100` and should be treated
 as a small-sample artifact, not a real effect. Why the sign varies
 across instances remains genuinely open. Produced by
-`scripts/wormhole_syk_teleportation.py`'s `run_ensemble_sign_check`.
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s `run_ensemble_sign_check`.
 Full data: `data/wormhole_ensemble_sign_check.csv`.
 
 ## Experiment 12: size winding (run 2026-08-07)
@@ -601,7 +601,7 @@ growth from `<l>(0)=1` up to a peak around `t~1.2-2.0` (values range
 (an expected artifact of evolving a small, `n_majorana=8` system rather
 than a true large-N limit).
 
-Produced by `scripts/wormhole_syk_teleportation.py`'s
+Produced by `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_size_winding_check`. Full data: `data/wormhole_size_winding.csv`.
 
 ## Experiment 13: mechanistic check -- message-mode participation & operator growth rate (run 2026-08-07)
@@ -661,7 +661,7 @@ already used, a real multiple-comparisons concern for any candidate
 that *did* come back significant -- since neither did here (and not
 marginally), no holdout re-verification was needed this time, but the
 concern is flagged for any future candidate that does show a hit.
-Produced by `scripts/wormhole_syk_teleportation.py`'s
+Produced by `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_mechanistic_check`. Full data:
 `data/wormhole_mechanistic_check.csv`.
 
@@ -721,7 +721,7 @@ fail to correlate.** `n_zero_pairs`: `r=+0.159, p=0.114`.
 `algebraic_connectivity`: `r=-0.141, p=0.163`. Neither reaches
 significance, ruling out a 6th and 7th candidate explanation (the two
 redundant degree features aren't counted as separate hypotheses, per
-the note above). Produced by `scripts/wormhole_syk_teleportation.py`'s
+the note above). Produced by `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_qubit_topology_check`. Full data: `data/wormhole_qubit_topology.csv`.
 
 ## Experiment 15: N-scaling check, N=8 vs N=12 (run 2026-08-07)
@@ -787,13 +787,13 @@ gave +44.6% over the 1D-scan headline value). Distinguishing "the
 signal is genuinely vanishing" from "the fixed parameters are
 increasingly wrong for this N" would need a real (costly) re-
 optimization at N=12, not attempted here. Produced by
-`scripts/wormhole_syk_teleportation.py`'s `run_n_scaling_check`. Full
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s `run_n_scaling_check`. Full
 data: `data/wormhole_n_scaling_check.csv`.
 
 ## Experiment 16: term-order non-commutativity check (run 2026-08-08)
 
 This repo already has a validated tool for exactly this kind of
-question: `scripts/channel_order_noncommutativity.py` tested whether
+question: `scripts/noise_mitigation_validation/channel_order_noncommutativity.py` tested whether
 applying two *noise channels* in different orders leaves a measurable
 fingerprint on the output distribution, using Jensen-Shannon divergence
 plus a permutation test for an honest p-value. Its settled finding:
@@ -861,7 +861,7 @@ the Trotterized circuit's output -- non-commutativity among the terms
 is real, exactly as Trotter theory predicts), it simply does not
 predict the sign. 15/30 (50%) of this n=30 subsample are wrong-signed,
 consistent with Experiment 11's ~49/100. Produced by
-`scripts/wormhole_syk_teleportation.py`'s
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_term_order_noncommutativity_check`. Full data:
 `data/wormhole_term_order_noncommutativity.csv`.
 
@@ -871,7 +871,7 @@ Experiment 16's own caveat flagged the natural next question: term
 order alone (pure Trotter error, noiseless) didn't predict the sign --
 but does term-order *sensitivity* change once realistic noise is
 present? This is closer in spirit to
-`scripts/channel_order_noncommutativity.py`'s own noisy, stochastic
+`scripts/noise_mitigation_validation/channel_order_noncommutativity.py`'s own noisy, stochastic
 setting, applied here to term order instead of noise-channel order.
 
 Method: identical to Experiment 16 (original vs. reversed K=10+10 term
@@ -928,7 +928,7 @@ where eight prior candidates (mode-usage imbalance, the level-spacing
 r-statistic, size winding, message-mode participation, operator growth
 rate, mode-pair coupling absence, algebraic connectivity, and
 noiseless order_sensitivity itself) found nothing. Produced by
-`scripts/wormhole_syk_teleportation.py`'s
+`scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_term_order_noise_interaction_check`. Full data:
 `data/wormhole_term_order_noise_interaction.csv`.
 
@@ -936,7 +936,7 @@ noiseless order_sensitivity itself) found nothing. Produced by
 
 Like Experiment 9, this scan used `noise_p=0.01` through the same
 pre-v8.1.57 buggy depolarizing channel. Re-run against v8.1.60
-(`scripts/wormhole_term_order_noise_reverified.py`, same
+(`scripts/exotic_physics/wormhole_term_order_noise_reverified.py`, same
 `NoiseSpec`-wrapped `jax.vmap` approach, verified bit-for-bit against
 this page's own eager noiseless reference first): the flagship n=50
 result **holds and strengthens**, r=+0.340 (p=0.0158) -> **r=+0.4013
@@ -957,7 +957,7 @@ highest -- itself an artifact of the same over-aggressive buggy channel
 the original scan ran under. The single-point flagship claim (n=50,
 `noise_p=0.01`) survives and strengthens; the multi-point "gets stronger
 with more noise" trend does not. Produced by
-`scripts/wormhole_term_order_noise_reverified.py` ->
+`scripts/exotic_physics/wormhole_term_order_noise_reverified.py` ->
 `data/wormhole_term_order_noise_interaction_reverified_v8160.csv`,
 `data/wormhole_noise_level_scan_reverified_v8160.csv`.
 
@@ -1019,7 +1019,7 @@ unless stated otherwise.
 A parallelization attempt for this n=100 loop (each seed is fully
 independent, so it looked embarrassingly parallel) was tried and
 abandoned -- see `run_t0_correction_check`'s own docstring in
-`scripts/wormhole_syk_teleportation.py` for the full account.
+`scripts/exotic_physics/wormhole_syk_teleportation.py` for the full account.
 ThreadPoolExecutor hung for tens of minutes from BLAS/OpenBLAS thread
 oversubscription; ProcessPoolExecutor (with each worker's BLAS threads
 pinned to 1) was correct but gave only ~1.1-1.2x wall-clock on an
@@ -1030,7 +1030,7 @@ single sequential process's own per-call time either). Left as a
 genuinely open question rather than silently dropped; the sequential
 version (kept) produces a correct result in a one-time ~18 minutes.
 
-Produced by `scripts/wormhole_syk_teleportation.py`'s
+Produced by `scripts/exotic_physics/wormhole_syk_teleportation.py`'s
 `run_t0_correction_check`. Full data:
 `data/wormhole_ensemble_sign_check_t0_1.8.csv`,
 `data/wormhole_t1_finescan_t0_1.8.csv`.
@@ -1157,7 +1157,7 @@ Produced by `scripts/wormhole_syk_teleportation.py`'s
 ## Reproduce
 
 ```bash
-python scripts/wormhole_syk_teleportation.py
+python scripts/exotic_physics/wormhole_syk_teleportation.py
 ```
 
 Requires `dense-evolution>=8.1.49` (`pip install dense-evolution`).

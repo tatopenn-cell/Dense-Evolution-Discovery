@@ -128,7 +128,7 @@ verified Hermitian for all 16 materials.
 ## Experiment 4: silicon, indirect gap (run 2026-08-05)
 
 Si ("silicio ibrido" in this repo's older band-comparison pipeline,
-`scripts/next_gen_silicon.py` / `data/bande_silicio_ibrido.csv`) is an
+`scripts/materials_tight_binding/next_gen_silicon.py` / `data/bande_silicio_ibrido.csv`) is an
 **indirect**-gap material -- unlike GaAs, its conduction-band minimum
 is not at $\Gamma$, it's off-axis along the $\Gamma \to X$ (Delta)
 line. `direct_gap_at_gamma` alone would give the wrong (too-large)
@@ -172,7 +172,7 @@ the right valley:
 
 ## Comparison plot
 
-Produced by `scripts/harrison_vhd_validation.py`, which also writes the
+Produced by `scripts/materials_tight_binding/harrison_vhd_validation.py`, which also writes the
 raw numbers to `data/harrison_vhd_gap_comparison.csv`:
 
 ![Harrison universal vs. VHD material-specific tight-binding gaps, all three materials against experiment](assets/harrison_tight_binding/harrison_vhd_gap_comparison.png)
@@ -197,7 +197,7 @@ Si, L for Ge) is the true minimum.
 ## What this does NOT replace
 
 Neither model replaces the DFT/SCF path already in this repo for GaAs
-(see `scripts/vqe_tmi_material_design.py`'s DFT-derived hopping,
+(see `scripts/materials_tight_binding/vqe_tmi_material_design.py`'s DFT-derived hopping,
 T1_GAAS_DFT_EV=7.917 eV) when first-principles accuracy is needed.
 Their value is as fast, dependency-free (no PySCF/OpenFermion, numpy
 only) estimates or starting points -- VHD close enough to experiment

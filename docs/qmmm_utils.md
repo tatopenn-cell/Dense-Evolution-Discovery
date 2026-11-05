@@ -134,4 +134,4 @@ function's real behavior is measured (above) but not yet shown to
 improve an actual reaction-energy comparison over fixed-radius BFS.
 
 **Scripts**: `scripts/qmmm/region.py`, `scripts/qmmm/propagation.py`,
-`scripts/qmmm_diffuse2seg_propagation_lambda_sweep.py` (the sweep above).
+`scripts/casmi26_chemistry_qmmm/qmmm_diffuse2seg_propagation_lambda_sweep.py` (the sweep above).

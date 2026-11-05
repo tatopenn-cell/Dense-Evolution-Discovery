@@ -155,7 +155,7 @@ experiment; see the maintainer's own notes for the decision on next steps.
 
 **Reproducing this**: `python scripts/robot_sensor_validation/run_lerobot_calibration_regime_analysis.py`
 re-downloads the dataset (~370KB, gitignored `lerobot_data/`) and regenerates
-`lerobot_calibration_regime_frozen.json`; `pytest tests/test_lerobot_calibration_regime.py`
+`lerobot_calibration_regime_frozen.json`; `pytest tests/dense_armor/test_lerobot_calibration_regime.py`
 reads the already-frozen file, no download needed.
 
 **The velocity-gated stable-frame filter is now a shared, tested helper**
