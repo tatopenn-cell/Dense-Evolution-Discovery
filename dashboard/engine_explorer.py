@@ -194,6 +194,7 @@ def build_args2(name, result, qasm, texts=None, values=None):
     for pname, kind, d in params:
         if first and name in FIRST_ARG:
             args[pname] = _first_arg(FIRST_ARG[name], qasm, result.n_qubits)
+            first = False
         elif kind == "state":
             args[pname] = s
         elif kind == "rho":
