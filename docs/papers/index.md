@@ -7,4 +7,4 @@ has a source.
 
 | # | Title | Status | Text | Code and numbers |
 |---|---|---|---|---|
-| 1 | Variance in float32 with a first-element shift, a local centring and a compensated tree sum | paper written (CPU and GPU, theory, limits); not submitted | [the paper](float32_variance.md), [the note](../dense_armor_float32_variance.md) | [`scripts/float32_variance_paper`](https://github.com/tatopenn-cell/Dense-Evolution-Discovery/tree/papers-section/scripts/float32_variance_paper) |
+| 1 | Variance in float32 with a first-element shift, a local centring and a compensated tree sum | paper written (the tests of the library page, CPU and GPU); not submitted | [the paper](float32_variance.md), [the note](../dense_armor_float32_variance.md) | `benchmarks/stable_variance_float32.py` and the two JSON files of the library |

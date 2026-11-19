@@ -1,6 +1,6 @@
 # Variance in float32 with a first-element shift, a local centring and a compensated tree sum
 
-- Paper: `docs/papers/float32_variance.md` (abstract, related work, kernel, error analysis, experiments on CPU and GPU, limits, reproduction)
+- Paper: `docs/papers/float32_variance.md` (the problem, related work, the kernel, the tests of the library page on a CPU and a GPU, declared limits, reproduction)
 - Note it extends: `docs/dense_armor_float32_variance.md`
-- Code and numbers: `scripts/float32_variance_paper/` (`experiments.py`, `make_figures.py`, `results_cpu.json`, `results_gpu.json`, `results_cpu_ln.json`, `results_gpu_ln.json`)
+- Code and numbers: `benchmarks/stable_variance_float32.py`, `stable_variance_float32.json` (CPU) and `stable_variance_float32_gpu.json` (GPU) of the library
 - Status: written; not submitted.
