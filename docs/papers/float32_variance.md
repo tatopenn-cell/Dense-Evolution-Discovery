@@ -189,6 +189,12 @@ The extra cost is 8.2 % at width 384 and between 2.8 % and 3.4 % at 768 and 1536
 
 The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64 rows of 4096 values `N(offset, 1)`), and the reference is the float64 variance of the stored values. Casting to float32 and using `jnp.var` has an error between 2.8e-08 and 1.6e-07, and `stable_var` between 0 and 2.2e-08; with the variance computed in the small type the error is about 1e-3 for bfloat16 and NaN for float8_e4m3fn. When the storage has already lost the wiggle, no method can give it back: bfloat16 at an offset of 1000 keeps 3 distinct values, and float8 at an offset of 100 keeps 1 or 2. `stable_var` accepts bfloat16 and returns it in the input dtype. The numbers are in `benchmarks/stable_variance_lowprec_gpu.json` of the library.
 
+### 4.8 What this covers and what it does not
+
+- The large sums of a normalisation are carried out in float32, also when the rest of the network is in half precision: Micikevicius et al. [8] write that large reductions, which come up when the statistics of the normalisation layers are accumulated and in the softmax, should be carried out in FP32. `stable_var` works in float32 also for bfloat16 input.
+- RMSNorm [9] does not subtract the mean and divides by the root mean square, so `stable_var`, which is a variance, does not apply to it; it applies to `LayerNorm`.
+- The effect on a real network such as Llama has not been measured.
+
 ## 5. Declared limits
 
 - The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10⁶, 1) on the CPU, in eager mode and under `jit`, and on N(0, 1) under `jit` on the GPU. The cause is not explained.
@@ -215,3 +221,5 @@ The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64
 5. TensorFlow, `tensorflow/python/ops/nn_impl.py`, function `moments`, lines 1480-1487 (master, read on 2026-10-29).
 6. TensorFlow, issue #117286: the inaccuracy of `tf.nn.moments` in float32.
 7. W. Kahan. *Further remarks on reducing truncation errors.* Communications of the ACM 8(1), 40, 1965.
+8. P. Micikevicius et al. *Mixed Precision Training.* ICLR 2018. Section 3.3, the large reductions in FP32.
+9. B. Zhang, R. Sennrich. *Root Mean Square Layer Normalization.* NeurIPS 2019. RMSNorm has no re-centering.
