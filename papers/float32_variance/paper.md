@@ -262,20 +262,7 @@ The kernel is closer to the float64 reference in all 66 stacks, by a factor betw
 
 ### 4.5 The cost in a network step
 
-**The key point: in a complete neural network, the impact of stable_var on the total speed is almost null (only +1.5%), even if the isolated operation is slower.**
-
-Here is the detailed explanation of the numbers and of their meaning:
-
-**1. The context of the test**
-
-The test simulates a small language model or a block of a neural network with these characteristics:
-
-- 4096 tokens: the length of the processed sequence.
-- Width 1024 and hidden 4096: the internal dimensions of the vectors and of the layers (typical architecture of the Feed-Forward blocks of Transformers).
-- 8 layers: the depth of the tested network.
-- Median of 7 runs: the test was repeated 7 times, taking the central value to avoid temporary distortions of the GPU.
-
-**2. Analysis of the table (isolated computation against whole network)**
+The step of a stack of 8 feed-forward blocks of a transformer (hidden size 4096, width 1024, 4096 tokens), forward and backward, on a Kaggle GPU in float32, with the usual layer normalisation and with `stable_var`; the median of 7 runs. The gradient is finite in both cases.
 
 | | usual | with `stable_var` |
 |---|---|---|
@@ -283,14 +270,7 @@ The test simulates a small language model or a block of a neural network with th
 | normalisation alone | 0.61 ms | 1.28 ms |
 | share of the normalisation in the step | 1.1 % | 2.2 % |
 
-- Normalisation alone (0.61 ms against 1.28 ms): taken alone, the version with stable_var takes about twice the time (2.1 times slower). It is the figure we had seen in the previous tests.
-- Forward and backward step (458.9 ms against 465.6 ms): it is the time needed for a whole training cycle (forward + backward pass, that is calculation of the error and update of the weights). Here the difference is only 6.7 milliseconds (+1.45%, rounded to 1.5%).
-- Share of the normalisation (1.1% against 2.2%): in a real network, the bulk of the computational work is done by the matrix multiplications (the linear layers). The normalisation takes a tiny slice of the total time. Even doubling its cost, its weight on the total goes from 1.1% to 2.2%: a negligible impact.
-
-**3. What it means for the training**
-
-- "The gradient is finite": it means that the calculations did not "explode" producing mathematical errors (NaN or infinity), confirming the numerical stability in both tests.
-- The practical confirmation: the slowdown (up to 3x) measured by isolating the single layer is not a problem in practice, because it is "absorbed" by the other, much heavier, calculations of the network.
+The normalisation alone is 2.1 times slower with `stable_var`, and the step is 1.45 % longer: the normalisation is a small share of the work of a step, which is mostly matrix products. The share falls with the width of the network, and the cost of the step should fall with it; Section 4.6 shows this only in part.
 
 ### 4.6 The same on a TPU, by width
 
@@ -318,7 +298,7 @@ The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64
 
 - The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10⁶, 1) on the CPU, in eager mode and under `jit`, and on N(0, 1) under `jit` on the GPU. The cause is not explained.
 - The speed is 3.59 times the baseline on the CPU and 2.24 times on the GPU; the threshold of 4.0 was chosen after the measurement.
-- Not measured: float64 (`[1e307]*3`), TPU, other array sizes.
+- Not measured: float64 (`[1e307]*3`), the four datasets and the speed benchmark on a TPU, other array sizes.
 - The baseline of the tests has no shift: there is no comparison with a shifted baseline.
 - `stable_var` is a function, not an estimator: it has no `learn_one`, no `budget_s`, no `memory_class`.
 - The 1965 paper of Kahan [7] is bibliographic only, not read.

@@ -1,14 +1,18 @@
 """Variance in float32: the standalone program of the paper.
 
-Everything the paper claims on the examples and on the accuracy runs is computed here, with no
-library of ours: the kernel of ``stable_var`` is written out below, copied from the code of the
-library (``dense_armor/core/signals/stats/stable.py``), and needs only JAX and NumPy.
+Everything the paper claims on the examples and on the accuracy runs is
+computed here, with no library of ours: the kernel of ``stable_var`` is
+written out below, copied from the code of the library
+(``dense_armor/core/signals/stats/stable.py``), and needs only JAX and
+NumPy.
 
     python reproduce_standalone.py
 
-It prints, in order: the problem, the stock index, the shift, the TwoSum, the compensated tree, the
-Kahan sum, the variance of identical values, the four datasets and a small stack of layers. The last
-digits can differ with the version of JAX and with the machine. The times are not measured here.
+It prints, in order: the grid of float32, the problem, the stock index, the
+shift, the TwoSum, the compensated tree, the Kahan sum, the variance of
+identical values, the four datasets and a small stack of layers. The last
+digits can differ with the version of JAX and with the machine. The times
+are not measured here.
 """
 
 import jax
@@ -21,6 +25,7 @@ WSCALE = 0.7
 
 
 # the kernel of stable_var, copied from the library
+
 
 def _as_float_array(x):
     """Return ``x`` as a JAX array with a float dtype.
@@ -76,7 +81,9 @@ def _check_axis(a, axis):
     nd = a.ndim
     for ax in axis:
         if not (-nd <= ax < nd):
-            raise ValueError(f"stable_var: axis {ax} out of bounds for ndim {nd}")
+            raise ValueError(
+                f"stable_var: axis {ax} out of bounds for ndim {nd}"
+            )
     return tuple(sorted({ax % nd for ax in axis}))
 
 
@@ -172,7 +179,9 @@ def _finish_var(var_pop, n, ddof, axes, batch_shape, keepdims, out_dtype):
         denom = n - ddof
         if denom <= 0:
             var = jnp.where(
-                var_pop == 0, jnp.zeros_like(var_pop), jnp.full_like(var_pop, jnp.nan)
+                var_pop == 0,
+                jnp.zeros_like(var_pop),
+                jnp.full_like(var_pop, jnp.nan),
             )
         else:
             factor = var_pop.dtype.type(n / denom)
@@ -232,9 +241,9 @@ def stable_var(x, axis=None, ddof=0, keepdims=False):
     if xa.dtype.kind == "c":
         re = xa.real
         im = xa.imag
-        return stable_var(re, axis=axis, ddof=ddof, keepdims=keepdims) + stable_var(
-            im, axis=axis, ddof=ddof, keepdims=keepdims
-        )
+        return stable_var(
+            re, axis=axis, ddof=ddof, keepdims=keepdims
+        ) + stable_var(im, axis=axis, ddof=ddof, keepdims=keepdims)
     a = _as_float_array(x)
     out_dtype = _result_dtype(x)
     if a.ndim == 0:
@@ -255,6 +264,7 @@ def stable_var(x, axis=None, ddof=0, keepdims=False):
 
 # the baseline, the cases and the error of the accuracy runs
 
+
 def naive(x, axis):
     m = jnp.mean(x, axis=axis, keepdims=True)
     d = x - m
@@ -264,7 +274,9 @@ def naive(x, axis):
 def base(x, axis):
     m = jnp.mean(x, axis=axis, keepdims=True)
     d = x - m
-    return jnp.maximum(jnp.mean(d * d, axis=axis) - jnp.mean(d, axis=axis) ** 2, 0.0)
+    return jnp.maximum(
+        jnp.mean(d * d, axis=axis) - jnp.mean(d, axis=axis) ** 2, 0.0
+    )
 
 
 def _max_rel(err, ref):
@@ -299,6 +311,7 @@ def accuracy_cases(smoke):
 
 
 # the layers of the stack of layers
+
 
 def ln_usual(x):
     mean = jnp.mean(x, axis=-1, keepdims=True)
@@ -341,7 +354,9 @@ def make_reference(spread):
     def reference_grad(xs, W, c):
         def step(g, inp):
             x, w = inp
-            return jax.vjp(lambda a: block(a, w, ln_usual, spread), x)[1](g)[0], None
+            return jax.vjp(lambda a: block(a, w, ln_usual, spread), x)[1](g)[
+                0
+            ], None
 
         return jax.lax.scan(step, c, (xs, W), reverse=True)[0]
 
@@ -352,19 +367,36 @@ def orthogonal(rng, L, D):
     q = np.linalg.qr(rng.normal(0.0, 1.0, (L, D, D)))[0]
     return (WSCALE * q).astype(np.float32)
 
+
 def grid():
-    print("0. the grid of float32 near mu^2, against sigma^2: the one-pass formula fails when sigma^2 is below one step")
-    for name, mu, sigma in (("stock index", 4500.0, 0.5), ("robot joint", 1000.0, 0.01), ("problem", 1e6, 1.0)):
+    print(
+        "0. the grid of float32 near mu^2, against sigma^2: "
+        "the one-pass formula fails when sigma^2 is below one step"
+    )
+    cases = (
+        ("stock index", 4500.0, 0.5),
+        ("robot joint", 1000.0, 0.01),
+        ("problem", 1e6, 1.0),
+    )
+    for name, mu, sigma in cases:
         step = float(np.spacing(np.float32(mu * mu)))
-        print(f"   {name:12s} mu/sigma {mu / sigma:9.0f}   ulp(mu^2) {step:12.4g}   sigma^2 {sigma * sigma:10.4g}   below one step: {sigma * sigma < step}")
+        below = sigma * sigma < step
+        print(
+            f"   {name:12s} mu/sigma {mu / sigma:9.0f}"
+            f"   ulp(mu^2) {step:12.4g}   sigma^2 {sigma * sigma:10.4g}"
+            f"   below one step: {below}"
+        )
 
 
 def problem():
-    x32 = np.random.default_rng(0).normal(1e6, 1.0, 3000).astype(np.float32)
+    rng = np.random.default_rng(0)
+    x32 = rng.normal(1e6, 1.0, 3000).astype(np.float32)
     x = jnp.asarray(x32)
+    ref = float(np.var(x32.astype(np.float64)))
+    one_pass = float(jnp.mean(x * x) - jnp.mean(x) ** 2)
     print("1. the problem: 3000 values around 10^6, float32")
-    print("   float64 variance          ", float(np.var(x32.astype(np.float64))))
-    print("   one-pass float32 formula  ", float(jnp.mean(x * x) - jnp.mean(x) ** 2))
+    print("   float64 variance          ", ref)
+    print("   one-pass float32 formula  ", one_pass)
     print("   stable_var                ", float(stable_var(x)))
 
 
@@ -373,33 +405,54 @@ def stock_index():
     quotes = np.round(rng.normal(4500.0, 0.5, 3000) * 4.0) / 4.0
     x = jnp.asarray(quotes.astype(np.float32))
     ref = float(np.var(np.asarray(x, dtype=np.float64)))
-    naive_one = float(jnp.mean(x * x) - jnp.mean(x) ** 2)
+    one_pass = float(jnp.mean(x * x) - jnp.mean(x) ** 2)
+    stable = float(stable_var(x))
     print("2. a stock index near 4500, steps of 0.25")
-    print(f"   {ref:.4f} {naive_one:.4f} {float(stable_var(x)):.4f}   (float64, one-pass float32, stable_var)")
+    print(
+        f"   {ref:.4f} {one_pass:.4f} {stable:.4f}"
+        "   (float64, one-pass float32, stable_var)"
+    )
 
 
 def shift():
     x = jnp.asarray([1000.0, 1000.01, 1000.02], dtype=jnp.float32)
-    print("3. the shift of [1000.0, 1000.01, 1000.02]:", np.asarray(x - x[0]))
+    d = np.asarray(x - x[0])
+    print("3. the shift of [1000.0, 1000.01, 1000.02]:", d)
 
 
 def two_sum_example():
     a, b = np.float32(16777216.0), np.float32(1.0)
     s, e = _two_sum(jnp.float32(a), jnp.float32(b))
-    print("4. TwoSum of a = 16777216 and b = 1, float32: plain sum", float(a + b), "| s", float(s), "e", float(e))
+    print(
+        "4. TwoSum of a = 16777216 and b = 1, float32:",
+        "plain sum",
+        float(a + b),
+        "| s",
+        float(s),
+        "e",
+        float(e),
+    )
 
 
 def tree_example():
     v = jnp.asarray([1.0] + [1e-8] * 7, dtype=jnp.float32)
     exact = float(np.sum(np.asarray(v, dtype=np.float64)))
-    print("5. eight numbers, 1.0 and seven of 1e-8: plain float32 sum", float(jnp.sum(v)),
-          "| compensated tree", float(_compensated_tree(v)), "| exact", exact)
+    print(
+        "5. eight numbers, 1.0 and seven of 1e-8:",
+        "plain float32 sum",
+        float(jnp.sum(v)),
+        "| compensated tree",
+        float(_compensated_tree(v)),
+        "| exact",
+        exact,
+    )
 
 
 def kahan_example():
     def seq_sum(x):
         def step(carry, xi):
             return carry + xi, None
+
         s, _ = jax.lax.scan(step, jnp.zeros((), x.dtype), x)
         return s
 
@@ -410,30 +463,45 @@ def kahan_example():
             t = s + y
             c = (t - s) - y
             return (t, c), None
-        (s, c), _ = jax.lax.scan(step, (jnp.zeros((), x.dtype), jnp.zeros((), x.dtype)), x)
+
+        zero = jnp.zeros((), x.dtype)
+        (s, c), _ = jax.lax.scan(step, (zero, zero), x)
         return s + c
 
     x = jnp.asarray([1.0] + [1e-7] * 100000, dtype=jnp.float32)
-    print("6. 1.0 and 100000 numbers of 1e-7, float32: sequential sum", f"{float(seq_sum(x)):.8f}", "| Kahan", f"{float(kahan(x)):.8f}", "| exact 1.01")
+    print(
+        "6. 1.0 and 100000 numbers of 1e-7, float32:",
+        "sequential sum",
+        f"{float(seq_sum(x)):.8f}",
+        "| Kahan",
+        f"{float(kahan(x)):.8f}",
+        "| exact 1.01",
+    )
 
 
 def identical():
     print("7. the variance of identical values (stable_var, under jit)")
     for name, dt, val in identical_cases():
         x = jnp.asarray(np.full(3, val, dtype=dt))
-        print(f"   {name:12s}", float(jax.jit(lambda a: stable_var(a))(x)))
+        v = float(jax.jit(lambda a: stable_var(a))(x))
+        print(f"   {name:12s}", v)
 
 
 def datasets():
-    print("8. the four datasets, maximum relative error against float64: base eager, kernel eager, base jit, kernel jit")
+    print(
+        "8. the four datasets, maximum relative error against float64:",
+        "base eager, kernel eager, base jit, kernel jit",
+    )
     for name, data, axis in accuracy_cases(False):
         ref = np.var(data.astype(np.float64), axis=axis)
         x = jnp.asarray(data)
+        base_jit = jax.jit(lambda a: base(a, axis))
+        kern_jit = jax.jit(lambda a: stable_var(a, axis=axis))
         row = [
             _max_rel(base(x, axis), ref),
             _max_rel(stable_var(x, axis=axis), ref),
-            _max_rel(jax.jit(lambda a: base(a, axis))(x), ref),
-            _max_rel(jax.jit(lambda a: stable_var(a, axis=axis))(x), ref),
+            _max_rel(base_jit(x), ref),
+            _max_rel(kern_jit(x), ref),
         ]
         print(f"   {name:11s}", "  ".join(f"{v:.2e}" for v in row))
 
@@ -444,16 +512,22 @@ def layers():
     B, D, depths = 16, 64, [1, 4, 16, 64]
     rng = np.random.default_rng(0)
     c = rng.normal(0.0, 1.0, (B, D)).astype(np.float32)
-    y0 = np.random.default_rng(1).normal(OFFSET, SPREAD, (B, D)).astype(np.float32)
-    print("9. a stack of normalised layers, float32, offset 1000 and spread 0.004: error of the gradient, usual and with stable_var")
+    rng1 = np.random.default_rng(1)
+    y0 = rng1.normal(OFFSET, SPREAD, (B, D)).astype(np.float32)
+    print(
+        "9. a stack of normalised layers, float32, offset 1000 and",
+        "spread 0.004: error of the gradient, usual and with stable_var",
+    )
     ref_grad = make_reference(SPREAD)
     for L in depths:
         W = jnp.asarray(orthogonal(rng, L, D))
         a = (jnp.asarray(y0), W, jnp.asarray(c))
+        W64 = W.astype(jnp.float64)
+        c64 = a[2].astype(jnp.float64)
         res = []
         for ln in (ln_usual, ln_stable):
             xs = make_inputs(ln, SPREAD)(a[0], W)
-            g64 = np.asarray(ref_grad(xs.astype(jnp.float64), W.astype(jnp.float64), a[2].astype(jnp.float64)))
+            g64 = np.asarray(ref_grad(xs.astype(jnp.float64), W64, c64))
             g32 = np.asarray(make_grad(ln, SPREAD)(*a), np.float64)
             res.append(np.linalg.norm(g32 - g64) / np.linalg.norm(g64))
         print(f"   {L:3d} layers   {res[0]:.2e}   {res[1]:.2e}")
