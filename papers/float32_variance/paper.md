@@ -294,12 +294,31 @@ The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64
 - RMSNorm [9] does not subtract the mean and divides by the root mean square, so `stable_var`, which is a variance, does not apply to it; it applies to `LayerNorm`.
 - The effect on a real network such as Llama has not been measured.
 
+### 4.9 Ablation: the contribution of each step
+
+Same datasets and the same structure (a `vmap` over one-dimensional slices), with one step changed at a time. The four columns of accuracy count the datasets, out of four, on which the maximum error of the variant is not larger than that of the reference formula; the speed is the median ratio to the reference formula, with the minimum and the maximum over the sessions.
+
+| variant | CPU eager | CPU jit | GPU eager | GPU jit | `[1e38]*3` CPU eager / jit | `[1e38]*3` GPU eager / jit | speed CPU | speed GPU |
+|---|---|---|---|---|---|---|---|---|
+| formula of reference (two-term, no shift, tree sum) | 4/4 | 4/4 | 4/4 | 4/4 | nan / nan | nan / nan | 1.00 (1.00-1.00) | 1.00 (1.00-1.00) |
+| shift + centring, tree sum, no compensation, no two-term | 2/4 | 0/4 | 3/4 | 2/4 | 0 / 0 | 0 / 0 | 1.01 (0.94-1.02) | 1.01 (1.00-1.05) |
+| shift + centring + two-term, tree sum, no compensation | 2/4 | 0/4 | 3/4 | 2/4 | 0 / 0 | 0 / 0 | 1.82 (1.78-1.89) | 1.00 (0.98-1.07) |
+| no shift, two-term, compensated tree | 4/4 | 4/4 | 4/4 | 4/4 | 0 / nan | nan / nan | 2.22 (2.11-2.28) | 2.17 (2.16-2.30) |
+| shift + centring, compensated tree, no two-term | 3/4 | 3/4 | 4/4 | 3/4 | 0 / 0 | 0 / 0 | 1.75 (1.65-1.80) | 1.87 (1.82-1.93) |
+| shift + centring + two-term, compensated tree (the kernel) | 3/4 | 3/4 | 4/4 | 3/4 | 0 / 0 | 0 / 0 | 2.27 (2.24-2.35) | 2.19 (2.16-2.30) |
+| shift + centring, Kahan sequential scan (previous version) | 3/4 | 3/4 | 4/4 | 3/4 | 0 / 0 | 0 / 0 | 1.62 (1.55-1.64) | 42.96 (41.71-45.79) |
+
+- The shift is the step that gives the exact zero on `[1e38]*3`: the variant without it returns nan under jit on the CPU and in both modes on the GPU, and the kernel returns 0.
+- The two-term correction does not change the result: the kernel and the variant without it have the same errors on all sixteen cells (four datasets, eager and jit, CPU and GPU).
+- The compensated tree keeps the error under jit at the level of the reference: the shifted variants without compensation are at most equal on 0 of 4 datasets on the CPU and on 2 of 4 on the GPU under jit, the kernel on 3 of 4 on both.
+- The sequential Kahan scan of the previous version has the same accuracy and the same zero as the kernel, and costs 1.62 times the reference on the CPU and 42.96 times on the GPU, against 2.27 and 2.19 for the compensated tree.
+
 ## 5. Declared limits
 
 - The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10⁶, 1) on the CPU, in eager mode and under `jit`, and on N(0, 1) under `jit` on the GPU. The cause is not explained.
 - The speed is 3.59 times the baseline on the CPU and 2.24 times on the GPU; the threshold of 4.0 was chosen after the measurement.
 - Not measured: float64 (`[1e307]*3`), the four datasets and the speed benchmark on a TPU, other array sizes.
-- The baseline of the tests has no shift: there is no comparison with a shifted baseline.
+- The baseline of the tests has no shift; the nearest comparison with a shifted baseline is the ablation of Section 4.9, where the variants with the shift and without the compensation are measured.
 - `stable_var` is a function, not an estimator: it has no `learn_one`, no `budget_s`, no `memory_class`.
 - The 1965 paper of Kahan [7] is bibliographic only, not read.
 - The depth test is one synthetic stack of layers, not a trained network; it was run in one GPU session (the session saw two devices), with 11 timed runs per depth in the first table and 3 in the second.
