@@ -24,7 +24,7 @@ Chan, Golub and LeVeque [1] survey the algorithms for the sample variance with t
 
 The compensated sum uses `TwoSum`, which returns the rounded sum of two floating-point numbers and its exact rounding error [2, Algorithm 3.1]; see also Theorem 7 of [4].
 
-This kernel adds to the algorithm of [3] the local centring `d = y - m` before the squares, a compensated binary tree, from Kahan's compensation, where each merge uses `TwoSum` [2, 4], in place of the sequential Kahan sum, and the evaluation one slice at a time with `vmap`. The tree has `log₂(n)` vectorised levels, so it runs on a GPU.
+This kernel adds to the algorithm of [3] the local centring `d = y - m` before the squares, a compensated binary tree of Kahan, where each merge uses `TwoSum` [2, 4], in place of the sequential Kahan sum, and the evaluation one slice at a time with `vmap`. The tree has `log₂(n)` vectorised levels, so it runs on a GPU.
 
 ### The TwoSum against the papers
 
