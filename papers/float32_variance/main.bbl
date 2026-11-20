@@ -1,0 +1,57 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[tfi(2026)]{tfissue}
+{TensorFlow}, issue \#117286: the inaccuracy of tf.nn.moments in float32, 2026.
+
+\bibitem[tfm(2026)]{tfmoments}
+{TensorFlow}, tensorflow/python/ops/nn\_impl.py, function moments, lines
+  1480-1487.
+\newblock master, read on 2026-10-29, 2026.
+
+\bibitem[Chan et~al.(1983)Chan, Golub, and LeVeque]{chan1983}
+T.~F. Chan, G.~H. Golub, and R.~J. LeVeque.
+\newblock Algorithms for computing the sample variance: Analysis and
+  recommendations.
+\newblock \emph{The American Statistician}, 37\penalty0 (3):\penalty0 242--247,
+  1983.
+
+\bibitem[Healy(2022)]{healy2022}
+J.~Healy.
+\newblock Accurate and consistent calculation of the mean and variance in
+  {Monte-Carlo} simulations.
+\newblock arXiv:2206.10662v7, 2022.
+
+\bibitem[Kahan(1965)]{kahan1965}
+W.~Kahan.
+\newblock Further remarks on reducing truncation errors.
+\newblock \emph{Communications of the ACM}, 8\penalty0 (1):\penalty0 40, 1965.
+
+\bibitem[Micikevicius et~al.(2018)]{micikevicius2018}
+P.~Micikevicius et~al.
+\newblock Mixed precision training.
+\newblock In \emph{ICLR 2018}, 2018.
+
+\bibitem[Ogita et~al.(2005)Ogita, Rump, and Oishi]{ogita2005}
+T.~Ogita, S.~M. Rump, and S.~Oishi.
+\newblock Accurate sum and dot product.
+\newblock \emph{SIAM Journal on Scientific Computing}, 26\penalty0
+  (6):\penalty0 1955--1988, 2005.
+
+\bibitem[Shewchuk(1997)]{shewchuk1997}
+J.~R. Shewchuk.
+\newblock Adaptive precision floating-point arithmetic and fast robust
+  geometric predicates.
+\newblock \emph{Discrete and Computational Geometry}, 18\penalty0 (3):\penalty0
+  305--363, 1997.
+
+\bibitem[Zhang and Sennrich(2019)]{zhang2019}
+B.~Zhang and R.~Sennrich.
+\newblock Root mean square layer normalization.
+\newblock In \emph{NeurIPS 2019}, 2019.
+
+\end{thebibliography}

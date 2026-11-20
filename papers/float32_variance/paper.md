@@ -41,15 +41,23 @@ The baseline in the tests is the formula of `tf.nn.moments` in TensorFlow [5], `
 3. **Compensated tree.** The residuals `d = y - m` are formed and `s2 = Σ d²` is accumulated by a binary tree. At each level the pairs of partial sums are added with `TwoSum`, and the rounding errors are carried up the tree.
 4. **Two-term correction and division.** With `s1 = Σ d`, the biased variance is `max(s2/n - (s1/n)², 0)`, multiplied by `n / (n - ddof)`. The mean is `x[0] + m`.
 
-![Two rows of the numbers float32 can hold: far apart near 20 million, close together near 0, with the wiggle of 0.25 lost in the first row and kept in the second](../../docs/papers/assets/float32/stable_var_2_shift.png)
+![Two rows of the numbers float32 can hold: far apart near 20 million, close together near 0, with the wiggle of 0.25 lost in the first row and kept in the second](../../docs/papers/assets/float32/stable_var_1_shift.png)
 
 *Figure 2. The shift.*
 
+![The first 20 shifted quotes and the same values after subtracting their mean, which sit around 0](../../docs/papers/assets/float32/stable_var_2_centre.png)
+
+*Figure 3. The centre: the shifted values and the same values after subtracting their mean.*
+
 The idea of a carry that keeps the low-order bits can be shown with the sequential summation of Kahan [7], which is not the one the kernel uses. For the array `[1.0] + [1e-7] * 100000` in float32 the exact sum is 1.01; the sequential sum gives 1.01192093 (error 1.9·10⁻³) and the Kahan sum 1.00999999 (error 9.5·10⁻⁹).
 
-![The TwoSum and the Kahan sum: the plain float32 sum loses the small number, the TwoSum keeps it as the error e, and the Kahan sum of 100000 numbers of 1e-7 gives 1.00999999 where the plain sum gives 1.01192093](../../docs/papers/assets/float32/stable_var_3_twosum.png)
+![A pillar for a, a small cube for b: the plain float32 sum loses the cube, the TwoSum keeps it as the error e](../../docs/papers/assets/float32/stable_var_3_twosum.png)
 
-*Figure 3. The TwoSum and the Kahan sum: with a = 16777216 and b = 1 the plain float32 sum is 16777216, and the TwoSum returns s = 16777216 and e = 1.*
+*Figure 4. The TwoSum: with a = 16777216 and b = 1 the plain float32 sum is 16777216, and the TwoSum returns s = 16777216 and e = 1.*
+
+![A tree of eight numbers added in pairs over three levels, with the sums in blue and the carries in gold](../../docs/papers/assets/float32/stable_var_4_tree.png)
+
+*Figure 5. The compensated tree of Kahan: eight numbers added in pairs over three levels, each merge using the TwoSum, the sums in blue and the carries in gold. For 1.0 and seven numbers of 1e-8 the plain float32 sum is 1.00000000, the compensated tree gives 1.00000012, and the exact sum is 1.00000007.*
 
 The dtype policy: float32 in gives float32 out; float64 in gives float64 out when `jax_enable_x64` is on (off, JAX promotes to float32); float16 and bfloat16 are computed in float32 and returned in the input dtype; integers give float32; complex input gives the real `E|z - mean(z)|²`. `ddof = n` returns `nan` when the variance is positive and `0.0` when the values are identical.
 
@@ -122,7 +130,7 @@ With a spread of 0.004, 11 depths from 1 to 1024 layers, median time of 11 runs:
 
 ![The relative error of the gradient and the time of one forward and backward step against the number of layers, on a GPU, for the usual layer normalisation and for the one with stable_var](../../docs/papers/assets/float32/depth_gradient.png)
 
-*Figure 4. The error of the gradient and the time of a step against the number of layers (spread 0.004).*
+*Figure 6. The error of the gradient and the time of a step against the number of layers (spread 0.004).*
 
 The same 11 depths with six values of the offset over the spread (66 stacks in all, 3 timed runs each), over the 11 depths of each row:
 
@@ -139,7 +147,7 @@ The kernel is closer to the float64 reference in all 66 stacks, by a factor betw
 
 ![The gradient of a stack of normalised layers on a GPU: the usual layer rises like a mountain to 21 percent, the layer with stable_var is a flat floor below 0.006 percent](../../docs/papers/assets/float32/stable_var_4_depth.png)
 
-*Figure 5. The gradient of a stack of normalised layers: the usual layer rises to 21 %, the layer with `stable_var` stays on the floor, below 0.006 %.*
+*Figure 7. The gradient of a stack of normalised layers: the usual layer rises to 21 %, the layer with `stable_var` stays on the floor, below 0.006 %.*
 
 ### 4.5 The cost in a network step
 

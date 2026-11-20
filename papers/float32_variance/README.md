@@ -5,3 +5,4 @@
 - Note it extends: `docs/dense_armor_float32_variance.md`
 - Code and numbers: `benchmarks/stable_variance_float32.py`, `stable_variance_float32.json` (CPU) and `stable_variance_float32_gpu.json` (GPU) of the library
 - Status: written; not submitted.
+- The LaTeX package of the paper: `main.tex`, `references.bib`, `figures/` and the compiled `float32_variance.pdf`; `float32_variance_arxiv_source.zip` is the source package for arXiv (the tex, the bbl, the bib and the figures); `build_tex.py` writes the tex from `docs/papers/float32_variance.md`, and `tectonic main.tex` compiles it
