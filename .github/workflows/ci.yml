@@ -3,8 +3,10 @@ name: Pipeline CI
 on:
   push:
     branches: [ main ]
+    paths: [ '**/*.py', 'requirements*.txt' ]
   pull_request:
     branches: [ main ]
+    paths: [ '**/*.py', 'requirements*.txt' ]
 
 jobs:
   test:
@@ -17,29 +19,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Detect code changes
-        id: scope
-        run: |
-          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
-          CODE=true
-          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            if git diff --name-only "$BASE" HEAD | grep -qE '\.py$|^requirements.*\.txt$'; then
-              CODE=true
-            else
-              CODE=false
-            fi
-          fi
-          echo "code=$CODE" >> "$GITHUB_OUTPUT"
-          echo "full tests: $CODE (they run only when a .py file or a requirements file changes)"
-
       - name: Set up Python 3.12
-        if: steps.scope.outputs.code == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Cache pip
-        if: steps.scope.outputs.code == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -48,11 +33,9 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        if: steps.scope.outputs.code == 'true'
         run: pip install -r requirements-ci.txt
 
       - name: Run cross-validation tests (Dense Evolution vs PennyLane)
-        if: steps.scope.outputs.code == 'true'
         run: pytest tests/ -v --tb=short
 
       - name: Upload Simulation Artifacts
