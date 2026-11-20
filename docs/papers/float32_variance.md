@@ -22,7 +22,7 @@ The same failure on a stock index quoted near 4500 in steps of 0.25 (3000 values
 
 Chan, Golub and LeVeque [1] survey the algorithms for the sample variance with their round-off error bounds, including an analysis of the computation on shifted data: even a crude estimate of the mean used as a shift gives a large gain in accuracy without a first pass. Healy [3], for the mean and the variance in Monte-Carlo simulations, takes the first observation as the shift `K`, sums with Kahan's compensation and applies the two-term formula `T/n - (M - K)²`; his Algorithm 2 is the shifted naive algorithm with Kahan summation. The shift is exact when the values are within a factor of two of it (Sterbenz; Lemma 5 of [4]).
 
-The compensated sum uses `TwoSum`, which returns the rounded sum of two floating-point numbers and its exact rounding error [2, Algorithm 3.1]; see also Theorem 7 of [4].
+`TwoSum` returns the rounded sum of two floating-point numbers and its exact rounding error [2, Algorithm 3.1]; see also Theorem 7 of [4]. The compensated tree of Kahan uses it at each merge.
 
 This kernel adds to the algorithm of [3] the local centring `d = y - m` before the squares, a compensated binary tree of Kahan, where each merge uses `TwoSum` [2, 4], in place of the sequential Kahan sum, and the evaluation one slice at a time with `vmap`. The tree has `log₂(n)` vectorised levels, so it runs on a GPU.
 
