@@ -396,13 +396,43 @@ The values are stored in bfloat16, float8\_e4m3fn and float8\_e5m2 (a GPU test, 
 \item The effect on a real network such as Llama has not been measured.
 \end{itemize}
 
+\subsection{Ablation: the contribution of each step}
+
+Same datasets and the same structure (a \texttt{vmap} over one-dimensional slices), with one step changed at a time. The four columns of accuracy count the datasets, out of four, on which the maximum error of the variant is not larger than that of the reference formula; the speed is the median ratio to the reference formula, with the minimum and the maximum over the sessions.
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllllllll}
+\toprule
+variant & CPU eager & CPU jit & GPU eager & GPU jit & \texttt{[1e38]*3} CPU eager / jit & \texttt{[1e38]*3} GPU eager / jit & speed CPU & speed GPU \\
+\midrule
+formula of reference (two-term, no shift, tree sum) & 4/4 & 4/4 & 4/4 & 4/4 & nan / nan & nan / nan & 1.00 (1.00-1.00) & 1.00 (1.00-1.00) \\
+shift + centring, tree sum, no compensation, no two-term & 2/4 & 0/4 & 3/4 & 2/4 & 0 / 0 & 0 / 0 & 1.01 (0.94-1.02) & 1.01 (1.00-1.05) \\
+shift + centring + two-term, tree sum, no compensation & 2/4 & 0/4 & 3/4 & 2/4 & 0 / 0 & 0 / 0 & 1.82 (1.78-1.89) & 1.00 (0.98-1.07) \\
+no shift, two-term, compensated tree & 4/4 & 4/4 & 4/4 & 4/4 & 0 / nan & nan / nan & 2.22 (2.11-2.28) & 2.17 (2.16-2.30) \\
+shift + centring, compensated tree, no two-term & 3/4 & 3/4 & 4/4 & 3/4 & 0 / 0 & 0 / 0 & 1.75 (1.65-1.80) & 1.87 (1.82-1.93) \\
+shift + centring + two-term, compensated tree (the kernel) & 3/4 & 3/4 & 4/4 & 3/4 & 0 / 0 & 0 / 0 & 2.27 (2.24-2.35) & 2.19 (2.16-2.30) \\
+shift + centring, Kahan sequential scan (previous version) & 3/4 & 3/4 & 4/4 & 3/4 & 0 / 0 & 0 / 0 & 1.62 (1.55-1.64) & 42.96 (41.71-45.79) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{itemize}
+\item The shift is the step that gives the exact zero on \texttt{[1e38]*3}: the variant without it returns nan under jit on the CPU and in both modes on the GPU, and the kernel returns 0.
+\item The two-term correction does not change the result: the kernel and the variant without it have the same errors on all sixteen cells (four datasets, eager and jit, CPU and GPU).
+\item The compensated tree keeps the error under jit at the level of the reference: the shifted variants without compensation are at most equal on 0 of 4 datasets on the CPU and on 2 of 4 on the GPU under jit, the kernel on 3 of 4 on both.
+\item The sequential Kahan scan of the previous version has the same accuracy and the same zero as the kernel, and costs 1.62 times the reference on the CPU and 42.96 times on the GPU, against 2.27 and 2.19 for the compensated tree.
+\end{itemize}
+
 \section{Declared limits}
 
 \begin{itemize}
 \item The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10$^{6}$, 1) on the CPU, in eager mode and under \texttt{jit}, and on N(0, 1) under \texttt{jit} on the GPU. The cause is not explained.
 \item The speed is 3.59 times the baseline on the CPU and 2.24 times on the GPU; the threshold of 4.0 was chosen after the measurement.
 \item Not measured: float64 (\texttt{[1e307]*3}), the four datasets and the speed benchmark on a TPU, other array sizes.
-\item The baseline of the tests has no shift: there is no comparison with a shifted baseline.
+\item The baseline of the tests has no shift; the nearest comparison with a shifted baseline is the ablation of Section 4.9, where the variants with the shift and without the compensation are measured.
 \item \texttt{stable\_var} is a function, not an estimator: it has no \texttt{learn\_one}, no \texttt{budget\_s}, no \texttt{memory\_class}.
 \item The 1965 paper of Kahan \cite{kahan1965} is bibliographic only, not read.
 \item The depth test is one synthetic stack of layers, not a trained network; it was run in one GPU session (the session saw two devices), with 11 timed runs per depth in the first table and 3 in the second.
