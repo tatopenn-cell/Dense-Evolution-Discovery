@@ -125,7 +125,7 @@ def body(lines):
             if j < len(lines) and lines[j].startswith("*Figure"):
                 cap = re.sub(r"^Figure \d+\.\s*", "", lines[j].strip().strip("*"))
                 i = j
-            o.append("\\begin{figure}[H]\n\\centering\n\\includegraphics[width=\\linewidth]{figures/" + name + "}\n\\caption{" + inline(cap or m.group(1)) + "}\n\\end{figure}")
+            o.append("\\begin{figure}[H]\n\\centering\n\\includegraphics[width=0.85\\linewidth]{figures/" + name + "}\n\\caption{" + inline(cap or m.group(1)) + "}\n\\end{figure}")
             i += 1
         elif re.match(r"^- ", ln):
             items = []
@@ -173,7 +173,7 @@ def main():
         "\\usepackage{hyperref}\n\\setlength{\\parskip}{0.5em}\\setlength{\\parindent}{0pt}\n\\sloppy\\emergencystretch=3em\n"
         f"\\title{{{inline(title)}}}\n\\author{{{esc(author)}}}\n\\date{{{esc(date)}}}\n\n\\begin{{document}}\n\\maketitle\n\n"
         + "\n\n".join(out)
-        + "\n\n\\bibliographystyle{plainnat}\n\\bibliography{references}\n\n\\end{document}\n"
+        + "\n\n\\bibliographystyle{unsrtnat}\n\\bibliography{references}\n\n\\end{document}\n"
     )
     (HERE / "main.tex").write_text(tex, encoding="utf-8")
     bib = []

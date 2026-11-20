@@ -29,7 +29,7 @@ The same failure on a stock index quoted near 4500 in steps of 0.25 (3000 values
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_1_problem.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_1_problem.png}
 \caption{The problem.}
 \end{figure}
 
@@ -60,13 +60,13 @@ The baseline in the tests is the formula of \texttt{tf.nn.moments} in TensorFlow
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_1_shift.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_1_shift.png}
 \caption{The shift.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_2_centre.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_2_centre.png}
 \caption{The centre: the shifted values and the same values after subtracting their mean.}
 \end{figure}
 
@@ -74,13 +74,13 @@ The idea of a carry that keeps the low-order bits can be shown with the sequenti
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_3_twosum.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_3_twosum.png}
 \caption{The TwoSum: with a = 16777216 and b = 1 the plain float32 sum is 16777216, and the TwoSum returns s = 16777216 and e = 1.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_4_tree.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_4_tree.png}
 \caption{The compensated tree of Kahan: eight numbers added in pairs over three levels, each merge using the TwoSum, the sums in blue and the carries in gold. For 1.0 and seven numbers of 1e-8 the plain float32 sum is 1.00000000, the compensated tree gives 1.00000012, and the exact sum is 1.00000007.}
 \end{figure}
 
@@ -191,7 +191,7 @@ layers & gradient error, usual & gradient error, \texttt{stable\_var} & time, us
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/depth_gradient.png}
+\includegraphics[width=0.85\linewidth]{figures/depth_gradient.png}
 \caption{The error of the gradient and the time of a step against the number of layers (spread 0.004).}
 \end{figure}
 
@@ -219,7 +219,7 @@ The kernel is closer to the float64 reference in all 66 stacks, by a factor betw
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/stable_var_4_depth.png}
+\includegraphics[width=0.85\linewidth]{figures/stable_var_4_depth.png}
 \caption{The gradient of a stack of normalised layers: the usual layer rises to 21 \%, the layer with \texttt{stable\_var} stays on the floor, below 0.006 \%.}
 \end{figure}
 
@@ -321,7 +321,7 @@ The values are stored in bfloat16, float8\_e4m3fn and float8\_e5m2 (a GPU test, 
 
 \texttt{python benchmarks/stable\_variance\_float32.py} in the library writes \texttt{benchmarks/stable\_variance\_float32.json} with the backend, the JAX version and the sessions of the speed measurement. The GPU numbers were obtained with the same script. As a check, the script was run again on a Kaggle GPU session with JAX 0.11.1, with \texttt{stable.py} and the script taken unchanged from the library: the accuracy numbers are equal to the ones of \texttt{stable\_variance\_float32\_gpu.json} to all the digits, the claims are the same, and the speed ratio is 2.22 (range 2.18 to 2.25). The depth test is \texttt{python benchmarks/stable\_variance\_depth.py} (the first table) and \texttt{python benchmarks/stable\_variance\_depth.py --grid} (the second) in the library, run on a Kaggle GPU session. The figures are drawn by \texttt{docs/assets/stable\_variance/make\_explained.py} and \texttt{make\_depth\_figure.py} of the library from those results. The code blocks of the documentation page of \texttt{stable\_var} were run with the function and their printed outputs are the ones shown there.
 
-\bibliographystyle{plainnat}
+\bibliographystyle{unsrtnat}
 \bibliography{references}
 
 \end{document}
