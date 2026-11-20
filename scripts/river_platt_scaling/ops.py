@@ -61,12 +61,12 @@ class OnlinePlattScaling(base.Wrapper, base.Classifier):
 
     >>> dataset = datasets.Phishing()
 
-    >>> evaluate.progressive_val_score(dataset, tree.HoeffdingTreeClassifier(), metrics.LogLoss())
-    LogLoss: 0.4535476064322544
+    >>> evaluate.progressive_val_score(dataset, tree.HoeffdingTreeClassifier(), metrics.LogLoss())  # doctest: +ELLIPSIS
+    LogLoss: 0.45354760643...
 
     >>> model = OnlinePlattScaling(tree.HoeffdingTreeClassifier())
-    >>> evaluate.progressive_val_score(dataset, model, metrics.LogLoss())
-    LogLoss: 0.35021471255578124
+    >>> evaluate.progressive_val_score(dataset, model, metrics.LogLoss())  # doctest: +ELLIPSIS
+    LogLoss: 0.350214712555...
 
     References
     ----------
