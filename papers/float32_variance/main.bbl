@@ -5,18 +5,18 @@
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Healy(2022)]{healy2022}
+J.~Healy.
+\newblock Accurate and consistent calculation of the mean and variance in
+  {Monte-Carlo} simulations.
+\newblock arXiv:2206.10662v7, 2022.
+
 \bibitem[Chan et~al.(1983)Chan, Golub, and LeVeque]{chan1983}
 T.~F. Chan, G.~H. Golub, and R.~J. LeVeque.
 \newblock Algorithms for computing the sample variance: Analysis and
   recommendations.
 \newblock \emph{The American Statistician}, 37\penalty0 (3):\penalty0 242--247,
   1983.
-
-\bibitem[Healy(2022)]{healy2022}
-J.~Healy.
-\newblock Accurate and consistent calculation of the mean and variance in
-  {Monte-Carlo} simulations.
-\newblock arXiv:2206.10662v7, 2022.
 
 \bibitem[Shewchuk(1997)]{shewchuk1997}
 J.~R. Shewchuk.

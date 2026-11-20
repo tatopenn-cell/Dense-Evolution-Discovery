@@ -1,0 +1,30 @@
+0. the grid of float32 near mu^2, against sigma^2: the one-pass formula fails when sigma^2 is below one step
+   stock index  mu/sigma      9000   ulp(mu^2)            2   sigma^2       0.25   below one step: True
+   robot joint  mu/sigma    100000   ulp(mu^2)       0.0625   sigma^2     0.0001   below one step: True
+   problem      mu/sigma   1000000   ulp(mu^2)    6.554e+04   sigma^2          1   below one step: True
+1. the problem: 3000 values around 10^6, float32
+   float64 variance           0.9897416558159723
+   one-pass float32 formula   -196608.0
+   stable_var                 0.9897416830062866
+2. a stock index near 4500, steps of 0.25
+   0.2528 0.0000 0.2528   (float64, one-pass float32, stable_var)
+3. the shift of [1000.0, 1000.01, 1000.02]: [0.         0.01000977 0.02001953]
+4. TwoSum of a = 16777216 and b = 1, float32: plain sum 16777216.0 | s 16777216.0 e 1.0
+5. eight numbers, 1.0 and seven of 1e-8: plain float32 sum 1.0 | compensated tree 1.0000001192092896 | exact 1.0000000699999996
+6. 1.0 and 100000 numbers of 1e-7, float32: sequential sum 1.01192093 | Kahan 1.00999999 | exact 1.01
+7. the variance of identical values (stable_var, under jit)
+   f32_1e10     0.0
+   f32_7_5e10   0.0
+   f32_1e15     0.0
+   f32_1e38     0.0
+   c64_7_5e10   0.0
+8. the four datasets, maximum relative error against float64: base eager, kernel eager, base jit, kernel jit
+   offset_1e3  1.44e-07  1.17e-07  1.18e-07  1.17e-07
+   offset_1e4  1.59e-07  1.15e-07  1.59e-07  1.15e-07
+   standard    1.94e-07  1.36e-07  1.94e-07  1.36e-07
+   offset_1e6  1.18e-07  1.22e-07  9.97e-08  1.22e-07
+9. a stack of normalised layers, float32, offset 1000 and spread 0.004: error of the gradient, usual and with stable_var
+     1 layers   5.74e-03   2.16e-07
+     4 layers   2.39e-02   4.86e-07
+    16 layers   4.94e-02   1.33e-06
+    64 layers   1.25e-01   3.58e-06

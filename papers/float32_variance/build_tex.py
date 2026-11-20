@@ -64,7 +64,27 @@ def plain(t):
     return "".join(out)
 
 
-TOK = re.compile(r"`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*")
+APPENDIX = (
+    "\n\n\\appendix\n\\section{The standalone program}\n\n"
+    "The program computes the examples and the accuracy runs of this paper with no library of ours: the kernel of "
+    "\\texttt{stable\\_var} is written out in it, and it needs only JAX and NumPy. Save it as "
+    "\\texttt{reproduce\\_standalone.py} and run \\texttt{python reproduce\\_standalone.py}.\n\n"
+    "\\lstinputlisting[language=Python,basicstyle=\\ttfamily\\tiny,breaklines=true,showstringspaces=false,numbers=left]{reproduce_standalone.py}\n\n"
+    "\\section{The output of the program}\n\n"
+    "The output of the run on a CPU; the last digits can differ with the version of JAX and with the machine.\n\n"
+    "\\lstinputlisting[basicstyle=\\ttfamily\\tiny,breaklines=true]{reproduce_standalone_output.txt}"
+)
+
+TOK = re.compile(r"`([^`]+)`|\$([^$]+)\$|\*\*(.+?)\*\*|\*(.+?)\*")
+
+
+def fence(lang, block):
+    if lang == "latex":
+        return "\\begin{equation}\n" + "\n".join(block) + "\n\\end{equation}"
+    if lang == "algorithm":
+        cap = block[0][len("%caption: "):]
+        return "\\begin{algorithm}[H]\n\\caption{" + cap + "}\n\\begin{algorithmic}[1]\n" + "\n".join(block[1:]) + "\n\\end{algorithmic}\n\\end{algorithm}"
+    return "\\begin{verbatim}\n" + "\n".join(block) + "\n\\end{verbatim}"
 
 
 def inline(t):
@@ -74,9 +94,11 @@ def inline(t):
         if m.group(1) is not None:
             out.append("\\texttt{" + uni(esc(m.group(1))) + "}")
         elif m.group(2) is not None:
-            out.append("\\textbf{" + inline(m.group(2)) + "}")
+            out.append("$" + m.group(2) + "$")
+        elif m.group(3) is not None:
+            out.append("\\textbf{" + inline(m.group(3)) + "}")
         else:
-            out.append("\\emph{" + inline(m.group(3)) + "}")
+            out.append("\\emph{" + inline(m.group(4)) + "}")
         pos = m.end()
     out.append(plain(t[pos:]))
     return "".join(out)
@@ -108,6 +130,12 @@ def body(lines):
         ln = lines[i]
         if not ln.strip():
             i += 1
+        elif ln.startswith("```"):
+            j = i + 1
+            while j < len(lines) and not lines[j].startswith("```"):
+                j += 1
+            o.append(fence(ln[3:].strip(), lines[i + 1 : j]))
+            i = j + 1
         elif ln.startswith("|"):
             j = i
             while j < len(lines) and lines[j].startswith("|"):
@@ -142,7 +170,7 @@ def body(lines):
         else:
             j = i
             par = []
-            while j < len(lines) and lines[j].strip() and not lines[j].startswith(("|", "![", "- ", "#")) and not re.match(r"^\d+\. ", lines[j]):
+            while j < len(lines) and lines[j].strip() and not lines[j].startswith(("|", "![", "- ", "#", "```")) and not re.match(r"^\d+\. ", lines[j]):
                 par.append(lines[j].strip())
                 j += 1
             o.append(inline(" ".join(par)))
@@ -169,10 +197,11 @@ def main():
         out.append(cmd + "{" + inline(name) + "}\n\n" + body(chunk))
     tex = (
         "\\documentclass[11pt]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage{lmodern}\n"
-        "\\usepackage{amsmath,amssymb,graphicx,booktabs,float}\n\\usepackage[numbers]{natbib}\n\\usepackage[margin=2.5cm]{geometry}\n"
+        "\\usepackage{amsmath,amssymb,graphicx,booktabs,float}\n\\usepackage{algorithm}\n\\usepackage{algpseudocode}\n\\usepackage{listings}\n\\usepackage[numbers]{natbib}\n\\usepackage[margin=2.5cm]{geometry}\n"
         "\\usepackage{hyperref}\n\\setlength{\\parskip}{0.5em}\\setlength{\\parindent}{0pt}\n\\sloppy\\emergencystretch=3em\n"
         f"\\title{{{inline(title)}}}\n\\author{{{esc(author)}}}\n\\date{{{esc(date)}}}\n\n\\begin{{document}}\n\\maketitle\n\n"
         + "\n\n".join(out)
+        + APPENDIX
         + "\n\n\\bibliographystyle{unsrtnat}\n\\bibliography{references}\n\n\\end{document}\n"
     )
     (HERE / "main.tex").write_text(tex, encoding="utf-8")
