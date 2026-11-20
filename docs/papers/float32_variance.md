@@ -141,6 +141,38 @@ The kernel is closer to the float64 reference in all 66 stacks, by a factor betw
 
 *Figure 5. The gradient of a stack of normalised layers: the usual layer rises to 21 %, the layer with `stable_var` stays on the floor, below 0.006 %.*
 
+### 4.5 The cost in a network step
+
+**The key point: in a complete neural network, the impact of stable_var on the total speed is almost null (only +1.5%), even if the isolated operation is slower.**
+
+Here is the detailed explanation of the numbers and of their meaning:
+
+**1. The context of the test**
+
+The test simulates a small language model or a block of a neural network with these characteristics:
+
+- 4096 tokens: the length of the processed sequence.
+- Width 1024 and hidden 4096: the internal dimensions of the vectors and of the layers (typical architecture of the Feed-Forward blocks of Transformers).
+- 8 layers: the depth of the tested network.
+- Median of 7 runs: the test was repeated 7 times, taking the central value to avoid temporary distortions of the GPU.
+
+**2. Analysis of the table (isolated computation against whole network)**
+
+| | usual | with `stable_var` |
+|---|---|---|
+| forward and backward step | 458.9 ms | 465.6 ms |
+| normalisation alone | 0.61 ms | 1.28 ms |
+| share of the normalisation in the step | 1.1 % | 2.2 % |
+
+- Normalisation alone (0.61 ms against 1.28 ms): taken alone, the version with stable_var takes about twice the time (2.1 times slower). It is the figure we had seen in the previous tests.
+- Forward and backward step (458.9 ms against 465.6 ms): it is the time needed for a whole training cycle (forward + backward pass, that is calculation of the error and update of the weights). Here the difference is only 6.7 milliseconds (+1.45%, rounded to 1.5%).
+- Share of the normalisation (1.1% against 2.2%): in a real network, the bulk of the computational work is done by the matrix multiplications (the linear layers). The normalisation takes a tiny slice of the total time. Even doubling its cost, its weight on the total goes from 1.1% to 2.2%: a negligible impact.
+
+**3. What it means for the training**
+
+- "The gradient is finite": it means that the calculations did not "explode" producing mathematical errors (NaN or infinity), confirming the numerical stability in both tests.
+- The practical confirmation: the slowdown (up to 3x) measured by isolating the single layer is not a problem in practice, because it is "absorbed" by the other, much heavier, calculations of the network.
+
 ## 5. Declared limits
 
 - The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10⁶, 1) on the CPU, in eager mode and under `jit`, and on N(0, 1) under `jit` on the GPU. The cause is not explained.
