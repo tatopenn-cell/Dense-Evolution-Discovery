@@ -18,6 +18,20 @@ The same failure on a stock index quoted near 4500 in steps of 0.25 (3000 values
 
 *Figure 1. The problem.*
 
+### Why the one-pass formula fails
+
+A float32 number $v$ with $2^{e} \le |v| < 2^{e+1}$ is a multiple of $\mathrm{ulp}(v) = 2^{e-23}$, and so $2^{-24}\,|v| < \mathrm{ulp}(v) \le 2^{-23}\,|v|$. Let $\mu$ be the mean and $\sigma$ the standard deviation of the values. The two terms of the one-pass formula $\overline{x^2} - \bar{x}^{\,2}$ are both about $\mu^2$, and the difference of two float32 numbers of that size is a multiple of $\mathrm{ulp}(\mu^2)$: it is $0$ or at least one step of the grid. The quantity to find, $\sigma^2$, is smaller than one step as soon as
+
+```latex
+\frac{\mu}{\sigma} \;>\; 2^{12} = 4096 ,
+```
+
+and it can already be smaller from $\mu/\sigma > 2^{11.5} \approx 2900$, according to where $\mu^2$ sits in its binade. This is the case of the three examples of this paper: a stock index near 4500 that moves by 0.25 ($\mu/\sigma \approx 9000$), a joint around 1000 that vibrates by 0.01 ($10^{5}$), and 3000 values around $10^6$ with a spread of 1 ($10^{6}$). For the last one $\mu^2 = 10^{12}$, the spacing of the float32 numbers there is $2^{16} = 65536$, and the variance, $0.99$, is far below one step of the grid: the one-pass formula returns $-196608$.
+
+The shift removes the cause. After $y_i = x_i - x_1$ the values are of the order of $\sigma$ and not of $\mu$, so the squares and the sums are of the order of $\sigma^2$, and their rounding errors are a fraction $2^{-24}$ of $\sigma^2$ and not of $\mu^2$: to the first order the relative error does not depend on $\mu/\sigma$ any more. What is left is the error of the sum of the $n$ squares, which the compensated tree reduces, and the error of $m$, which the second term of the formula cancels to the first order. The shift itself costs no error when the values are within a factor of two of $x_1$, because the subtraction is then exact. The formula of `tf.nn.moments`, which centres on the computed mean first, avoids the first failure and keeps the error of $x - \bar{x}$; Section 4 measures what is left of it.
+
+**Contributions.** (1) The condition under which the one-pass formula fails in float32, $\mu/\sigma$ above a few thousand, and the reason: the grid of the float32 numbers near $\mu^2$. (2) The kernel `stable_var`: the shift, the local centring and the two terms of Healy [3], with the compensated tree of Kahan in which each merge uses the TwoSum, so that it runs in $\lceil\log_2 n\rceil$ vectorised levels on a CPU and on a GPU. (3) The measurements on a CPU, a GPU and a TPU: the accuracy on four datasets, the gradient of a stack of up to 1024 normalised layers, the cost of a training step, and the variance of values stored in bfloat16 and float8. (4) The declared limits.
+
 ## 2. Related work
 
 Chan, Golub and LeVeque [1] survey the algorithms for the sample variance with their round-off error bounds, including an analysis of the computation on shifted data: even a crude estimate of the mean used as a shift gives a large gain in accuracy without a first pass. Healy [3], for the mean and the variance in Monte-Carlo simulations, takes the first observation as the shift `K`, sums with Kahan's compensation and applies the two-term formula `T/n - (M - K)²`; his Algorithm 2 is the shifted naive algorithm with Kahan summation. The shift is exact when the values are within a factor of two of it (Sterbenz; Lemma 5 of [4]).
@@ -41,15 +55,120 @@ The baseline in the tests is the formula of `tf.nn.moments` in TensorFlow [5], `
 3. **Compensated tree.** The residuals `d = y - m` are formed and `s2 = Σ d²` is accumulated by a binary tree. At each level the pairs of partial sums are added with `TwoSum`, and the rounding errors are carried up the tree.
 4. **Two-term correction and division.** With `s1 = Σ d`, the biased variance is `max(s2/n - (s1/n)², 0)`, multiplied by `n / (n - ddof)`. The mean is `x[0] + m`.
 
-![Two rows of the numbers float32 can hold: far apart near 20 million, close together near 0, with the wiggle of 0.25 lost in the first row and kept in the second](../../docs/papers/assets/float32/stable_var_2_shift.png)
+![Two rows of the numbers float32 can hold: far apart near 20 million, close together near 0, with the wiggle of 0.25 lost in the first row and kept in the second](../../docs/papers/assets/float32/stable_var_1_shift.png)
 
 *Figure 2. The shift.*
 
+![The first 20 shifted quotes and the same values after subtracting their mean, which sit around 0](../../docs/papers/assets/float32/stable_var_2_centre.png)
+
+*Figure 3. The centre: the shifted values and the same values after subtracting their mean.*
+
 The idea of a carry that keeps the low-order bits can be shown with the sequential summation of Kahan [7], which is not the one the kernel uses. For the array `[1.0] + [1e-7] * 100000` in float32 the exact sum is 1.01; the sequential sum gives 1.01192093 (error 1.9·10⁻³) and the Kahan sum 1.00999999 (error 9.5·10⁻⁹).
 
-![The TwoSum and the Kahan sum: the plain float32 sum loses the small number, the TwoSum keeps it as the error e, and the Kahan sum of 100000 numbers of 1e-7 gives 1.00999999 where the plain sum gives 1.01192093](../../docs/papers/assets/float32/stable_var_3_twosum.png)
+![A pillar for a, a small cube for b: the plain float32 sum loses the cube, the TwoSum keeps it as the error e](../../docs/papers/assets/float32/stable_var_3_twosum.png)
 
-*Figure 3. The TwoSum and the Kahan sum: with a = 16777216 and b = 1 the plain float32 sum is 16777216, and the TwoSum returns s = 16777216 and e = 1.*
+*Figure 4. The TwoSum: with a = 16777216 and b = 1 the plain float32 sum is 16777216, and the TwoSum returns s = 16777216 and e = 1.*
+
+![A tree of eight numbers added in pairs over three levels, with the sums in blue and the carries in gold](../../docs/papers/assets/float32/stable_var_4_tree.png)
+
+*Figure 5. The compensated tree of Kahan: eight numbers added in pairs over three levels, each merge using the TwoSum, the sums in blue and the carries in gold. For 1.0 and seven numbers of 1e-8 the plain float32 sum is 1.00000000, the compensated tree gives 1.00000012, and the exact sum is 1.00000007.*
+
+### The formulas and the algorithms
+
+Let $x \in \mathbb{F}^n$ be the values of one slice, in float32, and $\mathrm{fl}(\cdot)$ the rounding of the float32 arithmetic. Every operation below is one float32 operation, except where a sum is said to be ordinary or compensated.
+
+**TwoSum.** For two float32 numbers $a$ and $b$, Algorithm 3.1 of [2] and Theorem 7 of [4] give
+
+```latex
+\begin{aligned}
+s &= \mathrm{fl}(a+b),\\
+z &= \mathrm{fl}(s-a),\\
+e &= \mathrm{fl}\bigl((a-(s-z))+(b-z)\bigr),
+\end{aligned}
+\qquad\text{with}\qquad a+b = s+e \ \text{ exactly.}
+```
+
+```algorithm
+%caption: TwoSum$(a,b)$
+\Require float32 numbers $a$, $b$
+\Ensure $s$ and $e$ with $a+b=s+e$ exactly
+\State $s \gets \mathrm{fl}(a+b)$
+\State $z \gets \mathrm{fl}(s-a)$
+\State $e \gets \mathrm{fl}\bigl((a-(s-z))+(b-z)\bigr)$
+\State \Return $s$, $e$
+```
+
+**The shift, the centring and the two terms.** With $y_i = x_i - x_1$, the subtraction is exact when $x_i$ is within a factor of two of $x_1$ (Sterbenz; Lemma 5 of [4]). The mean of the shifted values and the residuals are
+
+```latex
+m = \mathrm{fl}\Bigl(\tfrac{1}{n}\sum_{i=1}^{n} y_i\Bigr), \qquad d_i = y_i - m .
+```
+
+For any constant $m$ the variance of $x$ is $\frac{1}{n}\sum_i (x_i-m)^2 - \bigl(\frac{1}{n}\sum_i (x_i-m)\bigr)^2$. With the computed $m$ the mean of the $d_i$ is zero in exact arithmetic and is not zero in float32: keeping the second term cancels the linear part of the error of $m$. The biased variance is
+
+```latex
+\sigma^2 = \max\Bigl(\tfrac{1}{n}\,S_2 - \bigl(\tfrac{1}{n}\,S_1\bigr)^{2},\ 0\Bigr),
+\qquad S_2 = \sum_{i=1}^{n} d_i^{2}\ \text{(compensated tree)},
+\qquad S_1 = \sum_{i=1}^{n} d_i\ \text{(ordinary sum)},
+```
+
+and, with `ddof`, $\sigma^2_{\mathrm{ddof}} = \frac{n}{n-\mathrm{ddof}}\,\sigma^2$; the mean is $x_1 + m$.
+
+**The complete formula.** Putting the pieces together, with $\mathrm{CT}$ the sum of Algorithm 2 below:
+
+```latex
+\begin{aligned}
+\mathrm{stable\_var}(x) &= \frac{n}{n-\mathrm{ddof}}\;
+\max\Bigl(\frac{1}{n}\,\mathrm{CT}\bigl(d_1^{2},\dots,d_n^{2}\bigr) - \Bigl(\frac{1}{n}\sum_{i=1}^{n} d_i\Bigr)^{2},\; 0\Bigr),\\
+d_i &= (x_i - x_1) - m, \qquad m = \mathrm{fl}\Bigl(\frac{1}{n}\sum_{i=1}^{n}(x_i - x_1)\Bigr).
+\end{aligned}
+```
+
+**The compensated tree.** For $v \in \mathbb{F}^n$, with $S^{(0)}_k = v_k$ and $C^{(0)}_k = 0$, each level adds the pairs at the same time:
+
+```latex
+\begin{aligned}
+(s_1,e_1) &= \mathrm{TwoSum}\bigl(S^{(\ell)}_{2k-1},S^{(\ell)}_{2k}\bigr),\\
+(s_2,e_2) &= \mathrm{TwoSum}\bigl(C^{(\ell)}_{2k-1},C^{(\ell)}_{2k}\bigr),\\
+(s_3,e_3) &= \mathrm{TwoSum}(s_1,s_2),\\
+S^{(\ell+1)}_{k} &= s_3, \qquad C^{(\ell+1)}_{k} = \mathrm{fl}\bigl(\mathrm{fl}(e_1+e_2)+e_3\bigr),
+\end{aligned}
+```
+
+and the result is $\mathrm{fl}\bigl(S^{(L)}_1 + C^{(L)}_1\bigr)$ after $L=\lceil \log_2 n\rceil$ levels; a level of odd length is completed with a zero.
+
+```algorithm
+%caption: CompensatedTree$(v)$
+\Require $v \in \mathbb{F}^n$
+\Ensure the compensated sum of $v$
+\State $S \gets v$, $C \gets 0$
+\While{$|S| > 1$}
+\If{$|S|$ is odd}
+\State append $0$ to $S$ and to $C$
+\EndIf
+\For{$k = 1,\dots,|S|/2$ \textbf{in parallel}}
+\State $(s_1,e_1) \gets \mathrm{TwoSum}(S_{2k-1},S_{2k})$
+\State $(s_2,e_2) \gets \mathrm{TwoSum}(C_{2k-1},C_{2k})$
+\State $(s_3,e_3) \gets \mathrm{TwoSum}(s_1,s_2)$
+\State $S'_k \gets s_3$, $\quad C'_k \gets \mathrm{fl}(\mathrm{fl}(e_1+e_2)+e_3)$
+\EndFor
+\State $S \gets S'$, $C \gets C'$
+\EndWhile
+\State \Return $\mathrm{fl}(S_1 + C_1)$
+```
+
+```algorithm
+%caption: StableVar$(x,\mathrm{ddof})$
+\Require $x \in \mathbb{F}^n$, $\mathrm{ddof}$
+\Ensure the variance of $x$
+\State $y_i \gets x_i - x_1$ for $i = 1,\dots,n$
+\State $m \gets \mathrm{fl}\bigl(\tfrac{1}{n}\sum_i y_i\bigr)$, $\quad d_i \gets y_i - m$
+\State $S_2 \gets \mathrm{CompensatedTree}(d_1^2,\dots,d_n^2)$, $\quad S_1 \gets \sum_i d_i$
+\State $\sigma^2 \gets \max\bigl(S_2/n - (S_1/n)^2,\ 0\bigr)$
+\State \Return $\sigma^2\, n/(n-\mathrm{ddof})$
+```
+
+The program of Appendix A writes these three algorithms out in Python and runs them, with no library of ours.
 
 The dtype policy: float32 in gives float32 out; float64 in gives float64 out when `jax_enable_x64` is on (off, JAX promotes to float32); float16 and bfloat16 are computed in float32 and returned in the input dtype; integers give float32; complex input gives the real `E|z - mean(z)|²`. `ddof = n` returns `nan` when the variance is positive and `0.0` when the values are identical.
 
@@ -122,7 +241,7 @@ With a spread of 0.004, 11 depths from 1 to 1024 layers, median time of 11 runs:
 
 ![The relative error of the gradient and the time of one forward and backward step against the number of layers, on a GPU, for the usual layer normalisation and for the one with stable_var](../../docs/papers/assets/float32/depth_gradient.png)
 
-*Figure 4. The error of the gradient and the time of a step against the number of layers (spread 0.004).*
+*Figure 6. The error of the gradient and the time of a step against the number of layers (spread 0.004).*
 
 The same 11 depths with six values of the offset over the spread (66 stacks in all, 3 timed runs each), over the 11 depths of each row:
 
@@ -139,24 +258,11 @@ The kernel is closer to the float64 reference in all 66 stacks, by a factor betw
 
 ![The gradient of a stack of normalised layers on a GPU: the usual layer rises like a mountain to 21 percent, the layer with stable_var is a flat floor below 0.006 percent](../../docs/papers/assets/float32/stable_var_4_depth.png)
 
-*Figure 5. The gradient of a stack of normalised layers: the usual layer rises to 21 %, the layer with `stable_var` stays on the floor, below 0.006 %.*
+*Figure 7. The gradient of a stack of normalised layers: the usual layer rises to 21 %, the layer with `stable_var` stays on the floor, below 0.006 %.*
 
 ### 4.5 The cost in a network step
 
-**The key point: in a complete neural network, the impact of stable_var on the total speed is almost null (only +1.5%), even if the isolated operation is slower.**
-
-Here is the detailed explanation of the numbers and of their meaning:
-
-**1. The context of the test**
-
-The test simulates a small language model or a block of a neural network with these characteristics:
-
-- 4096 tokens: the length of the processed sequence.
-- Width 1024 and hidden 4096: the internal dimensions of the vectors and of the layers (typical architecture of the Feed-Forward blocks of Transformers).
-- 8 layers: the depth of the tested network.
-- Median of 7 runs: the test was repeated 7 times, taking the central value to avoid temporary distortions of the GPU.
-
-**2. Analysis of the table (isolated computation against whole network)**
+The step of a stack of 8 feed-forward blocks of a transformer (hidden size 4096, width 1024, 4096 tokens), forward and backward, on a Kaggle GPU in float32, with the usual layer normalisation and with `stable_var`; the median of 7 runs. The gradient is finite in both cases.
 
 | | usual | with `stable_var` |
 |---|---|---|
@@ -164,14 +270,7 @@ The test simulates a small language model or a block of a neural network with th
 | normalisation alone | 0.61 ms | 1.28 ms |
 | share of the normalisation in the step | 1.1 % | 2.2 % |
 
-- Normalisation alone (0.61 ms against 1.28 ms): taken alone, the version with stable_var takes about twice the time (2.1 times slower). It is the figure we had seen in the previous tests.
-- Forward and backward step (458.9 ms against 465.6 ms): it is the time needed for a whole training cycle (forward + backward pass, that is calculation of the error and update of the weights). Here the difference is only 6.7 milliseconds (+1.45%, rounded to 1.5%).
-- Share of the normalisation (1.1% against 2.2%): in a real network, the bulk of the computational work is done by the matrix multiplications (the linear layers). The normalisation takes a tiny slice of the total time. Even doubling its cost, its weight on the total goes from 1.1% to 2.2%: a negligible impact.
-
-**3. What it means for the training**
-
-- "The gradient is finite": it means that the calculations did not "explode" producing mathematical errors (NaN or infinity), confirming the numerical stability in both tests.
-- The practical confirmation: the slowdown (up to 3x) measured by isolating the single layer is not a problem in practice, because it is "absorbed" by the other, much heavier, calculations of the network.
+The normalisation alone is 2.1 times slower with `stable_var`, and the step is 1.45 % longer: the normalisation is a small share of the work of a step, which is mostly matrix products. The share falls with the width of the network, and the cost of the step should fall with it; Section 4.6 shows this only in part.
 
 ### 4.6 The same on a TPU, by width
 
@@ -199,7 +298,7 @@ The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64
 
 - The accuracy is at most equal to the baseline formula on three of the four datasets in each combination of backend and mode. It is worse on N(10⁶, 1) on the CPU, in eager mode and under `jit`, and on N(0, 1) under `jit` on the GPU. The cause is not explained.
 - The speed is 3.59 times the baseline on the CPU and 2.24 times on the GPU; the threshold of 4.0 was chosen after the measurement.
-- Not measured: float64 (`[1e307]*3`), TPU, other array sizes.
+- Not measured: float64 (`[1e307]*3`), the four datasets and the speed benchmark on a TPU, other array sizes.
 - The baseline of the tests has no shift: there is no comparison with a shifted baseline.
 - `stable_var` is a function, not an estimator: it has no `learn_one`, no `budget_s`, no `memory_class`.
 - The 1965 paper of Kahan [7] is bibliographic only, not read.
@@ -210,7 +309,7 @@ The values are stored in bfloat16, float8_e4m3fn and float8_e5m2 (a GPU test, 64
 
 ## 6. Reproduction
 
-`python benchmarks/stable_variance_float32.py` in the library writes `benchmarks/stable_variance_float32.json` with the backend, the JAX version and the sessions of the speed measurement. The GPU numbers were obtained with the same script. As a check, the script was run again on a Kaggle GPU session with JAX 0.11.1, with `stable.py` and the script taken unchanged from the library: the accuracy numbers are equal to the ones of `stable_variance_float32_gpu.json` to all the digits, the claims are the same, and the speed ratio is 2.22 (range 2.18 to 2.25). The depth test is `python benchmarks/stable_variance_depth.py` (the first table) and `python benchmarks/stable_variance_depth.py --grid` (the second) in the library, run on a Kaggle GPU session. The figures are drawn by `docs/assets/stable_variance/make_explained.py` and `make_depth_figure.py` of the library from those results. The code blocks of the documentation page of `stable_var` were run with the function and their printed outputs are the ones shown there.
+`python benchmarks/stable_variance_float32.py` in the library writes `benchmarks/stable_variance_float32.json` with the backend, the JAX version and the sessions of the speed measurement. The GPU numbers were obtained with the same script. As a check, the script was run again on a Kaggle GPU session with JAX 0.11.1, with `stable.py` and the script taken unchanged from the library: the accuracy numbers are equal to the ones of `stable_variance_float32_gpu.json` to all the digits, the claims are the same, and the speed ratio is 2.22 (range 2.18 to 2.25). The standalone program of Appendix A, `papers/float32_variance/reproduce_standalone.py`, computes the examples and the accuracy runs of this paper with no library of ours: `python reproduce_standalone.py`. The depth test is `python benchmarks/stable_variance_depth.py` (the first table) and `python benchmarks/stable_variance_depth.py --grid` (the second) in the library, run on a Kaggle GPU session. The figures are drawn by `docs/assets/stable_variance/make_explained.py` and `make_depth_figure.py` of the library from those results. The code blocks of the documentation page of `stable_var` were run with the function and their printed outputs are the ones shown there.
 
 ## References
 
